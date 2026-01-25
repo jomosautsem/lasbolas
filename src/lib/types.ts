@@ -22,6 +22,8 @@ export interface Room {
   customer_name?: string;
   entry_type?: EntryType;
   total_debt?: number;
+  rate_id?: number | null;
+  persons?: string;
 }
 
 export interface RoomType {
@@ -36,6 +38,7 @@ export interface Rate {
   price: number;
   room_type_id: number;
   is_extra_hour: boolean;
+  color_class?: string;
 }
 
 export interface Product {

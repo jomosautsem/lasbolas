@@ -8,9 +8,10 @@ interface RoomGridProps {
   rooms: Room[];
   rates: Rate[];
   roomTypes: RoomType[];
+  onConfirmCheckIn: (room: Room, data: any) => void;
 }
 
-export default function RoomGrid({ rooms, rates, roomTypes }: RoomGridProps) {
+export default function RoomGrid({ rooms, rates, roomTypes, onConfirmCheckIn }: RoomGridProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
 
@@ -23,7 +24,13 @@ export default function RoomGrid({ rooms, rates, roomTypes }: RoomGridProps) {
     <>
       <div className="grid gap-4 md:gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
         {rooms.map((room) => (
-          <RoomCard key={room.id} room={room} onOccupy={handleOccupyClick} />
+          <RoomCard 
+            key={room.id} 
+            room={room} 
+            onOccupy={handleOccupyClick}
+            rates={rates}
+            roomTypes={roomTypes}
+          />
         ))}
       </div>
       {selectedRoom && (
@@ -33,6 +40,7 @@ export default function RoomGrid({ rooms, rates, roomTypes }: RoomGridProps) {
           room={selectedRoom}
           rates={rates.filter(r => r.room_type_id === selectedRoom.room_type_id)}
           roomTypes={roomTypes}
+          onConfirm={onConfirmCheckIn}
         />
       )}
     </>

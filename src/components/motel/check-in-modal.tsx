@@ -21,6 +21,7 @@ interface CheckInModalProps {
   room: Room;
   rates: Rate[];
   roomTypes: RoomType[];
+  onConfirm: (room: Room, data: any) => void;
 }
 
 const rateColors = [
@@ -33,7 +34,7 @@ const rateColors = [
 ];
 
 
-export default function CheckInModal({ isOpen, onOpenChange, room, rates, roomTypes }: CheckInModalProps) {
+export default function CheckInModal({ isOpen, onOpenChange, room, rates, roomTypes, onConfirm }: CheckInModalProps) {
   const { toast } = useToast();
   const [plate, setPlate] = useState('');
   const [isBlacklisted, setIsBlacklisted] = useState(false);
@@ -109,7 +110,20 @@ export default function CheckInModal({ isOpen, onOpenChange, room, rates, roomTy
         });
         return;
     }
-    // Here you would handle the form submission, update DB, etc.
+    
+    onConfirm(room, {
+        customerName,
+        persons,
+        entryType,
+        plate,
+        marca,
+        modelo,
+        color,
+        selectedRate,
+        startTime,
+        endTime
+    });
+    
     toast({
       title: 'Check-in Exitoso',
       description: `Habitación ${room.name} ocupada.`,

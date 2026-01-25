@@ -3,26 +3,29 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
-import { Bed, Car, Clock, Sparkles, Wrench, Trash2, PlusCircle, LogOut } from 'lucide-react';
+import { Bed, Car, Clock, Sparkles, Wrench, Trash2, PlusCircle, LogOut, MoreVertical, Menu, PersonStanding, Users, ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { Room } from '@/lib/types';
+import type { Room, Rate, RoomType } from '@/lib/types';
 import { formatToMexicanTime } from '@/lib/datetime';
+import { MotorcycleIcon } from '@/components/icons';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { MoreVertical } from 'lucide-react';
 
 
 interface RoomCardProps {
   room: Room;
+  rates: Rate[];
+  roomTypes: RoomType[];
   onOccupy: (room: Room) => void;
 }
 
-const statusConfig = {
+const statusConfig: { [key: string]: { icon: React.ElementType, color: string, labelColor: string } } = {
   Disponible: { icon: Bed, color: 'bg-green-100 border-green-500 text-green-700', labelColor: 'bg-green-500' },
   Ocupada: { icon: Bed, color: 'bg-blue-100 border-blue-500 text-blue-700', labelColor: 'bg-blue-500' },
   Limpieza: { icon: Sparkles, color: 'bg-cyan-100 border-cyan-500 text-cyan-700', labelColor: 'bg-cyan-500' },
@@ -31,62 +34,11 @@ const statusConfig = {
   Vencida: { icon: Bed, color: 'bg-red-100 border-red-500 text-red-700', labelColor: 'bg-red-500' },
 };
 
-const Timer = ({ checkInTime, checkOutTime }: { checkInTime: string, checkOutTime: string }) => {
+export function RoomCard({ room, rates, roomTypes, onOccupy }: RoomCardProps) {
   const [now, setNow] = useState<Date | null>(null);
 
   useEffect(() => {
-    setNow(new Date());
-    const timerId = setInterval(() => setNow(new Date()), 1000);
-    return () => clearInterval(timerId);
-  }, []);
-
-  if (!now) {
-    return (
-        <div className='w-full'>
-            <div className="text-center font-mono text-lg font-semibold">--:--:--</div>
-            <div className="text-center text-xs text-muted-foreground">Calculando...</div>
-            <div className="w-full bg-gray-200 rounded-full h-1.5 mt-1">
-                <div className="h-1.5 rounded-full bg-gray-200" style={{ width: `0%` }}></div>
-            </div>
-        </div>
-    );
-  }
-
-  const checkIn = new Date(checkInTime);
-  const checkOut = new Date(checkOutTime);
-  const isExpired = now > checkOut;
-  
-  const totalDuration = checkOut.getTime() - checkIn.getTime();
-  const elapsedTime = now.getTime() - checkIn.getTime();
-  const progress = Math.min((elapsedTime / totalDuration) * 100, 100);
-
-  const diff = Math.abs(now.getTime() - checkOut.getTime());
-  const hours = Math.floor(diff / 3600000);
-  const minutes = Math.floor((diff % 3600000) / 60000);
-  const seconds = Math.floor((diff % 60000) / 1000);
-
-  const timeStr = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-
-  let timerColor = 'bg-blue-500';
-  if (isExpired) timerColor = 'bg-red-500';
-  else if (progress > 85) timerColor = 'bg-yellow-500';
-  else if (progress > 60) timerColor = 'bg-orange-500';
-
-  return (
-    <div className='w-full'>
-      <div className="text-center font-mono text-lg font-semibold">{timeStr}</div>
-      <div className="text-center text-xs text-muted-foreground">{isExpired ? 'Vencido' : 'Restante'}</div>
-      <div className="w-full bg-gray-200 rounded-full h-1.5 mt-1">
-        <div className={cn("h-1.5 rounded-full transition-all", timerColor)} style={{ width: `${isExpired ? 100 : progress}%` }}></div>
-      </div>
-    </div>
-  );
-};
-
-export function RoomCard({ room, onOccupy }: RoomCardProps) {
-  const [now, setNow] = useState<Date | null>(null);
-
-  useEffect(() => {
+    // Only run the timer if the room is occupied
     if (room.status === 'Ocupada') {
       const timerId = setInterval(() => setNow(new Date()), 1000);
       setNow(new Date()); // Set initial time
@@ -98,64 +50,82 @@ export function RoomCard({ room, onOccupy }: RoomCardProps) {
   const isExpired = isOccupied && room.check_out_time && now && new Date(room.check_out_time) < now;
   const effectiveStatus = isExpired ? 'Vencida' : room.status;
 
-  const config = statusConfig[effectiveStatus];
+  const roomType = roomTypes.find(rt => rt.id === room.room_type_id);
+  const rate = room.rate_id ? rates.find(r => r.id === room.rate_id) : null;
+  
+  const baseConfig = statusConfig[effectiveStatus];
+  const cardColorClass = (isOccupied || isExpired) && rate?.color_class ? rate.color_class : baseConfig.color;
   const isActionable = room.status === 'Disponible' || room.status === 'Ocupada';
+  
+  const VehicleIcon = room.entry_type === 'Auto' ? Car : MotorcycleIcon;
 
   return (
-    <Card className={cn('rounded-2xl shadow-lg transition-all hover:shadow-xl flex flex-col', config.color)}>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 p-3">
-        <CardTitle className="text-xl font-bold font-headline">{room.name}</CardTitle>
-        <div className="flex items-center gap-2">
-          <Badge className={cn('text-white', config.labelColor)}>{effectiveStatus}</Badge>
-          <config.icon className="h-5 w-5" />
+    <Card className={cn('rounded-2xl shadow-lg transition-all hover:shadow-xl flex flex-col', cardColorClass)}>
+      <CardHeader className="flex flex-row items-start justify-between space-y-0 p-3">
+        <div>
+          <CardTitle className="text-xl font-bold font-headline">{room.name.replace('Habitación ', 'Hab ')}</CardTitle>
+          {roomType && <span className="text-xs font-semibold">{roomType.name.toUpperCase()}</span>}
         </div>
+        <Badge className={cn('text-white', baseConfig.labelColor)}>{effectiveStatus}</Badge>
       </CardHeader>
       <CardContent className="p-3 flex-grow flex flex-col justify-center items-center gap-2">
-        {isOccupied && room.check_in_time && room.check_out_time ? (
-          <>
-            <div className="flex justify-between w-full text-xs">
-              <span><Clock className="inline h-3 w-3 mr-1"/>{formatToMexicanTime(room.check_in_time)} - {formatToMexicanTime(room.check_out_time)}</span>
+        {isOccupied && room.check_in_time && room.check_out_time && rate ? (
+           <div className="w-full bg-white/60 rounded-lg p-3 space-y-2 text-sm">
+            <div className="flex justify-between items-center">
+              <div className="flex items-center gap-2 font-semibold">
+                <PersonStanding className="h-5 w-5" />
+                <span>{room.customer_name}</span>
+              </div>
+              <Badge variant="outline" className="flex items-center gap-1">
+                <Users className="h-4 w-4" />
+                {room.persons}
+              </Badge>
             </div>
-            <Timer checkInTime={room.check_in_time} checkOutTime={room.check_out_time} />
-             {room.vehicle_plate && (
-              <div className="text-sm flex items-center gap-2 mt-2">
-                <Car className="h-4 w-4"/>
-                <strong>{room.vehicle_plate}</strong>
+
+            <div className="text-center rounded-md bg-white/70 p-2">
+              <div className="text-xs text-muted-foreground font-semibold">HORARIO</div>
+              <div className="flex items-center justify-center gap-2 font-mono text-base">
+                <span>{formatToMexicanTime(room.check_in_time)}</span>
+                <ArrowRight className="h-4 w-4" />
+                <span>{formatToMexicanTime(room.check_out_time)}</span>
+              </div>
+            </div>
+
+            {room.entry_type && room.entry_type !== 'Pie' && (
+              <div className="flex justify-between items-center">
+                <div className="flex items-center gap-2">
+                  <VehicleIcon className="h-5 w-5" />
+                  <div>
+                    <div className="font-semibold">{room.entry_type}</div>
+                    <div className="text-xs text-muted-foreground">{room.vehicle_brand} {room.vehicle_details}</div>
+                  </div>
+                </div>
+                <Badge variant="outline">{room.vehicle_plate || 'SIN PLACA'}</Badge>
               </div>
             )}
-            <div className='text-sm text-muted-foreground'>{room.customer_name}</div>
-          </>
+            
+            <Separator className="my-1 bg-black/10" />
+
+            <div className="flex justify-between items-center text-base font-bold">
+              <span>HOSPEDAJE</span>
+              <span>${rate.price.toFixed(2)}</span>
+            </div>
+           </div>
         ) : (
           <div className="text-center text-muted-foreground text-sm py-8">
             {room.status === 'Disponible' ? 'Lista para rentar' : `En ${room.status}`}
           </div>
         )}
       </CardContent>
-      {isActionable && (
-        <CardFooter className="p-2 bg-white/50 rounded-b-2xl">
+      <CardFooter className="p-2 bg-white/50 rounded-b-2xl">
           {room.status === 'Disponible' ? (
             <Button className="w-full" onClick={() => onOccupy(room)}>Ocupar</Button>
+          ) : room.status === 'Ocupada' || effectiveStatus === 'Vencida' ? (
+             <Button variant="outline" className="w-full bg-white font-semibold"><Menu className="mr-2 h-4 w-4"/> Gestionar Habitación</Button>
           ) : (
-            <div className="flex w-full gap-1">
-              <Button variant="outline" className="flex-grow text-xs" size="sm"><PlusCircle className="h-4 w-4 mr-1"/>Consumo</Button>
-              <Button variant="outline" className="flex-grow text-xs" size="sm"><LogOut className="h-4 w-4 mr-1"/>Liberar</Button>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-9 w-9">
-                    <MoreVertical className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem>Añadir Tiempo Extra</DropdownMenuItem>
-                  <DropdownMenuItem>Añadir Persona Extra</DropdownMenuItem>
-                  <DropdownMenuItem>Ver Detalles</DropdownMenuItem>
-                  <DropdownMenuItem className="text-destructive">Cancelar Habitación</DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
+            <div className="h-10"></div> // Placeholder for consistent height
           )}
         </CardFooter>
-      )}
     </Card>
   );
 }
