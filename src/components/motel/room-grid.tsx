@@ -32,6 +32,7 @@ export default function RoomGrid({ rooms, rates, roomTypes }: RoomGridProps) {
           onOpenChange={setIsModalOpen}
           room={selectedRoom}
           rates={rates.filter(r => r.room_type_id === selectedRoom.room_type_id)}
+          roomTypes={roomTypes}
         />
       )}
     </>

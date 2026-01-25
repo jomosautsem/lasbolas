@@ -1,7 +1,7 @@
 import { AppLayout } from '@/components/motel/app-layout';
 import DashboardKPIs from '@/components/motel/dashboard-kpis';
 import RoomGrid from '@/components/motel/room-grid';
-import { rooms, products, transactions, expenses } from '@/lib/data';
+import { rooms, products, transactions, expenses, rates, roomTypes } from '@/lib/data';
 import { getCurrentShiftInfo } from '@/lib/datetime';
 
 export default function Home() {
@@ -15,7 +15,7 @@ export default function Home() {
           transactions={transactions}
           expenses={expenses}
         />
-        <RoomGrid rooms={rooms} rates={[]} roomTypes={[]} />
+        <RoomGrid rooms={rooms} rates={rates} roomTypes={roomTypes} />
       </div>
     </AppLayout>
   );
