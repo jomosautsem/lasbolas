@@ -3,8 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import type { Room, Rate, RoomType } from '@/lib/types';
+import type { Room, Rate, RoomType, EntryType } from '@/lib/types';
 import { vehicleReports } from '@/lib/data';
 import { useToast } from '@/hooks/use-toast';
 import { useState, useEffect } from 'react';
@@ -40,11 +39,14 @@ export default function CheckInModal({ isOpen, onOpenChange, room, rates, roomTy
   const [isBlacklisted, setIsBlacklisted] = useState(false);
   const [customerName, setCustomerName] = useState('');
   const [persons, setPersons] = useState('2');
-  const [entryType, setEntryType] = useState('Auto');
+  const [entryType, setEntryType] = useState<EntryType | null>(null);
   const [selectedRate, setSelectedRate] = useState<Rate | null>(null);
   const [isManual, setIsManual] = useState(false);
   const [startTime, setStartTime] = useState<Date | null>(null);
   const [endTime, setEndTime] = useState<Date | null>(null);
+  const [marca, setMarca] = useState('');
+  const [modelo, setModelo] = useState('');
+  const [color, setColor] = useState('');
 
   const roomType = roomTypes.find(rt => rt.id === room.room_type_id);
 
@@ -53,10 +55,13 @@ export default function CheckInModal({ isOpen, onOpenChange, room, rates, roomTy
       setStartTime(new Date());
       setCustomerName(room.name);
       setPersons('2');
-      setEntryType('Auto');
+      setEntryType(null);
       setSelectedRate(null);
       setEndTime(null);
       setPlate('');
+      setMarca('');
+      setModelo('');
+      setColor('');
       setIsBlacklisted(false);
       setIsManual(false);
     }
@@ -88,6 +93,14 @@ export default function CheckInModal({ isOpen, onOpenChange, room, rates, roomTy
   };
 
   const handleConfirm = () => {
+    if (!entryType) {
+        toast({
+            variant: "destructive",
+            title: "Error de validación",
+            description: "Por favor, seleccione un tipo de entrada.",
+        });
+        return;
+    }
     if (!selectedRate && !isManual) {
         toast({
             variant: "destructive",
@@ -146,15 +159,15 @@ export default function CheckInModal({ isOpen, onOpenChange, room, rates, roomTy
 
             <div className="space-y-2">
               <Label>Tipo de Entrada <span className="text-destructive">*</span></Label>
-              <RadioGroup value={entryType} onValueChange={setEntryType} className="flex gap-4">
+              <div className="flex gap-4">
                  <Button variant={entryType === 'Auto' ? 'default' : 'outline'} onClick={() => setEntryType('Auto')} className="flex-1 gap-2"><Car/> Auto</Button>
                  <Button variant={entryType === 'Moto' ? 'default' : 'outline'} onClick={() => setEntryType('Moto')} className="flex-1 gap-2"><MotorcycleIcon/> Moto</Button>
                  <Button variant={entryType === 'Pie' ? 'default' : 'outline'} onClick={() => setEntryType('Pie')} className="flex-1 gap-2"><PersonStanding/> Pie</Button>
-              </RadioGroup>
+              </div>
             </div>
             
             { (entryType === 'Auto' || entryType === 'Moto') && (
-              <>
+              <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="plate">Placa</Label>
                   <div className="relative">
@@ -168,12 +181,19 @@ export default function CheckInModal({ isOpen, onOpenChange, room, rates, roomTy
                       {isBlacklisted && <AlertTriangle className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-destructive" />}
                   </div>
                 </div>
-                
                 <div className="space-y-2">
-                  <Label htmlFor="brand">Vehículo</Label>
-                  <Input id="brand" placeholder="Marca, color, detalles" />
+                  <Label htmlFor="color">Color</Label>
+                  <Input id="color" placeholder="Ej. Rojo" value={color} onChange={(e) => setColor(e.target.value)} />
                 </div>
-              </>
+                <div className="space-y-2">
+                  <Label htmlFor="brand">Marca</Label>
+                  <Input id="brand" placeholder="Ej. Toyota" value={marca} onChange={(e) => setMarca(e.target.value)} />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="model">Modelo</Label>
+                  <Input id="model" placeholder="Ej. Yaris" value={modelo} onChange={(e) => setModelo(e.target.value)} />
+                </div>
+              </div>
             )}
           </div>
 
@@ -231,7 +251,7 @@ export default function CheckInModal({ isOpen, onOpenChange, room, rates, roomTy
 
         <DialogFooter>
           <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>Cancelar</Button>
-          <Button type="submit" onClick={handleConfirm} disabled={!selectedRate && !isManual}>Confirmar Check-in</Button>
+          <Button type="submit" onClick={handleConfirm} disabled={!entryType || (!selectedRate && !isManual)}>Confirmar Check-in</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
