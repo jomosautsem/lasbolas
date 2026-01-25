@@ -33,7 +33,7 @@ export const rates: Rate[] = [
   // Sencilla
   { id: 1, name: '2 Horas', hours: 2, price: 220, room_type_id: 1, is_extra_hour: false, color_class: 'bg-green-500 border-green-600 text-white' },
   { id: 2, name: '4 Horas', hours: 4, price: 280, room_type_id: 1, is_extra_hour: false, color_class: 'bg-orange-500 border-orange-600 text-white' },
-  { id: 3, name: '5 Horas', hours: 5, price: 300, room_type_id: 1, is_extra_hour: false, color_class: 'bg-yellow-400 border-yellow-500 text-yellow-950' },
+  { id: 3, name: '5 Horas', hours: 5, price: 300, room_type_id: 1, is_extra_hour: false, color_class: 'bg-amber-500 border-amber-600 text-white' },
   { id: 4, name: '8 Horas', hours: 8, price: 330, room_type_id: 1, is_extra_hour: false, color_class: 'bg-purple-500 border-purple-600 text-white' },
   { id: 5, name: '12 Horas (Amanecida)', hours: 12, price: 480, room_type_id: 1, is_extra_hour: false, color_class: 'bg-blue-500 border-blue-600 text-white' },
   { id: 6, name: 'Hora Extra', hours: 1, price: 100, room_type_id: 1, is_extra_hour: true, color_class: 'bg-gray-500 border-gray-600 text-white' },
@@ -41,7 +41,7 @@ export const rates: Rate[] = [
   // Jacuzzi
   { id: 7, name: '2 Horas Jacuzzi', hours: 2, price: 400, room_type_id: 2, is_extra_hour: false, color_class: 'bg-green-500 border-green-600 text-white' },
   { id: 8, name: '4 Horas Jacuzzi', hours: 4, price: 550, room_type_id: 2, is_extra_hour: false, color_class: 'bg-orange-500 border-orange-600 text-white' },
-  { id: 9, name: '5 Horas Jacuzzi', hours: 5, price: 650, room_type_id: 2, is_extra_hour: false, color_class: 'bg-yellow-400 border-yellow-500 text-yellow-950' },
+  { id: 9, name: '5 Horas Jacuzzi', hours: 5, price: 650, room_type_id: 2, is_extra_hour: false, color_class: 'bg-amber-500 border-amber-600 text-white' },
   { id: 10, name: '8 Horas Jacuzzi', hours: 8, price: 750, room_type_id: 2, is_extra_hour: false, color_class: 'bg-purple-500 border-purple-600 text-white' },
   { id: 11, name: '12 Horas Jacuzzi (Amanecida)', hours: 12, price: 900, room_type_id: 2, is_extra_hour: false, color_class: 'bg-blue-500 border-blue-600 text-white' },
   { id: 12, name: 'Hora Extra Jacuzzi', hours: 1, price: 150, room_type_id: 2, is_extra_hour: true, color_class: 'bg-gray-500 border-gray-600 text-white' },
