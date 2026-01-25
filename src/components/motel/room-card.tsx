@@ -138,7 +138,7 @@ export function RoomCard({ room, rates, roomTypes, onOccupy }: RoomCardProps) {
           {room.status === 'Disponible' ? (
             <Button className="w-full" onClick={() => onOccupy(room)}>Ocupar</Button>
           ) : room.status === 'Ocupada' || effectiveStatus === 'Vencida' ? (
-             <Button variant="outline" className="w-full bg-white font-semibold"><Menu className="mr-2 h-4 w-4"/> Gestionar Habitación</Button>
+             <Button variant="outline" className="w-full bg-white text-secondary-foreground hover:bg-secondary font-semibold"><Menu className="mr-2 h-4 w-4"/> Gestionar Habitación</Button>
           ) : (
             <div className="h-10"></div> // Placeholder for consistent height
           )}
