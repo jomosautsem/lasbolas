@@ -32,12 +32,25 @@ const statusConfig = {
 };
 
 const Timer = ({ checkInTime, checkOutTime }: { checkInTime: string, checkOutTime: string }) => {
-  const [now, setNow] = useState(new Date());
+  const [now, setNow] = useState<Date | null>(null);
 
   useEffect(() => {
+    setNow(new Date());
     const timerId = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(timerId);
   }, []);
+
+  if (!now) {
+    return (
+        <div className='w-full'>
+            <div className="text-center font-mono text-lg font-semibold">--:--:--</div>
+            <div className="text-center text-xs text-muted-foreground">Calculando...</div>
+            <div className="w-full bg-gray-200 rounded-full h-1.5 mt-1">
+                <div className="h-1.5 rounded-full bg-gray-200" style={{ width: `0%` }}></div>
+            </div>
+        </div>
+    );
+  }
 
   const checkIn = new Date(checkInTime);
   const checkOut = new Date(checkOutTime);
@@ -71,9 +84,18 @@ const Timer = ({ checkInTime, checkOutTime }: { checkInTime: string, checkOutTim
 };
 
 export function RoomCard({ room, onOccupy }: RoomCardProps) {
+  const [now, setNow] = useState<Date | null>(null);
+
+  useEffect(() => {
+    if (room.status === 'Ocupada') {
+      const timerId = setInterval(() => setNow(new Date()), 1000);
+      setNow(new Date()); // Set initial time
+      return () => clearInterval(timerId);
+    }
+  }, [room.status]);
+
   const isOccupied = room.status === 'Ocupada';
-  const now = new Date();
-  const isExpired = isOccupied && room.check_out_time && new Date(room.check_out_time) < now;
+  const isExpired = isOccupied && room.check_out_time && now && new Date(room.check_out_time) < now;
   const effectiveStatus = isExpired ? 'Vencida' : room.status;
 
   const config = statusConfig[effectiveStatus];
