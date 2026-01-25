@@ -31,7 +31,7 @@ const statusConfig: { [key: string]: { icon: React.ElementType, color: string, l
   Limpieza: { icon: Sparkles, color: 'bg-cyan-100 border-cyan-500 text-cyan-700', labelColor: 'bg-cyan-500' },
   Mantenimiento: { icon: Wrench, color: 'bg-gray-200 border-gray-500 text-gray-600', labelColor: 'bg-gray-500' },
   Profunda: { icon: Trash2, color: 'bg-purple-100 border-purple-500 text-purple-700', labelColor: 'bg-purple-500' },
-  Vencida: { icon: Bed, color: 'bg-red-100 border-red-500 text-red-700', labelColor: 'bg-red-500' },
+  Vencida: { icon: Bed, color: 'bg-red-500 border-red-600 text-white', labelColor: 'bg-red-500' },
 };
 
 export function RoomCard({ room, rates, roomTypes, onOccupy }: RoomCardProps) {
@@ -52,13 +52,21 @@ export function RoomCard({ room, rates, roomTypes, onOccupy }: RoomCardProps) {
   }, [room.status, room.check_out_time]);
 
   const isOccupied = room.status === 'Ocupada';
-  const effectiveStatus = isClient && isExpiredClient ? 'Vencida' : room.status;
+  const isExpired = isClient && isExpiredClient;
+  const effectiveStatus = isExpired ? 'Vencida' : room.status;
 
   const roomType = roomTypes.find(rt => rt.id === room.room_type_id);
   const rate = room.rate_id ? rates.find(r => r.id === room.rate_id) : null;
   
   const baseConfig = statusConfig[effectiveStatus];
-  const cardColorClass = (isOccupied || (isClient && isExpiredClient)) && rate?.color_class ? rate.color_class : baseConfig.color;
+  let cardColorClass = baseConfig.color;
+
+  if (isOccupied && rate?.color_class) {
+    cardColorClass = rate.color_class;
+  }
+  if (isExpired) {
+    cardColorClass = 'bg-red-500 border-red-600 text-white';
+  }
   
   const VehicleIcon = room.entry_type === 'Auto' ? Car : MotorcycleIcon;
 
@@ -79,14 +87,14 @@ export function RoomCard({ room, rates, roomTypes, onOccupy }: RoomCardProps) {
                 <PersonStanding className="h-5 w-5" />
                 <span>{room.customer_name}</span>
               </div>
-              <Badge variant="outline" className="flex items-center gap-1">
+              <Badge variant="outline" className="flex items-center gap-1 border-white/50 text-inherit">
                 <Users className="h-4 w-4" />
                 {room.persons}
               </Badge>
             </div>
 
-            <div className="text-center rounded-md bg-white/70 p-2">
-              <div className="text-xs text-muted-foreground font-semibold">HORARIO</div>
+            <div className="text-center rounded-md bg-black/10 p-2">
+              <div className="text-xs font-semibold opacity-80">HORARIO</div>
               <div className="flex items-center justify-center gap-2 font-mono text-base">
                 {isClient ? (
                   <>
@@ -106,14 +114,14 @@ export function RoomCard({ room, rates, roomTypes, onOccupy }: RoomCardProps) {
                   <VehicleIcon className="h-5 w-5" />
                   <div>
                     <div className="font-semibold">{room.entry_type}</div>
-                    <div className="text-xs text-muted-foreground">{room.vehicle_brand} {room.vehicle_details}</div>
+                    <div className="text-xs opacity-80">{room.vehicle_brand} {room.vehicle_details}</div>
                   </div>
                 </div>
-                <Badge variant="outline">{room.vehicle_plate || 'SIN PLACA'}</Badge>
+                <Badge variant="outline" className="border-white/50 text-inherit">{room.vehicle_plate || 'SIN PLACA'}</Badge>
               </div>
             )}
             
-            <Separator className="my-1 bg-black/10" />
+            <Separator className="my-1 bg-white/20" />
 
             <div className="flex justify-between items-center text-base font-bold">
               <span>HOSPEDAJE</span>
