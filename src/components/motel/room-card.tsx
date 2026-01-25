@@ -35,27 +35,30 @@ const statusConfig: { [key: string]: { icon: React.ElementType, color: string, l
 };
 
 export function RoomCard({ room, rates, roomTypes, onOccupy }: RoomCardProps) {
-  const [now, setNow] = useState<Date | null>(null);
+  const [isClient, setIsClient] = useState(false);
+  const [isExpiredClient, setIsExpiredClient] = useState(false);
 
   useEffect(() => {
-    // Only run the timer if the room is occupied
-    if (room.status === 'Ocupada') {
-      const timerId = setInterval(() => setNow(new Date()), 1000);
-      setNow(new Date()); // Set initial time
+    setIsClient(true);
+    if (room.status === 'Ocupada' && room.check_out_time) {
+      const checkExpired = () => {
+        const expired = new Date(room.check_out_time!) < new Date();
+        setIsExpiredClient(expired);
+      };
+      checkExpired();
+      const timerId = setInterval(checkExpired, 60000); // Check every minute
       return () => clearInterval(timerId);
     }
-  }, [room.status]);
+  }, [room.status, room.check_out_time]);
 
   const isOccupied = room.status === 'Ocupada';
-  const isExpired = isOccupied && room.check_out_time && now && new Date(room.check_out_time) < now;
-  const effectiveStatus = isExpired ? 'Vencida' : room.status;
+  const effectiveStatus = isClient && isExpiredClient ? 'Vencida' : room.status;
 
   const roomType = roomTypes.find(rt => rt.id === room.room_type_id);
   const rate = room.rate_id ? rates.find(r => r.id === room.rate_id) : null;
   
   const baseConfig = statusConfig[effectiveStatus];
-  const cardColorClass = (isOccupied || isExpired) && rate?.color_class ? rate.color_class : baseConfig.color;
-  const isActionable = room.status === 'Disponible' || room.status === 'Ocupada';
+  const cardColorClass = (isOccupied || (isClient && isExpiredClient)) && rate?.color_class ? rate.color_class : baseConfig.color;
   
   const VehicleIcon = room.entry_type === 'Auto' ? Car : MotorcycleIcon;
 
@@ -70,7 +73,7 @@ export function RoomCard({ room, rates, roomTypes, onOccupy }: RoomCardProps) {
       </CardHeader>
       <CardContent className="p-3 flex-grow flex flex-col justify-center items-center gap-2">
         {isOccupied && room.check_in_time && room.check_out_time && rate ? (
-           <div className="w-full bg-white/60 rounded-lg p-3 space-y-2 text-sm">
+           <div className="w-full rounded-lg p-3 space-y-2 text-sm">
             <div className="flex justify-between items-center">
               <div className="flex items-center gap-2 font-semibold">
                 <PersonStanding className="h-5 w-5" />
@@ -85,9 +88,15 @@ export function RoomCard({ room, rates, roomTypes, onOccupy }: RoomCardProps) {
             <div className="text-center rounded-md bg-white/70 p-2">
               <div className="text-xs text-muted-foreground font-semibold">HORARIO</div>
               <div className="flex items-center justify-center gap-2 font-mono text-base">
-                <span>{formatToMexicanTime(room.check_in_time)}</span>
-                <ArrowRight className="h-4 w-4" />
-                <span>{formatToMexicanTime(room.check_out_time)}</span>
+                {isClient ? (
+                  <>
+                    <span>{formatToMexicanTime(room.check_in_time)}</span>
+                    <ArrowRight className="h-4 w-4" />
+                    <span>{formatToMexicanTime(room.check_out_time)}</span>
+                  </>
+                ) : (
+                  <span>--:-- → --:--</span>
+                )}
               </div>
             </div>
 
@@ -117,7 +126,7 @@ export function RoomCard({ room, rates, roomTypes, onOccupy }: RoomCardProps) {
           </div>
         )}
       </CardContent>
-      <CardFooter className="p-2 bg-white/50 rounded-b-2xl">
+      <CardFooter className="p-2 rounded-b-2xl">
           {room.status === 'Disponible' ? (
             <Button className="w-full" onClick={() => onOccupy(room)}>Ocupar</Button>
           ) : room.status === 'Ocupada' || effectiveStatus === 'Vencida' ? (
