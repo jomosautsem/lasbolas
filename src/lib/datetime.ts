@@ -1,11 +1,11 @@
-import { format, toDate, zonedTimeToUtc, utcToZonedTime } from 'date-fns-tz';
+import { format, toDate, zonedTimeToUtc, toZonedTime } from 'date-fns-tz';
 import { subDays, set } from 'date-fns';
 import type { Shift } from './types';
 
 const TIMEZONE = 'America/Mexico_City';
 
 export function getMexicoCityTime(date: Date = new Date()): Date {
-  return utcToZonedTime(date, TIMEZONE);
+  return toZonedTime(date, TIMEZONE);
 }
 
 interface ShiftInfo {
@@ -41,12 +41,12 @@ export function getCurrentShiftInfo(date: Date = new Date()): ShiftInfo {
 
 export function formatToMexicanDate(date: Date | string | number): string {
     const d = toDate(date);
-    const zonedDate = utcToZonedTime(d, TIMEZONE);
+    const zonedDate = toZonedTime(d, TIMEZONE);
     return format(zonedDate, 'dd/MM/yyyy', { timeZone: TIMEZONE });
 }
 
 export function formatToMexicanTime(date: Date | string | number): string {
     const d = toDate(date);
-    const zonedDate = utcToZonedTime(d, TIMEZONE);
+    const zonedDate = toZonedTime(d, TIMEZONE);
     return format(zonedDate, 'HH:mm', { timeZone: TIMEZONE });
 }

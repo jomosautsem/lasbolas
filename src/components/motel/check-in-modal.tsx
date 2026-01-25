@@ -8,7 +8,8 @@ import type { Room, Rate, EntryType } from '@/lib/types';
 import { vehicleReports } from '@/lib/data';
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
-import { Car, Motorcycle, PersonStanding, AlertTriangle } from 'lucide-react';
+import { Car, PersonStanding, AlertTriangle } from 'lucide-react';
+import { MotorcycleIcon } from '@/components/icons';
 
 interface CheckInModalProps {
   isOpen: boolean;
@@ -76,7 +77,7 @@ export default function CheckInModal({ isOpen, onOpenChange, room, rates }: Chec
               </div>
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="Moto" id="r2" />
-                <Label htmlFor="r2" className="flex items-center gap-2"><Motorcycle className="h-4 w-4"/> Moto</Label>
+                <Label htmlFor="r2" className="flex items-center gap-2"><MotorcycleIcon className="h-4 w-4"/> Moto</Label>
               </div>
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="Pie" id="r3" />
