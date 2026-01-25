@@ -6,14 +6,27 @@ export const roomTypes: RoomType[] = [
 ];
 
 export const rooms: Room[] = [
-  { id: 1, name: '101', status: 'Disponible', check_in_time: null, check_out_time: null, room_type_id: 1, tv_controls: 1, ac_controls: 1, total_debt: 0 },
-  { id: 2, name: '102', status: 'Ocupada', check_in_time: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), check_out_time: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(), room_type_id: 1, vehicle_plate: 'ABC-123', vehicle_brand: 'Nissan', tv_controls: 1, ac_controls: 1, customer_name: "Juan Perez", entry_type: 'Auto', total_debt: 450 },
-  { id: 3, name: '103', status: 'Limpieza', check_in_time: null, check_out_time: null, room_type_id: 1, tv_controls: 1, ac_controls: 1, total_debt: 0 },
-  { id: 4, name: '104', status: 'Mantenimiento', check_in_time: null, check_out_time: null, room_type_id: 1, tv_controls: 1, ac_controls: 1, total_debt: 0 },
-  { id: 5, name: '201', status: 'Ocupada', check_in_time: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(), check_out_time: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(), room_type_id: 2, vehicle_plate: 'XYZ-789', vehicle_brand: 'Chevrolet', tv_controls: 1, ac_controls: 1, customer_name: "Maria Lopez", entry_type: 'Auto', total_debt: 700 },
-  { id: 6, name: '202', status: 'Disponible', check_in_time: null, check_out_time: null, room_type_id: 2, tv_controls: 1, ac_controls: 1, total_debt: 0 },
-  { id: 7, name: '203', status: 'Profunda', check_in_time: null, check_out_time: null, room_type_id: 2, tv_controls: 1, ac_controls: 1, total_debt: 0 },
-  { id: 8, name: '204', status: 'Disponible', check_in_time: null, check_out_time: null, room_type_id: 2, tv_controls: 1, ac_controls: 1, total_debt: 0 },
+  { id: 1, name: 'Habitación 1', status: 'Disponible', check_in_time: null, check_out_time: null, room_type_id: 1, tv_controls: 1, ac_controls: 1, total_debt: 0 },
+  { id: 2, name: 'Habitación 2', status: 'Disponible', check_in_time: null, check_out_time: null, room_type_id: 1, tv_controls: 1, ac_controls: 1, total_debt: 0 },
+  { id: 3, name: 'Habitación 3', status: 'Disponible', check_in_time: null, check_out_time: null, room_type_id: 1, tv_controls: 1, ac_controls: 1, total_debt: 0 },
+  { id: 4, name: 'Habitación 4', status: 'Disponible', check_in_time: null, check_out_time: null, room_type_id: 1, tv_controls: 1, ac_controls: 1, total_debt: 0 },
+  { id: 5, name: 'Habitación 5', status: 'Disponible', check_in_time: null, check_out_time: null, room_type_id: 1, tv_controls: 1, ac_controls: 1, total_debt: 0 },
+  { id: 6, name: 'Habitación 6', status: 'Disponible', check_in_time: null, check_out_time: null, room_type_id: 1, tv_controls: 1, ac_controls: 1, total_debt: 0 },
+  { id: 7, name: 'Habitación 7', status: 'Disponible', check_in_time: null, check_out_time: null, room_type_id: 1, tv_controls: 1, ac_controls: 1, total_debt: 0 },
+  { id: 8, name: 'Habitación 8', status: 'Disponible', check_in_time: null, check_out_time: null, room_type_id: 1, tv_controls: 1, ac_controls: 1, total_debt: 0 },
+  { id: 9, name: 'Habitación 9A', status: 'Disponible', check_in_time: null, check_out_time: null, room_type_id: 1, tv_controls: 1, ac_controls: 1, total_debt: 0 },
+  { id: 10, name: 'Habitación 9B', status: 'Disponible', check_in_time: null, check_out_time: null, room_type_id: 1, tv_controls: 1, ac_controls: 1, total_debt: 0 },
+  { id: 11, name: 'Habitación 10', status: 'Disponible', check_in_time: null, check_out_time: null, room_type_id: 2, tv_controls: 1, ac_controls: 1, total_debt: 0 },
+  { id: 12, name: 'Habitación 11', status: 'Disponible', check_in_time: null, check_out_time: null, room_type_id: 2, tv_controls: 1, ac_controls: 1, total_debt: 0 },
+  { id: 13, name: 'Habitación 12', status: 'Disponible', check_in_time: null, check_out_time: null, room_type_id: 2, tv_controls: 1, ac_controls: 1, total_debt: 0 },
+  { id: 14, name: 'Habitación 13', status: 'Disponible', check_in_time: null, check_out_time: null, room_type_id: 2, tv_controls: 1, ac_controls: 1, total_debt: 0 },
+  { id: 15, name: 'Habitación 14', status: 'Disponible', check_in_time: null, check_out_time: null, room_type_id: 2, tv_controls: 1, ac_controls: 1, total_debt: 0 },
+  { id: 16, name: 'Habitación 15', status: 'Disponible', check_in_time: null, check_out_time: null, room_type_id: 2, tv_controls: 1, ac_controls: 1, total_debt: 0 },
+  { id: 17, name: 'Habitación 16', status: 'Disponible', check_in_time: null, check_out_time: null, room_type_id: 2, tv_controls: 1, ac_controls: 1, total_debt: 0 },
+  { id: 18, name: 'Habitación 17', status: 'Disponible', check_in_time: null, check_out_time: null, room_type_id: 2, tv_controls: 1, ac_controls: 1, total_debt: 0 },
+  { id: 19, name: 'Habitación 18', status: 'Disponible', check_in_time: null, check_out_time: null, room_type_id: 2, tv_controls: 1, ac_controls: 1, total_debt: 0 },
+  { id: 20, name: 'Habitación 19', status: 'Disponible', check_in_time: null, check_out_time: null, room_type_id: 2, tv_controls: 1, ac_controls: 1, total_debt: 0 },
+  { id: 21, name: 'Habitación 20', status: 'Disponible', check_in_time: null, check_out_time: null, room_type_id: 2, tv_controls: 1, ac_controls: 1, total_debt: 0 },
 ];
 
 export const rates: Rate[] = [
