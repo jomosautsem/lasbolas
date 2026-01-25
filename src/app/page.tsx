@@ -30,6 +30,8 @@ export default function Home() {
             vehicle_details: `${checkInData.modelo} ${checkInData.color}`,
             rate_id: checkInData.selectedRate?.id,
             total_debt: checkInData.selectedRate?.price || 0,
+            tv_controls: 0,
+            ac_controls: 0,
           };
         }
         return r;
