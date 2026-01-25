@@ -87,7 +87,7 @@ export function RoomCard({ room, rates, roomTypes, onOccupy }: RoomCardProps) {
                 <PersonStanding className="h-5 w-5" />
                 <span>{room.customer_name}</span>
               </div>
-              <Badge variant="outline" className="flex items-center gap-1 border-white/50 text-inherit">
+              <Badge variant="outline" className="flex items-center gap-1 border-current/50">
                 <Users className="h-4 w-4" />
                 {room.persons}
               </Badge>
@@ -117,11 +117,11 @@ export function RoomCard({ room, rates, roomTypes, onOccupy }: RoomCardProps) {
                     <div className="text-xs opacity-80">{room.vehicle_brand} {room.vehicle_details}</div>
                   </div>
                 </div>
-                <Badge variant="outline" className="border-white/50 text-inherit">{room.vehicle_plate || 'SIN PLACA'}</Badge>
+                <Badge variant="outline" className="border-current/50">{room.vehicle_plate || 'SIN PLACA'}</Badge>
               </div>
             )}
             
-            <Separator className="my-1 bg-white/20" />
+            <Separator className="my-1 bg-current/20" />
 
             <div className="flex justify-between items-center text-base font-bold">
               <span>HOSPEDAJE</span>
@@ -138,7 +138,7 @@ export function RoomCard({ room, rates, roomTypes, onOccupy }: RoomCardProps) {
           {room.status === 'Disponible' ? (
             <Button className="w-full" onClick={() => onOccupy(room)}>Ocupar</Button>
           ) : room.status === 'Ocupada' || effectiveStatus === 'Vencida' ? (
-             <Button variant="outline" className="w-full bg-white text-black hover:bg-gray-200 font-semibold"><Menu className="mr-2 h-4 w-4"/> Gestionar Habitación</Button>
+             <Button className="w-full bg-white text-black hover:bg-gray-200 font-semibold border border-slate-300"><Menu className="mr-2 h-4 w-4"/> Gestionar Habitación</Button>
           ) : (
             <div className="h-10"></div> // Placeholder for consistent height
           )}
