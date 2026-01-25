@@ -34,9 +34,10 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
-import { getCurrentShiftInfo, formatToMexicanDate } from '@/lib/datetime';
+import { getCurrentShiftInfo, formatToMexicanDate, type ShiftInfo } from '@/lib/datetime';
 import { Logo } from '../icons';
 import { useEffect, useState } from 'react';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const ShiftIcon = ({ shift }: { shift: 'Matutino' | 'Vespertino' | 'Nocturno' }) => {
   switch (shift) {
@@ -52,9 +53,10 @@ const ShiftIcon = ({ shift }: { shift: 'Matutino' | 'Vespertino' | 'Nocturno' })
 };
 
 export function AppHeader() {
-  const [shiftInfo, setShiftInfo] = useState(getCurrentShiftInfo());
+  const [shiftInfo, setShiftInfo] = useState<ShiftInfo | null>(null);
 
   useEffect(() => {
+    setShiftInfo(getCurrentShiftInfo());
     const timer = setInterval(() => {
       setShiftInfo(getCurrentShiftInfo());
     }, 60000); // Update every minute
@@ -112,10 +114,14 @@ export function AppHeader() {
       </Sheet>
       <div className="flex items-center gap-2">
          <h1 className="text-xl font-semibold md:text-2xl font-headline">Dashboard</h1>
-         <Badge variant="outline" className="flex items-center gap-2">
-            <ShiftIcon shift={shiftInfo.shift} />
-            Turno {shiftInfo.shift} - {formatToMexicanDate(shiftInfo.operationalDate)}
-         </Badge>
+         {shiftInfo ? (
+           <Badge variant="outline" className="flex items-center gap-2">
+              <ShiftIcon shift={shiftInfo.shift} />
+              Turno {shiftInfo.shift} - {formatToMexicanDate(shiftInfo.operationalDate)}
+           </Badge>
+         ) : (
+            <Skeleton className="h-7 w-56 rounded-md" />
+         )}
       </div>
 
       <div className="relative ml-auto flex-1 md:grow-0">

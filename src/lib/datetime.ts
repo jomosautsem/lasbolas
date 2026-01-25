@@ -8,7 +8,7 @@ export function getMexicoCityTime(date: Date = new Date()): Date {
   return toZonedTime(date, TIMEZONE);
 }
 
-interface ShiftInfo {
+export interface ShiftInfo {
   shift: Shift;
   operationalDate: Date;
 }
