@@ -1,3 +1,10 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "motel-logo",
+      "description": "Motel Las Bolas Logo",
+      "imageUrl": "https://images.unsplash.com/photo-1641104300716-4099bc61df1c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8bW9ub2dyYW0lMjBsb2dvfGVufDB8fHx8MTc2OTMxNzM3MXww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "monogram logo"
+    }
+  ]
 }
