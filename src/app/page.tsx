@@ -7,9 +7,11 @@ import RoomGrid from '@/components/motel/room-grid';
 import { rooms as initialRooms, products, transactions, expenses, rates, roomTypes } from '@/lib/data';
 import { getCurrentShiftInfo } from '@/lib/datetime';
 import type { Room } from '@/lib/types';
+import { useToast } from '@/hooks/use-toast';
 
 export default function Home() {
   const [rooms, setRooms] = useState<Room[]>(initialRooms);
+  const { toast } = useToast();
 
   const handleConfirmCheckIn = (roomToUpdate: Room, checkInData: any) => {
     setRooms(currentRooms => 
@@ -46,6 +48,39 @@ export default function Home() {
     );
   };
 
+  const handleReleaseRoom = (roomId: number) => {
+    setRooms(currentRooms =>
+      currentRooms.map(r => {
+        if (r.id === roomId) {
+          return {
+            ...r,
+            status: 'Limpieza',
+            check_in_time: null,
+            check_out_time: null,
+            customer_name: '',
+            persons: '0',
+            entry_type: undefined,
+            vehicle_plate: '',
+            vehicle_brand: '',
+            vehicle_details: '',
+            rate_id: null,
+            total_debt: 0,
+            tv_controls: 0,
+            ac_controls: 0,
+          };
+        }
+        return r;
+      })
+    );
+    const room = rooms.find(r => r.id === roomId);
+    if(room) {
+      toast({
+        title: 'Habitación Liberada',
+        description: `La habitación ${room.name} ha sido puesta en limpieza.`,
+      });
+    }
+  };
+
 
   return (
     <AppLayout>
@@ -61,6 +96,7 @@ export default function Home() {
           roomTypes={roomTypes}
           onConfirmCheckIn={handleConfirmCheckIn}
           onUpdateControls={handleUpdateControls}
+          onReleaseRoom={handleReleaseRoom}
         />
       </div>
     </AppLayout>
