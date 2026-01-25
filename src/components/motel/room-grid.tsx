@@ -9,9 +9,10 @@ interface RoomGridProps {
   rates: Rate[];
   roomTypes: RoomType[];
   onConfirmCheckIn: (room: Room, data: any) => void;
+  onUpdateControls: (roomId: number, tvControls: number, acControls: number) => void;
 }
 
-export default function RoomGrid({ rooms, rates, roomTypes, onConfirmCheckIn }: RoomGridProps) {
+export default function RoomGrid({ rooms, rates, roomTypes, onConfirmCheckIn, onUpdateControls }: RoomGridProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
 
@@ -30,6 +31,7 @@ export default function RoomGrid({ rooms, rates, roomTypes, onConfirmCheckIn }: 
             onOccupy={handleOccupyClick}
             rates={rates}
             roomTypes={roomTypes}
+            onUpdateControls={onUpdateControls}
           />
         ))}
       </div>

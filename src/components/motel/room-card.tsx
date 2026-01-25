@@ -7,12 +7,13 @@ import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import {
   Bed, Car, Sparkles, Wrench, Trash2, Menu, PersonStanding, Users, ArrowRight,
-  LogOut, SlidersHorizontal, ArrowRightLeft, TrendingUp, PlusCircle, MinusCircle, UserPlus, UserMinus, Edit, X, DollarSign
+  LogOut, SlidersHorizontal, ArrowRightLeft, TrendingUp, PlusCircle, MinusCircle, UserPlus, UserMinus, Edit, X, DollarSign, Tv, Wind
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { Room, Rate, RoomType } from '@/lib/types';
 import { formatToMexicanTime, formatToMexicanDate } from '@/lib/datetime';
 import { MotorcycleIcon } from '@/components/icons';
+import ControlsModal from './controls-modal';
 
 
 interface RoomCardProps {
@@ -20,6 +21,7 @@ interface RoomCardProps {
   rates: Rate[];
   roomTypes: RoomType[];
   onOccupy: (room: Room) => void;
+  onUpdateControls: (roomId: number, tvControls: number, acControls: number) => void;
 }
 
 const statusConfig: { [key: string]: { icon: React.ElementType, color: string, labelColor: string, textColor: string } } = {
@@ -31,18 +33,19 @@ const statusConfig: { [key: string]: { icon: React.ElementType, color: string, l
     Vencida: { icon: Bed, color: 'bg-red-500 border-red-600 text-white', labelColor: 'bg-red-600', textColor: 'text-white' },
 };
 
-const ActionButton = ({ icon: Icon, label, colorClass = '', className = '' }: { icon: React.ElementType, label: string, colorClass?: string, className?: string }) => (
-    <Button variant="outline" className={cn("h-auto flex-col p-2 space-y-1 bg-white/80 dark:bg-black/20 border-white/50 dark:border-black/50 hover:bg-white dark:hover:bg-black/40", className)}>
+const ActionButton = ({ icon: Icon, label, colorClass = '', className = '', ...props }: { icon: React.ElementType, label: string, colorClass?: string, className?: string, onClick?: () => void }) => (
+    <Button variant="outline" className={cn("h-auto flex-col p-2 space-y-1 bg-white/80 dark:bg-black/20 border-white/50 dark:border-black/50 hover:bg-white dark:hover:bg-black/40", className)} {...props}>
         <Icon className={cn("h-6 w-6", colorClass)} />
         <span className={cn("text-xs font-semibold", colorClass)}>{label}</span>
     </Button>
 );
 
 
-export function RoomCard({ room, rates, roomTypes, onOccupy }: RoomCardProps) {
+export function RoomCard({ room, rates, roomTypes, onOccupy, onUpdateControls }: RoomCardProps) {
   const [isClient, setIsClient] = useState(false);
   const [isExpiredClient, setIsExpiredClient] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isControlsModalOpen, setIsControlsModalOpen] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
@@ -64,24 +67,23 @@ export function RoomCard({ room, rates, roomTypes, onOccupy }: RoomCardProps) {
   const roomType = roomTypes.find(rt => rt.id === room.room_type_id);
   const rate = room.rate_id ? rates.find(r => r.id === room.rate_id) : null;
   
-  const baseConfig = statusConfig[effectiveStatus];
+  const baseConfig = statusConfig[effectiveStatus] || statusConfig['Disponible'];
   let cardColorClass = baseConfig.color;
-  let cardTextColorClass = baseConfig.textColor;
-
+  
   if (isOccupied && !isExpired && rate?.color_class) {
     cardColorClass = rate.color_class;
   }
   
-  const isDarkBg = cardColorClass.includes('purple') || cardColorClass.includes('blue') || cardColorClass.includes('red-500') || cardColorClass.includes('green-500') || cardColorClass.includes('orange-500');
+  const isDarkBg = cardColorClass.includes('purple') || cardColorClass.includes('blue') || cardColorClass.includes('red-500') || cardColorClass.includes('green-500') || cardColorClass.includes('orange-500') ;
   const textColor = isDarkBg ? 'text-white' : 'text-black';
-  cardTextColorClass = isOccupied && !isMenuOpen ? textColor : baseConfig.textColor;
-  if(effectiveStatus === 'Vencida' || isMenuOpen) cardTextColorClass = isDarkBg ? 'text-white' : 'text-black';
-  if(rate?.id === 3) cardTextColorClass = 'text-black';
+  const cardTextColorClass = (isOccupied && !isMenuOpen) ? textColor : baseConfig.textColor;
+  if(rate?.id === 9) cardColorClass = 'bg-yellow-500 border-yellow-600';
 
   const VehicleIcon = room.entry_type === 'Auto' ? Car : MotorcycleIcon;
 
   return (
-    <Card className={cn('rounded-2xl shadow-lg transition-all hover:shadow-xl flex flex-col', cardColorClass, cardTextColorClass)}>
+    <>
+    <Card className={cn('rounded-2xl shadow-lg transition-all hover:shadow-xl flex flex-col', cardColorClass, rate?.id === 9 ? 'text-black' : cardTextColorClass)}>
       <CardHeader className="flex flex-row items-start justify-between space-y-0 p-3">
         <div>
           <CardTitle className="text-xl font-bold font-headline">{room.name.replace('Habitación ', 'Hab ')}</CardTitle>
@@ -112,7 +114,7 @@ export function RoomCard({ room, rates, roomTypes, onOccupy }: RoomCardProps) {
 
                 <div className="grid grid-cols-3 gap-2 text-center text-card-foreground">
                     <ActionButton icon={LogOut} label="Liberar" colorClass="text-red-500" />
-                    <ActionButton icon={SlidersHorizontal} label="Controles" />
+                    <ActionButton icon={SlidersHorizontal} label="Controles" onClick={() => setIsControlsModalOpen(true)}/>
                     <ActionButton icon={ArrowRightLeft} label="Cambiar Hab." />
                     <ActionButton icon={TrendingUp} label="Ajustar Paq." />
                     <ActionButton icon={PlusCircle} label="Aumentar" colorClass="text-green-600" />
@@ -149,6 +151,8 @@ export function RoomCard({ room, rates, roomTypes, onOccupy }: RoomCardProps) {
                 )}
               </div>
             </div>
+            
+            <Separator className={cn("my-1", rate?.id === 9 ? 'bg-black/20' : 'bg-current/20')} />
 
             {room.entry_type && room.entry_type !== 'Pie' && (
               <div className="flex justify-between items-center">
@@ -163,7 +167,12 @@ export function RoomCard({ room, rates, roomTypes, onOccupy }: RoomCardProps) {
               </div>
             )}
             
-            <Separator className="my-1 bg-current/20" />
+            <div className="flex justify-between items-center text-xs opacity-80 pt-1">
+                <span className="flex items-center gap-1"><Tv className="h-4 w-4"/> {room.tv_controls}</span>
+                <span className="flex items-center gap-1"><Wind className="h-4 w-4"/> {room.ac_controls}</span>
+            </div>
+
+            <Separator className={cn("my-1", rate?.id === 9 ? 'bg-black/20' : 'bg-current/20')} />
 
             <div className="flex justify-between items-center text-base font-bold">
               <span>HOSPEDAJE</span>
@@ -178,7 +187,7 @@ export function RoomCard({ room, rates, roomTypes, onOccupy }: RoomCardProps) {
         )}
       </CardContent>
 
-      <CardFooter className="p-2 rounded-b-2xl bg-black/5">
+      <CardFooter className={cn("p-2 rounded-b-2xl bg-black/5", rate?.id === 9 ? 'border-t border-black/10' : '')}>
           {room.status === 'Disponible' ? (
             <Button className="w-full" onClick={() => onOccupy(room)}>Ocupar</Button>
           ) : isOccupied || effectiveStatus === 'Vencida' ? (
@@ -192,5 +201,14 @@ export function RoomCard({ room, rates, roomTypes, onOccupy }: RoomCardProps) {
           )}
         </CardFooter>
     </Card>
+    {isOccupied && (
+      <ControlsModal 
+        isOpen={isControlsModalOpen}
+        onOpenChange={setIsControlsModalOpen}
+        room={room}
+        onSave={onUpdateControls}
+      />
+    )}
+    </>
   );
 }

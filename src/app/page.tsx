@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from 'react';
@@ -36,6 +35,17 @@ export default function Home() {
     );
   };
 
+  const handleUpdateControls = (roomId: number, tvControls: number, acControls: number) => {
+    setRooms(currentRooms =>
+      currentRooms.map(r => {
+        if (r.id === roomId) {
+          return { ...r, tv_controls: tvControls, ac_controls: acControls };
+        }
+        return r;
+      })
+    );
+  };
+
 
   return (
     <AppLayout>
@@ -50,6 +60,7 @@ export default function Home() {
           rates={rates} 
           roomTypes={roomTypes}
           onConfirmCheckIn={handleConfirmCheckIn}
+          onUpdateControls={handleUpdateControls}
         />
       </div>
     </AppLayout>
