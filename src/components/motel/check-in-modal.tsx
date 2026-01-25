@@ -4,10 +4,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import type { Room, Rate, EntryType } from '@/lib/types';
+import type { Room, Rate } from '@/lib/types';
 import { vehicleReports } from '@/lib/data';
 import { useToast } from '@/hooks/use-toast';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Car, PersonStanding, AlertTriangle } from 'lucide-react';
 import { MotorcycleIcon } from '@/components/icons';
 
@@ -22,6 +22,13 @@ export default function CheckInModal({ isOpen, onOpenChange, room, rates }: Chec
   const { toast } = useToast();
   const [plate, setPlate] = useState('');
   const [isBlacklisted, setIsBlacklisted] = useState(false);
+  const [customerName, setCustomerName] = useState('');
+
+  useEffect(() => {
+    if (room) {
+      setCustomerName(room.name);
+    }
+  }, [room]);
 
   const handlePlateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newPlate = e.target.value.toUpperCase();
@@ -63,7 +70,13 @@ export default function CheckInModal({ isOpen, onOpenChange, room, rates }: Chec
             <Label htmlFor="name" className="text-right">
               Cliente
             </Label>
-            <Input id="name" placeholder="Nombre (opcional)" className="col-span-3" />
+            <Input 
+              id="name" 
+              placeholder="Nombre (opcional)" 
+              className="col-span-3"
+              value={customerName}
+              onChange={(e) => setCustomerName(e.target.value)}
+            />
           </div>
 
           <div className="grid grid-cols-4 items-start gap-4">
