@@ -160,6 +160,7 @@ export default function ReportsPage({ rooms, transactions, expenses }: ReportsPa
         isFromPreviousShift: room.status === 'Ocupada' && isFromPreviousShift,
         initialOccupancyAmount,
         productsAmount,
+        productTransactions,
         otherChargeTransactions,
         totalStayAmount,
       };
@@ -337,6 +338,16 @@ export default function ReportsPage({ rooms, transactions, expenses }: ReportsPa
                                     <span>Total en Productos:</span>
                                     <span className="font-medium">${logItem.productsAmount.toFixed(2)}</span>
                                 </div>
+                                {logItem.productTransactions.length > 0 && (
+                                    <div className="pl-4 mt-1 border-l-2 border-muted">
+                                    {logItem.productTransactions.map(t => (
+                                        <div key={t.id} className="flex justify-between text-sm text-muted-foreground">
+                                            <span className="truncate">{t.description}</span>
+                                            <span className="font-medium">${t.amount.toFixed(2)}</span>
+                                        </div>
+                                    ))}
+                                    </div>
+                                )}
                                 {logItem.otherChargeTransactions.length > 0 && (
                                     <div className="pl-4 mt-1 border-l-2 border-muted">
                                     {logItem.otherChargeTransactions.map(c => (
