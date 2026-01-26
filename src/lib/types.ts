@@ -1,6 +1,6 @@
 export type RoomStatus = 'Disponible' | 'Ocupada' | 'Limpieza' | 'Mantenimiento' | 'Profunda';
 export type EntryType = 'Auto' | 'Moto' | 'Pie';
-export type TransactionType = 'Hospedaje Inicial' | 'Tiempo Extra' | 'Consumo' | 'Gasto';
+export type TransactionType = 'Hospedaje Inicial' | 'Tiempo Extra' | 'Consumo' | 'Gasto' | 'Ajuste de Paquete';
 export type ProductCategory = 'Cocina' | 'Snack' | 'Bebida' | 'Otro';
 export type EmployeeRole = 'Admin' | 'Recepcionista' | 'Limpieza';
 export type VehicleReportSeverity = 'Baja' | 'Media' | 'Alta';

@@ -6,8 +6,9 @@ import DashboardKPIs from '@/components/motel/dashboard-kpis';
 import RoomGrid from '@/components/motel/room-grid';
 import { rooms as initialRooms, products, transactions as initialTransactions, expenses, rates, roomTypes } from '@/lib/data';
 import { getCurrentShiftInfo } from '@/lib/datetime';
-import type { Room, Transaction } from '@/lib/types';
+import type { Room, Transaction, Rate } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
+import { addHours } from 'date-fns';
 
 export default function Home() {
   const [rooms, setRooms] = useState<Room[]>(initialRooms);
@@ -180,6 +181,49 @@ export default function Home() {
     });
   };
 
+  const handleAdjustPackage = (roomId: number, newRate: Rate, difference: number) => {
+    const roomToUpdate = rooms.find(r => r.id === roomId);
+    if (!roomToUpdate || !roomToUpdate.check_in_time) return;
+
+    // Create a new transaction for the difference
+    const shiftInfo = getCurrentShiftInfo();
+    const newTransaction: Transaction = {
+      id: Date.now(),
+      room_id: roomId,
+      amount: difference,
+      type: 'Ajuste de Paquete',
+      timestamp: new Date().toISOString(),
+      shift: shiftInfo.shift,
+      description: `Ajuste a paquete ${newRate.name} - Hab ${roomToUpdate.name}`,
+      turno_calculado: shiftInfo.shift,
+      fecha_operativa: shiftInfo.operationalDate.toISOString().split('T')[0],
+    };
+    setTransactions(currentTransactions => [...currentTransactions, newTransaction]);
+
+    // Update the room
+    setRooms(currentRooms => 
+      currentRooms.map(r => {
+        if (r.id === roomId) {
+          const checkInTime = new Date(r.check_in_time!);
+          const newCheckOutTime = addHours(checkInTime, newRate.hours);
+
+          return {
+            ...r,
+            rate_id: newRate.id,
+            check_out_time: newCheckOutTime.toISOString(),
+            total_debt: (r.total_debt || 0) + difference,
+          };
+        }
+        return r;
+      })
+    );
+
+    toast({
+      title: 'Paquete Ajustado Exitosamente',
+      description: `Habitación ${roomToUpdate.name} ahora tiene el paquete ${newRate.name}. Se cobró una diferencia de $${difference.toFixed(2)}.`,
+    });
+  };
+
   return (
     <AppLayout>
       <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
@@ -197,6 +241,7 @@ export default function Home() {
           onReleaseRoom={handleReleaseRoom}
           onFinishCleaning={handleFinishCleaning}
           onRoomChange={handleChangeRoom}
+          onAdjustPackage={handleAdjustPackage}
         />
       </div>
     </AppLayout>
