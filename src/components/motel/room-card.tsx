@@ -76,31 +76,31 @@ export function RoomCard({ room, allRooms, rates, roomTypes, onOccupy, onUpdateC
     }
   };
 
+  const roomType = roomTypes.find(rt => rt.id === room.room_type_id);
+  const rate = room.rate_id ? rates.find(r => r.id === room.rate_id) : null;
   const isOccupied = room.status === 'Ocupada';
   const isExpired = isClient && isExpiredClient;
   const effectiveStatus = isExpired ? 'Vencida' : room.status;
-
-  const roomType = roomTypes.find(rt => rt.id === room.room_type_id);
-  const rate = room.rate_id ? rates.find(r => r.id === room.rate_id) : null;
   
   const baseConfig = statusConfig[effectiveStatus] || statusConfig['Disponible'];
   let cardColorClass = baseConfig.color;
+  let textColor = baseConfig.textColor;
   
-  let textColor = 'text-black';
   if (isOccupied && !isExpired && rate?.color_class) {
     cardColorClass = rate.color_class;
-  }
-  const isDarkBg = cardColorClass.includes('purple-500') || cardColorClass.includes('blue-500') || cardColorClass.includes('red-500') || cardColorClass.includes('green-500') || cardColorClass.includes('orange-500');
-  if(isDarkBg) {
-      textColor = 'text-white';
-  }
-  
-  if (rate?.id === 3 || rate?.id === 9) { // 5 horas
-    cardColorClass = 'bg-yellow-500 border-yellow-600';
-    textColor = 'text-black';
+    if (rate.id === 3 || rate.id === 9) { // 5 hours (yellow) needs black text
+        textColor = 'text-black';
+    } else {
+        textColor = 'text-white';
+    }
   }
 
-  const separatorClass = textColor === 'text-black' ? 'bg-black/20' : 'bg-current/20';
+  if (effectiveStatus === 'Vencida') {
+    textColor = 'text-white';
+  }
+
+
+  const separatorClass = textColor === 'text-black' ? 'bg-black/20' : 'bg-white/20';
   const contentBgClass = textColor === 'text-black' ? 'bg-white/70 text-black' : 'bg-black/20 text-white';
 
   const VehicleIcon = room.entry_type === 'Auto' ? Car : MotorcycleIcon;
