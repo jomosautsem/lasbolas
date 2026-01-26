@@ -12,9 +12,10 @@ interface RoomGridProps {
   onUpdateControls: (roomId: number, tvControls: number, acControls: number) => void;
   onReleaseRoom: (roomId: number) => void;
   onFinishCleaning: (roomId: number) => void;
+  onRoomChange: (fromRoomId: number, toRoomId: number) => void;
 }
 
-export default function RoomGrid({ rooms, rates, roomTypes, onConfirmCheckIn, onUpdateControls, onReleaseRoom, onFinishCleaning }: RoomGridProps) {
+export default function RoomGrid({ rooms, rates, roomTypes, onConfirmCheckIn, onUpdateControls, onReleaseRoom, onFinishCleaning, onRoomChange }: RoomGridProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
 
@@ -29,13 +30,15 @@ export default function RoomGrid({ rooms, rates, roomTypes, onConfirmCheckIn, on
         {rooms.map((room) => (
           <RoomCard 
             key={room.id} 
-            room={room} 
+            room={room}
+            allRooms={rooms}
             onOccupy={handleOccupyClick}
             rates={rates}
             roomTypes={roomTypes}
             onUpdateControls={onUpdateControls}
             onReleaseRoom={onReleaseRoom}
             onFinishCleaning={onFinishCleaning}
+            onRoomChange={onRoomChange}
           />
         ))}
       </div>

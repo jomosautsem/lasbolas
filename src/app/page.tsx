@@ -118,6 +118,68 @@ export default function Home() {
     }
   };
 
+  const handleChangeRoom = (fromRoomId: number, toRoomId: number) => {
+    const fromRoom = rooms.find(r => r.id === fromRoomId);
+    const toRoom = rooms.find(r => r.id === toRoomId);
+
+    if (!fromRoom || !toRoom) {
+      console.error("Could not find rooms for change");
+      return;
+    }
+
+    const updatedRooms = rooms.map(r => {
+      // This is the room we are moving FROM. It becomes 'Limpieza'
+      if (r.id === fromRoomId) {
+        return {
+          ...r,
+          status: 'Limpieza' as const,
+          check_in_time: null,
+          check_out_time: null,
+          customer_name: '',
+          persons: '0',
+          entry_type: undefined,
+          vehicle_plate: '',
+          vehicle_brand: '',
+          vehicle_details: '',
+          rate_id: null,
+          total_debt: 0,
+          tv_controls: 0,
+          ac_controls: 0,
+        };
+      }
+
+      // This is the room we are moving TO. It gets all data from 'fromRoom'.
+      if (r.id === toRoomId) {
+        return {
+          ...r, // Keep toRoom's own properties like id, name, room_type_id
+          status: 'Ocupada' as const,
+          check_in_time: fromRoom.check_in_time,
+          check_out_time: fromRoom.check_out_time,
+          customer_name: fromRoom.customer_name,
+          persons: fromRoom.persons,
+          entry_type: fromRoom.entry_type,
+          vehicle_plate: fromRoom.vehicle_plate,
+          vehicle_brand: fromRoom.vehicle_brand,
+          vehicle_details: fromRoom.vehicle_details,
+          rate_id: fromRoom.rate_id,
+          total_debt: fromRoom.total_debt,
+          tv_controls: fromRoom.tv_controls,
+          ac_controls: fromRoom.ac_controls,
+        };
+      }
+
+      // Any other room remains unchanged
+      return r;
+    });
+
+    setRooms(updatedRooms);
+
+    toast({
+      title: 'Cambio de Habitación Exitoso',
+      description: `Cliente movido de ${fromRoom.name} a ${toRoom.name}.`,
+    });
+  };
+
   return (
     <AppLayout>
       <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
@@ -134,6 +196,7 @@ export default function Home() {
           onUpdateControls={handleUpdateControls}
           onReleaseRoom={handleReleaseRoom}
           onFinishCleaning={handleFinishCleaning}
+          onRoomChange={handleChangeRoom}
         />
       </div>
     </AppLayout>
