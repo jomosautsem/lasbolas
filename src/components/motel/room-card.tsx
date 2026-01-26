@@ -21,6 +21,8 @@ import ExtendStayModal from './extend-stay-modal';
 import AddPersonModal from './add-person-modal';
 import RemovePersonModal from './remove-person-modal';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { formatDistanceToNow } from 'date-fns';
+import { es } from 'date-fns/locale';
 
 interface RoomCardProps {
   room: Room;
@@ -45,7 +47,7 @@ const statusConfig: { [key: string]: { icon: React.ElementType, color: string, l
     Limpieza: { icon: Sparkles, color: 'bg-cyan-100 border-cyan-500 text-cyan-700', labelColor: 'bg-cyan-500', textColor: 'text-cyan-700' },
     Mantenimiento: { icon: Wrench, color: 'bg-gray-200 border-gray-500 text-gray-600', labelColor: 'bg-gray-500', textColor: 'text-gray-600' },
     Profunda: { icon: Trash2, color: 'bg-purple-100 border-purple-500 text-purple-700', labelColor: 'bg-purple-500', textColor: 'text-purple-700' },
-    Vencida: { icon: Bed, color: 'bg-red-500 border-red-600 text-white', labelColor: 'bg-red-600', textColor: 'text-white' },
+    Vencida: { icon: Bed, color: 'bg-red-500 border-red-600 text-white animate-pulse', labelColor: 'bg-red-600', textColor: 'text-white' },
 };
 
 const ActionButton = ({ icon: Icon, label, colorClass = '', className = '', ...props }: { icon: React.ElementType, label: string, colorClass?: string, className?: string, onClick?: () => void, disabled?: boolean }) => (
@@ -58,7 +60,7 @@ const ActionButton = ({ icon: Icon, label, colorClass = '', className = '', ...p
 
 export function RoomCard({ room, allRooms, rates, roomTypes, allTransactions, onOccupy, onUpdateControls, onReleaseRoom, onFinishCleaning, onRoomChange, onAdjustPackage, onExtendStay, onAddPerson, onRemovePerson }: RoomCardProps) {
   const [isClient, setIsClient] = useState(false);
-  const [isExpiredClient, setIsExpiredClient] = useState(false);
+  const [now, setNow] = useState(new Date());
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isControlsModalOpen, setIsControlsModalOpen] = useState(false);
   const [isReleaseWarningOpen, setIsReleaseWarningOpen] = useState(false);
@@ -85,16 +87,18 @@ export function RoomCard({ room, allRooms, rates, roomTypes, allTransactions, on
 
   useEffect(() => {
     setIsClient(true);
-    if (isOccupied && room.check_out_time) {
-      const checkExpired = () => {
-        const expired = new Date(room.check_out_time!) < new Date();
-        setIsExpiredClient(expired);
-      };
-      checkExpired();
-      const timerId = setInterval(checkExpired, 60000); // Check every minute
-      return () => clearInterval(timerId);
-    }
-  }, [isOccupied, room.check_out_time]);
+    const timerId = setInterval(() => {
+      setNow(new Date());
+    }, 30000); // update every 30 seconds
+    return () => clearInterval(timerId);
+  }, []);
+
+  const isExpired = isClient && isOccupied && room.check_out_time ? new Date(room.check_out_time) < now : false;
+
+  const timeDifferenceText = useMemo(() => {
+    if (!isExpired || !room.check_out_time) return null;
+    return `Venció ${formatDistanceToNow(new Date(room.check_out_time), { locale: es, addSuffix: true })}`;
+  }, [now, room.check_out_time, isExpired]);
 
   const handleReleaseClick = () => {
     if (room.tv_controls > 0 || room.ac_controls > 0) {
@@ -117,7 +121,6 @@ export function RoomCard({ room, allRooms, rates, roomTypes, allTransactions, on
     return rate.hours >= 8;
   }, [rate, extensionRate]);
 
-  const isExpired = isClient && isExpiredClient;
   const effectiveStatus = isExpired ? 'Vencida' : room.status;
   
   const baseConfig = statusConfig[effectiveStatus] || statusConfig['Disponible'];
@@ -209,11 +212,17 @@ export function RoomCard({ room, allRooms, rates, roomTypes, allTransactions, on
                 <span>${rate?.price.toFixed(2) || '0.00'}</span>
             </div>
 
-            <div className="text-center rounded-md bg-black/10 p-2">
-              <div className="text-xs font-semibold opacity-80">HORA DE SALIDA</div>
-              <div className="flex items-center justify-center gap-2 font-mono text-xl">
-                {isClient && room.check_out_time ? formatToMexicanTime(room.check_out_time) : '--:--'}
-              </div>
+            <div className={cn("text-center rounded-md p-2", isExpired ? "bg-black/20" : "bg-black/10")}>
+                <div className={cn("text-xs font-semibold opacity-80", isExpired && "text-yellow-300")}>{isExpired ? 'TIEMPO VENCIDO' : 'HORA DE SALIDA'}</div>
+                <div className={cn(
+                    "flex items-center justify-center gap-2",
+                    isExpired ? "font-sans text-sm text-yellow-300" : "font-mono text-xl"
+                )}>
+                    {isExpired 
+                        ? timeDifferenceText 
+                        : (isClient && room.check_out_time ? formatToMexicanTime(room.check_out_time) : '--:--')
+                    }
+                </div>
             </div>
             
             <Separator className={cn("my-1", separatorClass)} />
