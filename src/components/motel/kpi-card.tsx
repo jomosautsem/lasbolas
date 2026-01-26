@@ -10,12 +10,14 @@ interface KPICardProps {
   color?: string;
   borderColor?: string;
   isGradient?: boolean;
+  gradientClassName?: string;
 }
 
-export default function KPICard({ title, amount, description, icon: Icon, color, borderColor, isGradient = false }: KPICardProps) {
+export default function KPICard({ title, amount, description, icon: Icon, color, borderColor, isGradient = false, gradientClassName }: KPICardProps) {
   if (isGradient) {
+    const gradientClass = gradientClassName || 'bg-gradient-to-br from-blue-600 to-indigo-800';
     return (
-      <Card className="rounded-2xl shadow-lg bg-gradient-to-br from-blue-600 to-indigo-800 text-white overflow-hidden relative h-full">
+      <Card className={cn("rounded-2xl shadow-lg text-white overflow-hidden relative h-full", gradientClass)}>
         <div className="p-6 flex flex-col justify-between h-full z-10">
           <div>
             <CardTitle className="text-sm font-medium">{title}</CardTitle>

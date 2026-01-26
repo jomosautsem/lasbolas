@@ -99,8 +99,8 @@ export default function DashboardKPIs({ rooms, transactions, expenses }: Dashboa
         amount={`$${kpiData.totalIncome.toFixed(2)}`}
         description={incomeDescription}
         icon={DollarSign}
-        color="text-green-500"
-        borderColor="border-green-500"
+        isGradient={true}
+        gradientClassName="bg-gradient-to-br from-green-600 to-emerald-800"
       />
       <KPICard
         title="Habitaciones Ocupadas"
