@@ -7,8 +7,8 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { analyzeDataWithAIConsultant } from '@/ai/flows/analyze-data-with-ai-consultant';
-import { rooms, transactions, products, expenses } from '@/lib/data'; // Using mock data
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/lib/supabaseClient';
 
 interface Message {
   id: string;
@@ -34,6 +34,18 @@ export function AIConsultant() {
 
     try {
       // Prepare the data context for the AI
+      const [
+        { data: rooms },
+        { data: transactions },
+        { data: products },
+        { data: expenses }
+      ] = await Promise.all([
+        supabase.from('rooms').select('*'),
+        supabase.from('transactions').select('*'),
+        supabase.from('products').select('*'),
+        supabase.from('expenses').select('*')
+      ]);
+
       const motelDataContext = {
         rooms,
         transactions,
