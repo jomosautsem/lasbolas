@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { AppLayout } from '@/components/motel/app-layout';
 import DashboardKPIs from '@/components/motel/dashboard-kpis';
 import RoomGrid from '@/components/motel/room-grid';
-import { rooms as initialRooms, products, transactions as initialTransactions, expenses as initialExpenses, rates, roomTypes, vehicleHistory as initialVehicleHistory } from '@/lib/data';
+import { rooms as initialRooms, products as initialProducts, transactions as initialTransactions, expenses as initialExpenses, rates, roomTypes, vehicleHistory as initialVehicleHistory } from '@/lib/data';
 import { getCurrentShiftInfo } from '@/lib/datetime';
 import type { Room, Transaction, Rate, Expense, VehicleHistory, Product } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
@@ -12,12 +12,14 @@ import { addHours } from 'date-fns';
 import AddExpenseModal from '@/components/motel/add-expense-modal';
 import VehicleHistoryPage from '@/components/motel/vehicle-history-page';
 import ConsumptionPage from '@/components/motel/consumption-page';
+import ProductsPage from '@/components/motel/products-page';
 
 export default function Home() {
   const [rooms, setRooms] = useState<Room[]>(initialRooms);
   const [transactions, setTransactions] = useState<Transaction[]>(initialTransactions);
   const [expenses, setExpenses] = useState<Expense[]>(initialExpenses);
   const [vehicleHistory, setVehicleHistory] = useState<VehicleHistory[]>(initialVehicleHistory);
+  const [products, setProducts] = useState<Product[]>(initialProducts);
   const [isAddExpenseModalOpen, setIsAddExpenseModalOpen] = useState(false);
   const [activeView, setActiveView] = useState('dashboard');
   const { toast } = useToast();
@@ -425,6 +427,30 @@ export default function Home() {
     );
   };
   
+  const handleAddProduct = (newProductData: Omit<Product, 'id'>) => {
+    setProducts(currentProducts => {
+      const newProduct: Product = {
+        id: currentProducts.length > 0 ? Math.max(...currentProducts.map(p => p.id)) + 1 : 1,
+        ...newProductData,
+      };
+      return [...currentProducts, newProduct];
+    });
+    toast({ title: 'Producto Creado', description: `El producto "${newProductData.name}" ha sido creado.` });
+  };
+
+  const handleUpdateProduct = (updatedProduct: Product) => {
+    setProducts(currentProducts =>
+      currentProducts.map(p => (p.id === updatedProduct.id ? updatedProduct : p))
+    );
+    toast({ title: 'Producto Actualizado', description: `El producto "${updatedProduct.name}" ha sido actualizado.` });
+  };
+
+  const handleDeleteProduct = (productId: number) => {
+    const productName = products.find(p => p.id === productId)?.name || '';
+    setProducts(currentProducts => currentProducts.filter(p => p.id !== productId));
+    toast({ variant: 'destructive', title: 'Producto Eliminado', description: `El producto "${productName}" ha sido eliminado.` });
+  };
+
   const occupiedRooms = rooms.filter(r => r.status === 'Ocupada');
 
 
@@ -462,6 +488,14 @@ export default function Home() {
             products={products}
             occupiedRooms={occupiedRooms}
             onConfirm={handleAddConsumption}
+          />
+        )}
+        {activeView === 'products' && (
+          <ProductsPage
+            products={products}
+            onAddProduct={handleAddProduct}
+            onUpdateProduct={handleUpdateProduct}
+            onDeleteProduct={handleDeleteProduct}
           />
         )}
       </AppLayout>

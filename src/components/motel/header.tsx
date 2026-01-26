@@ -17,6 +17,7 @@ import {
   Sunset,
   Receipt,
   BotMessageSquare,
+  ShoppingCart,
 } from 'lucide-react';
 import {
   Sheet,
@@ -102,8 +103,12 @@ export function AppHeader({ onAddExpenseClick, setActiveView }: { onAddExpenseCl
               Habitaciones
             </button>
             <button onClick={() => handleMenuClick('consumption')} className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground">
+              <ShoppingCart className="h-5 w-5" />
+              Consumo
+            </button>
+            <button onClick={() => handleMenuClick('products')} className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground">
               <Package className="h-5 w-5" />
-              Alimentos y Bebidas
+              Productos
             </button>
              <a href="#" onClick={handleGastosClick} className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground">
               <Receipt className="h-5 w-5" />

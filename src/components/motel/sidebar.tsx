@@ -9,6 +9,7 @@ import {
   Settings,
   Receipt,
   BotMessageSquare,
+  ShoppingCart,
 } from 'lucide-react';
 import {
   Tooltip,
@@ -67,11 +68,26 @@ export function AppSidebar({ onAddExpenseClick, activeView, setActiveView }: { o
                   activeView === 'consumption' && 'bg-accent text-accent-foreground'
                 )}
               >
-                <Package className="h-5 w-5" />
-                <span className="sr-only">Alimentos y Bebidas</span>
+                <ShoppingCart className="h-5 w-5" />
+                <span className="sr-only">Consumo</span>
               </button>
             </TooltipTrigger>
-            <TooltipContent side="right">Alimentos y Bebidas</TooltipContent>
+            <TooltipContent side="right">Consumo</TooltipContent>
+          </Tooltip>
+           <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={() => setActiveView('products')}
+                className={cn(
+                  "flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8",
+                  activeView === 'products' && 'bg-accent text-accent-foreground'
+                )}
+              >
+                <Package className="h-5 w-5" />
+                <span className="sr-only">Productos</span>
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="right">Productos</TooltipContent>
           </Tooltip>
            <Tooltip>
             <TooltipTrigger asChild>
