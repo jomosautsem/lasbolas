@@ -177,7 +177,9 @@ export function RoomCard({ room, allRooms, rates, roomTypes, allTransactions, on
                       <div className="space-y-1 text-xs">
                           {stayTransactions.map(t => (
                             <div key={t.id} className="flex justify-between items-center gap-2">
-                                <span className="flex-1 truncate">{t.description}</span>
+                                <div className="flex-1 min-w-0">
+                                    <p className="truncate">{t.description}</p>
+                                </div>
                                 <span className="font-medium whitespace-nowrap">${t.amount.toFixed(2)}</span>
                             </div>
                           ))}
