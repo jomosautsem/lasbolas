@@ -17,6 +17,7 @@ import ControlsModal from './controls-modal';
 import ReleaseWarningModal from './release-warning-modal';
 import ChangeRoomModal from './change-room-modal';
 import AdjustPackageModal from './adjust-package-modal';
+import ExtendStayModal from './extend-stay-modal';
 
 interface RoomCardProps {
   room: Room;
@@ -57,6 +58,7 @@ export function RoomCard({ room, allRooms, rates, roomTypes, onOccupy, onUpdateC
   const [isReleaseWarningOpen, setIsReleaseWarningOpen] = useState(false);
   const [isChangeRoomModalOpen, setIsChangeRoomModalOpen] = useState(false);
   const [isAdjustPackageModalOpen, setIsAdjustPackageModalOpen] = useState(false);
+  const [isExtendStayModalOpen, setIsExtendStayModalOpen] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
@@ -83,6 +85,15 @@ export function RoomCard({ room, allRooms, rates, roomTypes, onOccupy, onUpdateC
   const roomType = roomTypes.find(rt => rt.id === room.room_type_id);
   const rate = useMemo(() => room.rate_id ? rates.find(r => r.id === room.rate_id) : null, [room.rate_id, rates]);
   
+  const extensionRate = useMemo(() => {
+    return rates.find(r => r.name === 'Extensión 3 Horas' && r.room_type_id === room.room_type_id);
+  }, [rates, room.room_type_id]);
+
+  const canExtendStay = useMemo(() => {
+    if (!rate || !extensionRate) return false;
+    return rate.hours >= 8;
+  }, [rate, extensionRate]);
+
   const isOccupied = room.status === 'Ocupada';
   const isExpired = isClient && isExpiredClient;
   const effectiveStatus = isExpired ? 'Vencida' : room.status;
@@ -90,13 +101,12 @@ export function RoomCard({ room, allRooms, rates, roomTypes, onOccupy, onUpdateC
   const baseConfig = statusConfig[effectiveStatus] || statusConfig['Disponible'];
 
   const { cardColorClass, textColor } = useMemo(() => {
-    // Centralize rate color logic here to ensure Tailwind includes the classes
     const rateColorMap: { [key: number]: string } = {
-      1: 'bg-green-500 border-green-600', // 2h
-      2: 'bg-orange-500 border-orange-600', // 4h
-      3: 'bg-yellow-500 border-yellow-600', // 5h
-      4: 'bg-purple-500 border-purple-600', // 8h
-      5: 'bg-blue-500 border-blue-600', // 12h
+      1: 'bg-green-500 border-green-600',
+      2: 'bg-orange-500 border-orange-600',
+      3: 'bg-yellow-500 border-yellow-600',
+      4: 'bg-purple-500 border-purple-600',
+      5: 'bg-blue-500 border-blue-600',
       7: 'bg-green-500 border-green-600',
       8: 'bg-orange-500 border-orange-600',
       9: 'bg-yellow-500 border-yellow-600',
@@ -104,8 +114,7 @@ export function RoomCard({ room, allRooms, rates, roomTypes, onOccupy, onUpdateC
       11: 'bg-blue-500 border-blue-600',
     };
     
-    // Define which backgrounds should have dark text for better contrast
-    const darkTextBgs = ['bg-yellow-500'];
+    const darkTextBgs = ['bg-yellow-500', 'bg-green-500', 'bg-orange-500'];
 
     if (isOccupied && !isExpired && rate) {
         const colorClass = rateColorMap[rate.id];
@@ -122,11 +131,6 @@ export function RoomCard({ room, allRooms, rates, roomTypes, onOccupy, onUpdateC
   const contentBgClass = textColor === 'text-black' ? 'bg-white/70 text-black' : 'bg-black/20 text-white';
 
   const VehicleIcon = room.entry_type === 'Auto' ? Car : MotorcycleIcon;
-
-  const canExtendStay = useMemo(() => {
-    if (!rate) return false;
-    return rate.hours >= 8;
-  }, [rate]);
 
   return (
     <>
@@ -164,7 +168,7 @@ export function RoomCard({ room, allRooms, rates, roomTypes, onOccupy, onUpdateC
                     <ActionButton icon={SlidersHorizontal} label="Controles" onClick={() => setIsControlsModalOpen(true)}/>
                     <ActionButton icon={ArrowRightLeft} label="Cambiar Hab." onClick={() => setIsChangeRoomModalOpen(true)}/>
                     <ActionButton icon={TrendingUp} label="Ajustar Paq." onClick={() => setIsAdjustPackageModalOpen(true)} />
-                    <ActionButton icon={PlusCircle} label="Aumentar" colorClass="text-green-600" onClick={() => onExtendStay(room.id)} disabled={!canExtendStay} />
+                    <ActionButton icon={PlusCircle} label="Aumentar" colorClass="text-green-600" onClick={() => setIsExtendStayModalOpen(true)} disabled={!canExtendStay} />
                     <ActionButton icon={MinusCircle} label="Reducir" colorClass="text-red-500" />
                     <ActionButton icon={UserPlus} label="+ Persona" />
                     <ActionButton icon={UserMinus} label="- Persona" />
@@ -280,6 +284,15 @@ export function RoomCard({ room, allRooms, rates, roomTypes, onOccupy, onUpdateC
         currentRoom={room}
         allRates={rates}
         onConfirmAdjust={onAdjustPackage}
+      />
+    )}
+    {isOccupied && canExtendStay && extensionRate && (
+      <ExtendStayModal 
+        isOpen={isExtendStayModalOpen}
+        onOpenChange={setIsExtendStayModalOpen}
+        currentRoom={room}
+        extensionRate={extensionRate}
+        onConfirm={onExtendStay}
       />
     )}
     </>
