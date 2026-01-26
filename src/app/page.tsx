@@ -224,6 +224,60 @@ export default function Home() {
     });
   };
 
+  const handleExtendStay = (roomId: number) => {
+    const roomToUpdate = rooms.find(r => r.id === roomId);
+    if (!roomToUpdate || !roomToUpdate.check_out_time) return;
+
+    const extensionRate = rates.find(r => r.name === 'Extensión 3 Horas' && r.room_type_id === roomToUpdate.room_type_id);
+
+    if (!extensionRate) {
+      toast({
+        variant: 'destructive',
+        title: 'Configuración Faltante',
+        description: "La tarifa de 'Extensión 3 Horas' no está configurada para este tipo de habitación.",
+      });
+      return;
+    }
+
+    // Create a new transaction for the extension
+    const shiftInfo = getCurrentShiftInfo();
+    const newTransaction: Transaction = {
+      id: Date.now(),
+      room_id: roomId,
+      amount: extensionRate.price,
+      type: 'Tiempo Extra',
+      timestamp: new Date().toISOString(),
+      shift: shiftInfo.shift,
+      description: `Extensión 3 Horas - Hab ${roomToUpdate.name}`,
+      turno_calculado: shiftInfo.shift,
+      fecha_operativa: shiftInfo.operationalDate.toISOString().split('T')[0],
+    };
+    setTransactions(currentTransactions => [...currentTransactions, newTransaction]);
+
+    // Update the room
+    setRooms(currentRooms => 
+      currentRooms.map(r => {
+        if (r.id === roomId) {
+          const currentCheckOutTime = new Date(r.check_out_time!);
+          const newCheckOutTime = addHours(currentCheckOutTime, extensionRate.hours);
+
+          return {
+            ...r,
+            check_out_time: newCheckOutTime.toISOString(),
+            total_debt: (r.total_debt || 0) + extensionRate.price,
+          };
+        }
+        return r;
+      })
+    );
+
+    toast({
+      title: 'Estancia Extendida',
+      description: `Se agregaron ${extensionRate.hours} horas a la habitación ${roomToUpdate.name} por $${extensionRate.price.toFixed(2)}.`,
+    });
+  };
+
+
   return (
     <AppLayout>
       <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
@@ -242,6 +296,7 @@ export default function Home() {
           onFinishCleaning={handleFinishCleaning}
           onRoomChange={handleChangeRoom}
           onAdjustPackage={handleAdjustPackage}
+          onExtendStay={handleExtendStay}
         />
       </div>
     </AppLayout>

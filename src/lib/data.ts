@@ -37,6 +37,7 @@ export const rates: Rate[] = [
   { id: 4, name: '8 Horas', hours: 8, price: 330, room_type_id: 1, is_extra_hour: false },
   { id: 5, name: '12 Horas (Amanecida)', hours: 12, price: 480, room_type_id: 1, is_extra_hour: false },
   { id: 6, name: 'Hora Extra', hours: 1, price: 100, room_type_id: 1, is_extra_hour: true },
+  { id: 13, name: 'Extensión 3 Horas', hours: 3, price: 180, room_type_id: 1, is_extra_hour: true },
   
   // Jacuzzi
   { id: 7, name: '2 Horas Jacuzzi', hours: 2, price: 400, room_type_id: 2, is_extra_hour: false },
