@@ -12,7 +12,6 @@ import { addHours } from 'date-fns';
 import AddExpenseModal from '@/components/motel/add-expense-modal';
 import VehicleHistoryPage from '@/components/motel/vehicle-history-page';
 import ConsumptionPage from '@/components/motel/consumption-page';
-import ProductsPage from '@/components/motel/products-page';
 
 export default function Home() {
   const [rooms, setRooms] = useState<Room[]>(initialRooms);
@@ -488,11 +487,6 @@ export default function Home() {
             products={products}
             occupiedRooms={occupiedRooms}
             onConfirm={handleAddConsumption}
-          />
-        )}
-        {activeView === 'products' && (
-          <ProductsPage
-            products={products}
             onAddProduct={handleAddProduct}
             onUpdateProduct={handleUpdateProduct}
             onDeleteProduct={handleDeleteProduct}

@@ -3,12 +3,10 @@ import Link from 'next/link';
 import {
   Home,
   BedDouble,
-  Package,
   Car,
   TrendingUp,
   Settings,
   Receipt,
-  BotMessageSquare,
   ShoppingCart,
 } from 'lucide-react';
 import {
@@ -69,25 +67,10 @@ export function AppSidebar({ onAddExpenseClick, activeView, setActiveView }: { o
                 )}
               >
                 <ShoppingCart className="h-5 w-5" />
-                <span className="sr-only">Consumo</span>
+                <span className="sr-only">Consumo y Productos</span>
               </button>
             </TooltipTrigger>
-            <TooltipContent side="right">Consumo</TooltipContent>
-          </Tooltip>
-           <Tooltip>
-            <TooltipTrigger asChild>
-              <button
-                onClick={() => setActiveView('products')}
-                className={cn(
-                  "flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8",
-                  activeView === 'products' && 'bg-accent text-accent-foreground'
-                )}
-              >
-                <Package className="h-5 w-5" />
-                <span className="sr-only">Productos</span>
-              </button>
-            </TooltipTrigger>
-            <TooltipContent side="right">Productos</TooltipContent>
+            <TooltipContent side="right">Consumo y Productos</TooltipContent>
           </Tooltip>
            <Tooltip>
             <TooltipTrigger asChild>
