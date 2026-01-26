@@ -53,7 +53,7 @@ const ShiftIcon = ({ shift }: { shift: 'Matutino' | 'Vespertino' | 'Nocturno' })
   }
 };
 
-export function AppHeader({ onAddExpenseClick, setActiveView }: { onAddExpenseClick: () => void; setActiveView: (view: string) => void; }) {
+export function AppHeader({ onAddExpenseClick, activeView, setActiveView }: { onAddExpenseClick: () => void; activeView: string; setActiveView: (view: string) => void; }) {
   const [shiftInfo, setShiftInfo] = useState<ShiftInfo | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -75,6 +75,17 @@ export function AppHeader({ onAddExpenseClick, setActiveView }: { onAddExpenseCl
     setMobileMenuOpen(false);
     onAddExpenseClick();
   };
+
+  const viewTitles: { [key: string]: string } = {
+    dashboard: 'Dashboard',
+    'occupancy-monitor': 'Monitor de Ocupación',
+    consumption: 'Consumo y Productos',
+    vehicles: 'Historial de Vehículos',
+    employees: 'Gestión de Empleados',
+    reports: 'Centro de Reportes',
+    settings: 'Configuración',
+  };
+  const title = viewTitles[activeView] || 'Dashboard';
 
   return (
     <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6">
@@ -130,7 +141,7 @@ export function AppHeader({ onAddExpenseClick, setActiveView }: { onAddExpenseCl
         </SheetContent>
       </Sheet>
       <div className="flex items-center gap-2">
-         <h1 className="text-xl font-semibold md:text-2xl font-headline">Dashboard</h1>
+         <h1 className="text-xl font-semibold md:text-2xl font-headline">{title}</h1>
          {shiftInfo ? (
            <Badge variant="outline" className="flex items-center gap-2">
               <ShiftIcon shift={shiftInfo.shift} />
