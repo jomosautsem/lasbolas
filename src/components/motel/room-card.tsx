@@ -38,6 +38,19 @@ const statusConfig: { [key: string]: { icon: React.ElementType, color: string, l
     Vencida: { icon: Bed, color: 'bg-red-500 border-red-600 text-white', labelColor: 'bg-red-600', textColor: 'text-white' },
 };
 
+const rateColorMap: { [key: number]: { bg: string, text: string } } = {
+  1: { bg: 'bg-green-500 border-green-600', text: 'text-white' }, // 2h Sencilla
+  2: { bg: 'bg-orange-500 border-orange-600', text: 'text-white' }, // 4h Sencilla
+  3: { bg: 'bg-yellow-500 border-yellow-600', text: 'text-black' }, // 5h Sencilla
+  4: { bg: 'bg-purple-500 border-purple-600', text: 'text-white' }, // 8h Sencilla
+  5: { bg: 'bg-blue-500 border-blue-600', text: 'text-white' }, // 12h Sencilla
+  7: { bg: 'bg-green-500 border-green-600', text: 'text-white' }, // 2h Jacuzzi
+  8: { bg: 'bg-orange-500 border-orange-600', text: 'text-white' }, // 4h Jacuzzi
+  9: { bg: 'bg-yellow-500 border-yellow-600', text: 'text-black' }, // 5h Jacuzzi
+  10: { bg: 'bg-purple-500 border-purple-600', text: 'text-white' }, // 8h Jacuzzi
+  11: { bg: 'bg-blue-500 border-blue-600', text: 'text-white' }, // 12h Jacuzzi
+};
+
 const ActionButton = ({ icon: Icon, label, colorClass = '', className = '', ...props }: { icon: React.ElementType, label: string, colorClass?: string, className?: string, onClick?: () => void }) => (
     <Button variant="outline" className={cn("h-auto flex-col p-2 space-y-1 bg-white/80 dark:bg-black/20 border-white/50 dark:border-black/50 hover:bg-white dark:hover:bg-black/40", className)} {...props}>
         <Icon className={cn("h-6 w-6", colorClass)} />
@@ -86,19 +99,13 @@ export function RoomCard({ room, allRooms, rates, roomTypes, onOccupy, onUpdateC
   let cardColorClass = baseConfig.color;
   let textColor = baseConfig.textColor;
   
-  if (isOccupied && !isExpired && rate?.color_class) {
-    cardColorClass = rate.color_class;
-    if (rate.id === 3 || rate.id === 9) { // 5 hours (yellow) needs black text
-        textColor = 'text-black';
-    } else {
-        textColor = 'text-white';
+  if (isOccupied && !isExpired && rate) {
+    const colorInfo = rateColorMap[rate.id];
+    if (colorInfo) {
+      cardColorClass = colorInfo.bg;
+      textColor = colorInfo.text;
     }
   }
-
-  if (effectiveStatus === 'Vencida') {
-    textColor = 'text-white';
-  }
-
 
   const separatorClass = textColor === 'text-black' ? 'bg-black/20' : 'bg-white/20';
   const contentBgClass = textColor === 'text-black' ? 'bg-white/70 text-black' : 'bg-black/20 text-white';
