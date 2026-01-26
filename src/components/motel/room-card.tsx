@@ -54,13 +54,10 @@ const ActionButton = ({ icon: Icon, label, colorClass = '', className = '', ...p
     <Button 
         variant="ghost" 
         className={cn(
-            "h-auto flex-col p-2 space-y-1 rounded-lg transition-all duration-150 border-2 text-opacity-80",
-            "border-white/40 bg-white/20 shadow-lg shadow-black/10 backdrop-blur-sm",
-            "hover:bg-white/30 hover:border-white/60",
-            "active:bg-white/40 active:shadow-sm active:translate-y-px",
-            "[.text-black_&]:border-black/10 [.text-black_&]:bg-black/5 [.text-black_&]:shadow-black/5",
-            "[.text-black_&]:hover:bg-black/10 [.text-black_&]:hover:border-black/20",
-            "[.text-black_&]:active:bg-black/15",
+            "h-auto flex-col p-2 space-y-1 rounded-lg transition-colors duration-150 border",
+            "bg-white border-slate-200 text-slate-700 shadow-sm",
+            "hover:bg-slate-100",
+            "active:bg-slate-200 active:shadow-inner",
             className
         )} 
         {...props}
