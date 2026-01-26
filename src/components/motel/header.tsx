@@ -97,10 +97,6 @@ export function AppHeader({ onAddExpenseClick, setActiveView }: { onAddExpenseCl
               <Home className="h-5 w-5" />
               Dashboard
             </button>
-            <button onClick={() => handleMenuClick('dashboard')} className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground">
-              <BedDouble className="h-5 w-5" />
-              Habitaciones
-            </button>
             <button onClick={() => handleMenuClick('consumption')} className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground">
               <ShoppingCart className="h-5 w-5" />
               Consumo y Productos
@@ -117,7 +113,7 @@ export function AppHeader({ onAddExpenseClick, setActiveView }: { onAddExpenseCl
               <Users className="h-5 w-5" />
               Empleados
             </button>
-            <button onClick={() => {}} className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground">
+            <button onClick={() => handleMenuClick('reports')} className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground">
               <TrendingUp className="h-5 w-5" />
               Reportes
             </button>

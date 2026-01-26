@@ -13,6 +13,7 @@ import AddExpenseModal from '@/components/motel/add-expense-modal';
 import VehicleHistoryPage from '@/components/motel/vehicle-history-page';
 import ConsumptionPage from '@/components/motel/consumption-page';
 import EmployeesPage from '@/components/motel/employees-page';
+import ReportsPage from '@/components/motel/reports-page';
 
 export default function Home() {
   const [rooms, setRooms] = useState<Room[]>(initialRooms);
@@ -554,6 +555,12 @@ export default function Home() {
             onUpdateEmployee={handleUpdateEmployee}
             onDeleteEmployee={handleDeleteEmployee}
             onConfirmSale={handleSellToEmployee}
+          />
+        )}
+         {activeView === 'reports' && (
+          <ReportsPage
+            transactions={transactions}
+            expenses={expenses}
           />
         )}
       </AppLayout>

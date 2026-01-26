@@ -2,7 +2,6 @@
 import Link from 'next/link';
 import {
   Home,
-  BedDouble,
   Car,
   TrendingUp,
   Settings,
@@ -45,18 +44,6 @@ export function AppSidebar({ onAddExpenseClick, activeView, setActiveView }: { o
               </button>
             </TooltipTrigger>
             <TooltipContent side="right">Dashboard</TooltipContent>
-          </Tooltip>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button
-                 onClick={() => setActiveView('dashboard')}
-                className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8"
-              >
-                <BedDouble className="h-5 w-5" />
-                <span className="sr-only">Habitaciones</span>
-              </button>
-            </TooltipTrigger>
-            <TooltipContent side="right">Habitaciones</TooltipContent>
           </Tooltip>
           <Tooltip>
             <TooltipTrigger asChild>
@@ -118,8 +105,11 @@ export function AppSidebar({ onAddExpenseClick, activeView, setActiveView }: { o
            <Tooltip>
             <TooltipTrigger asChild>
               <button
-                onClick={() => {}}
-                className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8"
+                onClick={() => setActiveView('reports')}
+                className={cn(
+                  "flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8",
+                  activeView === 'reports' && 'bg-accent text-accent-foreground'
+                )}
               >
                 <TrendingUp className="h-5 w-5" />
                 <span className="sr-only">Reportes</span>
