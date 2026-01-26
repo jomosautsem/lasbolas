@@ -235,7 +235,10 @@ export default function CheckInModal({ isOpen, onOpenChange, room, rates, roomTy
                     <div>
                       <Label className="mb-2 block">Seleccionar Tarifa (Obligatorio) <span className="text-destructive">*</span></Label>
                       <div className="flex flex-wrap gap-2">
-                        {rates.filter(r => !r.is_extra_hour).map((rate, index) => (
+                        {rates
+                          .filter(r => !r.is_extra_hour)
+                          .sort((a, b) => a.hours - b.hours)
+                          .map((rate, index) => (
                            <Button 
                               key={rate.id}
                               variant={selectedRate?.id === rate.id ? 'default' : 'outline'}

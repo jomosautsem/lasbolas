@@ -1,19 +1,14 @@
--- Este script reemplaza TODAS las habitaciones existentes por la nueva lista.
--- ¡CUIDADO! Se borrarán los datos de las habitaciones actuales.
+-- supabase/seed.sql
+-- Este script actualiza las habitaciones y las tarifas para el tipo 'Sencilla'.
 
--- 1. Elimina las habitaciones existentes en la tabla 'rooms'.
--- Las tablas relacionadas (vehicle_history) se borrarán en cascada y las transacciones (transactions)
--- actualizarán su room_id a NULL, según la configuración de la base de datos.
-DELETE FROM public.rooms;
+-- ADVERTENCIA: Este script borrará todas las habitaciones existentes y las tarifas
+-- regulares (no de extensión) para el tipo de habitación 'Sencilla' (ID=1).
 
+-- 1. Borrar todas las habitaciones existentes para evitar duplicados.
+TRUNCATE TABLE public.rooms RESTART IDENTITY CASCADE;
 
--- 2. Reinicia la secuencia del ID para que los nuevos IDs comiencen desde 1.
-SELECT setval(pg_get_serial_sequence('public.rooms', 'id'), 1, false);
-
-
--- 3. Inserta la nueva lista de 21 habitaciones.
--- Se asume que todas son del tipo de habitación con ID = 1 ('Sencilla').
--- Si deseas asignarlas a otro tipo, cambia el segundo número en cada línea.
+-- 2. Insertar la nueva lista de 21 habitaciones.
+-- Se asume que el room_type_id para 'Sencilla' es 1.
 INSERT INTO public.rooms (name, room_type_id) VALUES
 ('Habitación 1', 1),
 ('Habitación 2', 1),
@@ -36,3 +31,19 @@ INSERT INTO public.rooms (name, room_type_id) VALUES
 ('Habitación 18', 1),
 ('Habitación 19', 1),
 ('Habitación 20', 1);
+
+-- 3. Borrar las tarifas regulares existentes para el tipo de habitación 'Sencilla' (ID=1).
+-- Esto no borrará las tarifas de "Tiempo Extra".
+DELETE FROM public.rates 
+WHERE room_type_id = 1 AND is_extra_hour = false;
+
+-- 4. Insertar las nuevas tarifas para el tipo de habitación 'Sencilla'.
+INSERT INTO public.rates (name, hours, price, room_type_id, is_extra_hour) VALUES 
+('2 Horas', 2, 220, 1, false),
+('4 Horas', 4, 280, 1, false),
+('5 Horas', 5, 300, 1, false),
+('8 Horas', 8, 330, 1, false),
+('12 Horas', 12, 480, 1, false);
+
+-- Nota: Este script no modifica las tarifas de otros tipos de habitación como 'Con Jacuzzi'.
+-- La tarifa 'Extensión 3 Horas' para habitaciones Sencillas se mantiene si ya existía.
