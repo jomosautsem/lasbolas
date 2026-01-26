@@ -134,16 +134,16 @@ export default function CheckInModal({ isOpen, onOpenChange, room, rates, roomTy
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-4xl rounded-2xl">
+      <DialogContent className="sm:max-w-3xl rounded-2xl">
         <DialogHeader>
           <DialogTitle className="font-headline text-2xl flex items-center">
             Ocupar Habitación: {room.name}
             {roomType && <span className="text-base font-light text-muted-foreground ml-2">({roomType.name})</span>}
           </DialogTitle>
         </DialogHeader>
-        <div className="grid md:grid-cols-2 gap-8 py-4">
+        <div className="grid md:grid-cols-2 gap-6 py-4">
           {/* Columna Izquierda */}
-          <div className="grid gap-6">
+          <div className="grid gap-4">
             <div className="space-y-2">
               <Label htmlFor="name">Nombre del Cliente <span className="text-destructive">*</span></Label>
               <div className="relative">
@@ -212,12 +212,12 @@ export default function CheckInModal({ isOpen, onOpenChange, room, rates, roomTy
           </div>
 
           {/* Columna Derecha */}
-          <div className="grid gap-6">
+          <div className="grid gap-4">
             <Card className="bg-muted/50">
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2 text-lg"><Calendar className="h-5 w-5"/> Tiempo de Estancia</CardTitle>
                 </CardHeader>
-                <CardContent className="grid gap-6">
+                <CardContent className="grid gap-4">
                     <div className="flex items-center justify-between rounded-lg border bg-background p-3">
                         <Label htmlFor="manual-time">Activar Tiempo Manual</Label>
                         <Switch id="manual-time" checked={isManual} onCheckedChange={setIsManual} />
