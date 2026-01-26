@@ -95,20 +95,20 @@ export default function DashboardKPIs({ rooms, transactions, expenses }: Dashboa
   return (
     <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
       <KPICard
-        title="Ingresos del Turno"
-        amount={`$${kpiData.totalIncome.toFixed(2)}`}
-        description={incomeDescription}
-        icon={DollarSign}
-        isGradient={true}
-        gradientClassName="bg-gradient-to-br from-green-600 to-emerald-800"
-      />
-      <KPICard
         title="Habitaciones Ocupadas"
         amount={`${kpiData.occupiedRooms} de ${rooms.length}`}
         description={`${occupiedPercentage.toFixed(0)}% de ocupación`}
         icon={Bed}
         color="text-orange-500"
         borderColor="border-orange-500"
+      />
+      <KPICard
+        title="Ingresos del Turno"
+        amount={`$${kpiData.totalIncome.toFixed(2)}`}
+        description={incomeDescription}
+        icon={DollarSign}
+        isGradient={true}
+        gradientClassName="bg-gradient-to-br from-green-600 to-emerald-800"
       />
       <KPICard
         title="Gastos del Turno"
