@@ -1,7 +1,7 @@
 'use client';
 import type { Room, Transaction, Expense } from '@/lib/types';
 import KPICard from './kpi-card';
-import { DollarSign, Bed, ArrowDownCircle, Banknote } from 'lucide-react';
+import { DollarSign, Bed, ArrowDownCircle, Wallet } from 'lucide-react';
 import { getCurrentShiftInfo } from '@/lib/datetime';
 import { useEffect, useState } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -74,7 +74,7 @@ export default function DashboardKPIs({ rooms, transactions, expenses }: Dashboa
     return (
       <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
         {Array.from({ length: 4 }).map((_, i) => (
-          <Card key={i} className="rounded-2xl shadow-lg border-l-4 border-primary">
+          <Card key={i} className="rounded-2xl shadow-lg border-l-4 border-primary h-32">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <Skeleton className="h-4 w-2/3" />
               <Skeleton className="h-5 w-5 rounded-full" />
@@ -122,9 +122,8 @@ export default function DashboardKPIs({ rooms, transactions, expenses }: Dashboa
         title="Utilidad Neta en Caja"
         amount={`$${kpiData.netProfit.toFixed(2)}`}
         description="Ingresos - Gastos"
-        icon={Banknote}
-        color="text-blue-500"
-        borderColor="border-blue-500"
+        icon={Wallet}
+        isGradient={true}
       />
     </div>
   );
