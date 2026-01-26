@@ -684,6 +684,7 @@ export default function DashboardPage() {
             rooms={rooms}
             transactions={transactions}
             expenses={expenses}
+            products={products}
           />
         )}
         {activeView === 'settings' && (

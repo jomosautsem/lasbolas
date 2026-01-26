@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import type { Transaction, Expense, Shift, Room, TransactionType } from '@/lib/types';
+import type { Transaction, Expense, Shift, Room, Product, TransactionType } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -21,6 +21,7 @@ interface ReportsPageProps {
   rooms: Room[];
   transactions: Transaction[];
   expenses: Expense[];
+  products: Product[];
 }
 
 const shifts: { value: Shift; label: string }[] = [
@@ -39,7 +40,7 @@ const StatCard = ({ title, value, icon: Icon, className }: { title: string; valu
     </div>
 );
 
-export default function ReportsPage({ rooms, transactions, expenses }: ReportsPageProps) {
+export default function ReportsPage({ rooms, transactions, expenses, products }: ReportsPageProps) {
     const [selectedDate, setSelectedDate] = useState<Date | undefined>(getMexicoCityTime());
     const [selectedShift, setSelectedShift] = useState<Shift>(getCurrentShiftInfo().shift);
 
@@ -144,6 +145,26 @@ export default function ReportsPage({ rooms, transactions, expenses }: ReportsPa
       const productTransactions = allStayTransactions.filter(t => t.type === 'Consumo');
       const productsAmount = productTransactions.reduce((sum, t) => sum + t.amount, 0);
 
+      const parsedProducts = productTransactions.flatMap(t => {
+          return t.description.split(', ').map(desc => {
+              const match = desc.match(/(\d+)x\s(.+)/);
+              if (!match) return null;
+              
+              const quantity = parseInt(match[1], 10);
+              const name = match[2].trim();
+              const product = products.find(p => p.name === name);
+              const price = product ? product.price : 0; // price per item
+
+              return {
+                  id: `${t.id}-${name}`,
+                  quantity,
+                  name,
+                  price,
+                  total: quantity * price,
+              }
+          }).filter((p): p is NonNullable<typeof p> => p !== null);
+      });
+
       const otherChargeTransactions = allStayTransactions.filter(t =>
         t.type !== 'Hospedaje Inicial' && t.type !== 'Consumo'
       );
@@ -161,13 +182,14 @@ export default function ReportsPage({ rooms, transactions, expenses }: ReportsPa
         initialOccupancyAmount,
         productsAmount,
         productTransactions,
+        parsedProducts,
         otherChargeTransactions,
         totalStayAmount,
       };
     }).filter((r): r is NonNullable<typeof r> => r !== null);
 
     return log.sort((a, b) => new Date(b.check_in_time!).getTime() - new Date(a.check_in_time!).getTime());
-  }, [selectedDate, selectedShift, rooms, transactions]);
+  }, [selectedDate, selectedShift, rooms, transactions, products]);
 
 
   return (
@@ -334,28 +356,36 @@ export default function ReportsPage({ rooms, transactions, expenses }: ReportsPa
                                     <span>Hospedaje Inicial:</span>
                                     <span className="font-medium">${logItem.initialOccupancyAmount.toFixed(2)}</span>
                                 </div>
-                                <div className="flex justify-between text-sm">
-                                    <span>Total en Productos:</span>
-                                    <span className="font-medium">${logItem.productsAmount.toFixed(2)}</span>
-                                </div>
-                                {logItem.productTransactions.length > 0 && (
-                                    <div className="pl-4 mt-1 border-l-2 border-muted">
-                                    {logItem.productTransactions.map(t => (
-                                        <div key={t.id} className="flex justify-between text-sm text-muted-foreground">
-                                            <span className="truncate">{t.description}</span>
-                                            <span className="font-medium">${t.amount.toFixed(2)}</span>
+
+                                {logItem.parsedProducts.length > 0 && (
+                                    <div className="text-sm">
+                                        <p>Consumo de Productos:</p>
+                                        <div className="pl-4 mt-1 border-l-2 border-muted space-y-1">
+                                            {logItem.parsedProducts.map(p => (
+                                                <div key={p.id} className="flex justify-between text-muted-foreground">
+                                                    <span>{p.quantity}x {p.name}</span>
+                                                    <span className="font-medium">${p.total.toFixed(2)}</span>
+                                                </div>
+                                            ))}
+                                            <div className="pt-1 border-t border-muted/50 flex justify-between font-semibold text-foreground">
+                                                <span>Subtotal Productos:</span>
+                                                <span>${logItem.productsAmount.toFixed(2)}</span>
+                                            </div>
                                         </div>
-                                    ))}
                                     </div>
                                 )}
+
                                 {logItem.otherChargeTransactions.length > 0 && (
-                                    <div className="pl-4 mt-1 border-l-2 border-muted">
-                                    {logItem.otherChargeTransactions.map(c => (
-                                        <div key={c.id} className="flex justify-between text-sm text-muted-foreground">
-                                            <span>{c.description}</span>
-                                            <span className="font-medium">${c.amount.toFixed(2)}</span>
+                                    <div className="text-sm">
+                                        <p className="mt-2">Otros Cargos:</p>
+                                        <div className="pl-4 mt-1 border-l-2 border-muted space-y-1">
+                                        {logItem.otherChargeTransactions.map(c => (
+                                            <div key={c.id} className="flex justify-between text-muted-foreground">
+                                                <span>{c.description}</span>
+                                                <span className="font-medium">${c.amount.toFixed(2)}</span>
+                                            </div>
+                                        ))}
                                         </div>
-                                    ))}
                                     </div>
                                 )}
                                 <Separator className="my-2 !mt-4" />
