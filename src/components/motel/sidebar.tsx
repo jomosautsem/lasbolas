@@ -8,6 +8,7 @@ import {
   Settings,
   Receipt,
   ShoppingCart,
+  Users,
 } from 'lucide-react';
 import {
   Tooltip,
@@ -98,6 +99,21 @@ export function AppSidebar({ onAddExpenseClick, activeView, setActiveView }: { o
               </button>
             </TooltipTrigger>
             <TooltipContent side="right">Vehículos</TooltipContent>
+          </Tooltip>
+           <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={() => setActiveView('employees')}
+                className={cn(
+                  "flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8",
+                  activeView === 'employees' && 'bg-accent text-accent-foreground'
+                )}
+              >
+                <Users className="h-5 w-5" />
+                <span className="sr-only">Empleados</span>
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="right">Empleados</TooltipContent>
           </Tooltip>
            <Tooltip>
             <TooltipTrigger asChild>

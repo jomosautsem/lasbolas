@@ -1,4 +1,4 @@
-import type { Room, RoomType, Rate, Product, Transaction, Expense, VehicleHistory } from './types';
+import type { Room, RoomType, Rate, Product, Transaction, Expense, VehicleHistory, Employee } from './types';
 
 export const roomTypes: RoomType[] = [
   { id: 1, name: 'Sencilla' },
@@ -72,3 +72,9 @@ export const vehicleReports = [
 ];
 
 export const vehicleHistory: VehicleHistory[] = [];
+
+export const employees: Employee[] = [
+  { id: 1, name: 'Juan Pérez', role: 'Recepcionista', status: 'Activo' },
+  { id: 2, name: 'María García', role: 'Recamarera', status: 'Activo' },
+  { id: 3, name: 'Carlos López', role: 'Cochero', status: 'Activo' },
+];

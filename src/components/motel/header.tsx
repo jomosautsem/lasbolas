@@ -16,6 +16,7 @@ import {
   Sunset,
   Receipt,
   ShoppingCart,
+  Users,
 } from 'lucide-react';
 import {
   Sheet,
@@ -111,6 +112,10 @@ export function AppHeader({ onAddExpenseClick, setActiveView }: { onAddExpenseCl
             <button onClick={() => handleMenuClick('vehicles')} className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground">
               <Car className="h-5 w-5" />
               Vehículos
+            </button>
+            <button onClick={() => handleMenuClick('employees')} className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground">
+              <Users className="h-5 w-5" />
+              Empleados
             </button>
             <button onClick={() => {}} className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground">
               <TrendingUp className="h-5 w-5" />

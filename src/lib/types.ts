@@ -1,8 +1,8 @@
 export type RoomStatus = 'Disponible' | 'Ocupada' | 'Limpieza' | 'Mantenimiento' | 'Profunda';
 export type EntryType = 'Auto' | 'Moto' | 'Pie';
-export type TransactionType = 'Hospedaje Inicial' | 'Tiempo Extra' | 'Consumo' | 'Gasto' | 'Ajuste de Paquete' | 'Persona Extra';
+export type TransactionType = 'Hospedaje Inicial' | 'Tiempo Extra' | 'Consumo' | 'Gasto' | 'Ajuste de Paquete' | 'Persona Extra' | 'Venta a Empleado';
 export type ProductCategory = 'Cocina' | 'Snack' | 'Bebida' | 'Otro';
-export type EmployeeRole = 'Admin' | 'Recepcionista' | 'Limpieza';
+export type EmployeeRole = 'Admin' | 'Recepcionista' | 'Recamarera' | 'Cochero';
 export type VehicleReportSeverity = 'Baja' | 'Media' | 'Alta';
 export type Shift = 'Matutino' | 'Vespertino' | 'Nocturno';
 
@@ -50,6 +50,7 @@ export interface Product {
 export interface Transaction {
   id: number;
   room_id: number | null;
+  employee_id?: number | null;
   amount: number;
   type: TransactionType;
   timestamp: string;

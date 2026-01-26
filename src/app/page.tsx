@@ -4,14 +4,15 @@ import { useState } from 'react';
 import { AppLayout } from '@/components/motel/app-layout';
 import DashboardKPIs from '@/components/motel/dashboard-kpis';
 import RoomGrid from '@/components/motel/room-grid';
-import { rooms as initialRooms, products as initialProducts, transactions as initialTransactions, expenses as initialExpenses, rates, roomTypes, vehicleHistory as initialVehicleHistory } from '@/lib/data';
+import { rooms as initialRooms, products as initialProducts, transactions as initialTransactions, expenses as initialExpenses, rates, roomTypes, vehicleHistory as initialVehicleHistory, employees as initialEmployees } from '@/lib/data';
 import { getCurrentShiftInfo } from '@/lib/datetime';
-import type { Room, Transaction, Rate, Expense, VehicleHistory, Product } from '@/lib/types';
+import type { Room, Transaction, Rate, Expense, VehicleHistory, Product, Employee } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { addHours } from 'date-fns';
 import AddExpenseModal from '@/components/motel/add-expense-modal';
 import VehicleHistoryPage from '@/components/motel/vehicle-history-page';
 import ConsumptionPage from '@/components/motel/consumption-page';
+import EmployeesPage from '@/components/motel/employees-page';
 
 export default function Home() {
   const [rooms, setRooms] = useState<Room[]>(initialRooms);
@@ -19,6 +20,7 @@ export default function Home() {
   const [expenses, setExpenses] = useState<Expense[]>(initialExpenses);
   const [vehicleHistory, setVehicleHistory] = useState<VehicleHistory[]>(initialVehicleHistory);
   const [products, setProducts] = useState<Product[]>(initialProducts);
+  const [employees, setEmployees] = useState<Employee[]>(initialEmployees);
   const [isAddExpenseModalOpen, setIsAddExpenseModalOpen] = useState(false);
   const [activeView, setActiveView] = useState('dashboard');
   const { toast } = useToast();
@@ -450,6 +452,58 @@ export default function Home() {
     toast({ variant: 'destructive', title: 'Producto Eliminado', description: `El producto "${productName}" ha sido eliminado.` });
   };
 
+  const handleAddEmployee = (newEmployeeData: Omit<Employee, 'id' | 'status'>) => {
+    setEmployees(current => {
+      const newEmployee: Employee = {
+        id: current.length > 0 ? Math.max(...current.map(e => e.id)) + 1 : 1,
+        status: 'Activo',
+        ...newEmployeeData,
+      };
+      return [...current, newEmployee];
+    });
+    toast({ title: 'Empleado Creado', description: `El empleado "${newEmployeeData.name}" ha sido creado.` });
+  };
+
+  const handleUpdateEmployee = (updatedEmployee: Employee) => {
+    setEmployees(current =>
+      current.map(e => (e.id === updatedEmployee.id ? updatedEmployee : e))
+    );
+    toast({ title: 'Empleado Actualizado', description: `El empleado "${updatedEmployee.name}" ha sido actualizado.` });
+  };
+
+  const handleDeleteEmployee = (employeeId: number) => {
+    const employeeName = employees.find(e => e.id === employeeId)?.name || '';
+    setEmployees(current => current.filter(e => e.id !== employeeId));
+    toast({ variant: 'destructive', title: 'Empleado Eliminado', description: `El empleado "${employeeName}" ha sido eliminado.` });
+  };
+  
+  const handleSellToEmployee = (employeeId: number, items: (Product & { quantity: number; salePrice: number })[], totalPrice: number) => {
+    const employee = employees.find(e => e.id === employeeId);
+    if (!employee) return;
+
+    const shiftInfo = getCurrentShiftInfo();
+    const description = `Venta a ${employee.name}: ` + items.map(item => `${item.quantity}x ${item.name} @ $${item.salePrice.toFixed(2)}`).join(', ');
+
+    const newTransaction: Transaction = {
+      id: Date.now(),
+      room_id: null,
+      employee_id: employeeId,
+      amount: totalPrice,
+      type: 'Venta a Empleado',
+      timestamp: new Date().toISOString(),
+      shift: shiftInfo.shift,
+      description,
+      turno_calculado: shiftInfo.shift,
+      fecha_operativa: shiftInfo.operationalDate.toISOString().split('T')[0],
+    };
+    setTransactions(currentTransactions => [...currentTransactions, newTransaction]);
+    
+    toast({
+      title: 'Venta a Empleado Registrada',
+      description: `Se registró una venta de $${totalPrice.toFixed(2)} a ${employee.name}.`,
+    });
+  };
+
   const occupiedRooms = rooms.filter(r => r.status === 'Ocupada');
 
 
@@ -490,6 +544,16 @@ export default function Home() {
             onAddProduct={handleAddProduct}
             onUpdateProduct={handleUpdateProduct}
             onDeleteProduct={handleDeleteProduct}
+          />
+        )}
+        {activeView === 'employees' && (
+          <EmployeesPage
+            employees={employees}
+            products={products}
+            onAddEmployee={handleAddEmployee}
+            onUpdateEmployee={handleUpdateEmployee}
+            onDeleteEmployee={handleDeleteEmployee}
+            onConfirmSale={handleSellToEmployee}
           />
         )}
       </AppLayout>
