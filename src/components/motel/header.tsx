@@ -52,8 +52,9 @@ const ShiftIcon = ({ shift }: { shift: 'Matutino' | 'Vespertino' | 'Nocturno' })
   }
 };
 
-export function AppHeader() {
+export function AppHeader({ onAddExpenseClick }: { onAddExpenseClick: () => void; }) {
   const [shiftInfo, setShiftInfo] = useState<ShiftInfo | null>(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     setShiftInfo(getCurrentShiftInfo());
@@ -63,9 +64,15 @@ export function AppHeader() {
     return () => clearInterval(timer);
   }, []);
 
+  const handleGastosClick = (event: React.MouseEvent) => {
+    event.preventDefault();
+    setMobileMenuOpen(false); // Close menu
+    onAddExpenseClick(); // Open modal
+  };
+
   return (
     <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6">
-      <Sheet>
+      <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
         <SheetTrigger asChild>
           <Button size="icon" variant="outline" className="sm:hidden">
             <PanelLeft className="h-5 w-5" />
@@ -81,31 +88,31 @@ export function AppHeader() {
               <Logo className="h-5 w-5 transition-all group-hover:scale-110" />
               <span className="sr-only">Motel las Bolas</span>
             </Link>
-            <Link href="#" className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground">
+            <Link href="#" className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground" onClick={() => setMobileMenuOpen(false)}>
               <Home className="h-5 w-5" />
               Dashboard
             </Link>
-            <Link href="#" className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground">
+            <Link href="#" className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground" onClick={() => setMobileMenuOpen(false)}>
               <BedDouble className="h-5 w-5" />
               Habitaciones
             </Link>
-            <Link href="#" className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground">
+            <Link href="#" className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground" onClick={() => setMobileMenuOpen(false)}>
               <Package className="h-5 w-5" />
               Inventario
             </Link>
-             <Link href="#" className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground">
+             <a href="#" onClick={handleGastosClick} className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground">
               <Receipt className="h-5 w-5" />
               Gastos
-            </Link>
-            <Link href="#" className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground">
+            </a>
+            <Link href="#" className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground" onClick={() => setMobileMenuOpen(false)}>
               <Car className="h-5 w-5" />
               Vehículos
             </Link>
-            <Link href="#" className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground">
+            <Link href="#" className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground" onClick={() => setMobileMenuOpen(false)}>
               <TrendingUp className="h-5 w-5" />
               Reportes
             </Link>
-            <Link href="#" className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground">
+            <Link href="#" className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground" onClick={() => setMobileMenuOpen(false)}>
               <Settings className="h-5 w-5" />
               Configuración
             </Link>

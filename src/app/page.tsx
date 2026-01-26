@@ -4,15 +4,18 @@ import { useState } from 'react';
 import { AppLayout } from '@/components/motel/app-layout';
 import DashboardKPIs from '@/components/motel/dashboard-kpis';
 import RoomGrid from '@/components/motel/room-grid';
-import { rooms as initialRooms, products, transactions as initialTransactions, expenses, rates, roomTypes } from '@/lib/data';
+import { rooms as initialRooms, products, transactions as initialTransactions, expenses as initialExpenses, rates, roomTypes } from '@/lib/data';
 import { getCurrentShiftInfo } from '@/lib/datetime';
-import type { Room, Transaction, Rate } from '@/lib/types';
+import type { Room, Transaction, Rate, Expense } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { addHours } from 'date-fns';
+import AddExpenseModal from '@/components/motel/add-expense-modal';
 
 export default function Home() {
   const [rooms, setRooms] = useState<Room[]>(initialRooms);
   const [transactions, setTransactions] = useState<Transaction[]>(initialTransactions);
+  const [expenses, setExpenses] = useState<Expense[]>(initialExpenses);
+  const [isAddExpenseModalOpen, setIsAddExpenseModalOpen] = useState(false);
   const { toast } = useToast();
 
   const handleConfirmCheckIn = (roomToUpdate: Room, checkInData: any) => {
@@ -349,30 +352,53 @@ export default function Home() {
     });
   };
 
+  const handleAddExpense = ({ description, amount }: { description: string, amount: number }) => {
+    const shiftInfo = getCurrentShiftInfo();
+    const newExpense: Expense = {
+      id: Date.now(),
+      description,
+      amount,
+      date: new Date().toISOString(),
+      shift: shiftInfo.shift,
+    };
+    setExpenses(currentExpenses => [...currentExpenses, newExpense]);
+    toast({
+      title: 'Gasto Registrado',
+      description: `Se registró un gasto de $${amount.toFixed(2)} por "${description}".`,
+    });
+  };
+
 
   return (
-    <AppLayout>
-      <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-        <DashboardKPIs
-          rooms={rooms}
-          transactions={transactions}
-          expenses={expenses}
-        />
-        <RoomGrid 
-          rooms={rooms} 
-          rates={rates} 
-          roomTypes={roomTypes}
-          onConfirmCheckIn={handleConfirmCheckIn}
-          onUpdateControls={handleUpdateControls}
-          onReleaseRoom={handleReleaseRoom}
-          onFinishCleaning={handleFinishCleaning}
-          onRoomChange={handleChangeRoom}
-          onAdjustPackage={handleAdjustPackage}
-          onExtendStay={handleExtendStay}
-          onAddPerson={handleAddPerson}
-          onRemovePerson={handleRemovePerson}
-        />
-      </div>
-    </AppLayout>
+    <>
+      <AppLayout onAddExpenseClick={() => setIsAddExpenseModalOpen(true)}>
+        <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
+          <DashboardKPIs
+            rooms={rooms}
+            transactions={transactions}
+            expenses={expenses}
+          />
+          <RoomGrid 
+            rooms={rooms} 
+            rates={rates} 
+            roomTypes={roomTypes}
+            onConfirmCheckIn={handleConfirmCheckIn}
+            onUpdateControls={handleUpdateControls}
+            onReleaseRoom={handleReleaseRoom}
+            onFinishCleaning={handleFinishCleaning}
+            onRoomChange={handleChangeRoom}
+            onAdjustPackage={handleAdjustPackage}
+            onExtendStay={handleExtendStay}
+            onAddPerson={handleAddPerson}
+            onRemovePerson={handleRemovePerson}
+          />
+        </div>
+      </AppLayout>
+      <AddExpenseModal
+        isOpen={isAddExpenseModalOpen}
+        onOpenChange={setIsAddExpenseModalOpen}
+        onConfirm={handleAddExpense}
+      />
+    </>
   );
 }

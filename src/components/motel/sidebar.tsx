@@ -18,7 +18,7 @@ import {
 } from '@/components/ui/tooltip';
 import { Logo } from '@/components/icons';
 
-export function AppSidebar() {
+export function AppSidebar({ onAddExpenseClick }: { onAddExpenseClick: () => void; }) {
   return (
     <aside className="fixed inset-y-0 left-0 z-10 hidden w-14 flex-col border-r bg-background sm:flex">
       <TooltipProvider>
@@ -68,13 +68,13 @@ export function AppSidebar() {
           </Tooltip>
            <Tooltip>
             <TooltipTrigger asChild>
-              <Link
-                href="#"
+              <button
+                onClick={onAddExpenseClick}
                 className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8"
               >
                 <Receipt className="h-5 w-5" />
                 <span className="sr-only">Gastos</span>
-              </Link>
+              </button>
             </TooltipTrigger>
             <TooltipContent side="right">Gastos</TooltipContent>
           </Tooltip>
