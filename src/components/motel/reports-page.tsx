@@ -15,6 +15,7 @@ import { getCurrentShiftInfo, getMexicoCityTime, formatToMexicanTime } from '@/l
 import { cn } from '@/lib/utils';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Separator } from '@/components/ui/separator';
 
 interface ReportsPageProps {
   rooms: Room[];
@@ -104,71 +105,68 @@ export default function ReportsPage({ rooms, transactions, expenses }: ReportsPa
     }, [filteredData]);
     
     const roomLogData = useMemo(() => {
-        if (!selectedDate) return [];
-        const operationalDateStr = format(selectedDate, 'yyyy-MM-dd');
-    
-        // 1. Rooms that are currently active
-        const activeRooms = rooms.filter(r => r.status === 'Ocupada');
-    
-        // 2. Rooms that checked out during the selected shift
-        const checkedOutRoomsInShift = rooms.filter(r => {
-            if (r.status === 'Ocupada' || !r.check_out_time) return false;
-            
-            const checkoutShiftInfo = getCurrentShiftInfo(new Date(r.check_out_time));
-            const checkoutOpDateStr = format(checkoutShiftInfo.operationalDate, 'yyyy-MM-dd');
-            
-            return checkoutShiftInfo.shift === selectedShift && checkoutOpDateStr === operationalDateStr;
-        });
-    
-        // 3. Combine and create log entries
-        const combinedRooms = [...activeRooms, ...checkedOutRoomsInShift];
-        const uniqueRoomIds = Array.from(new Set(combinedRooms.map(r => r.id)));
-    
-        const log = uniqueRoomIds.map(roomId => {
-            const room = rooms.find(r => r.id === roomId)!;
-            if (!room.check_in_time) return null;
-    
-            // Check if check-in was in a previous shift
-            const checkinShiftInfo = getCurrentShiftInfo(new Date(room.check_in_time));
-            const checkinOpDateStr = format(checkinShiftInfo.operationalDate, 'yyyy-MM-dd');
-            
-            const isFromPreviousShift = (checkinShiftInfo.shift !== selectedShift || checkinOpDateStr !== operationalDateStr);
-    
-            // Get all transactions for this specific stay
-            const allStayTransactions = transactions.filter(t => {
-                if (t.room_id !== roomId) return false;
-                const transactionTime = new Date(t.timestamp).getTime();
-                const checkInTime = new Date(room.check_in_time!).getTime();
-                // If it checked out, use that time. If not, use now.
-                const endTime = room.status !== 'Ocupada' && room.check_out_time 
-                    ? new Date(room.check_out_time).getTime() 
-                    : Date.now();
-                return transactionTime >= checkInTime && transactionTime <= endTime;
-            });
-    
-            let totalStayAmount: number;
-            // If the room has checked out, we must recalculate the total from its transactions for that stay.
-            if (room.status !== 'Ocupada') {
-                totalStayAmount = allStayTransactions.reduce((sum, t) => sum + t.amount, 0);
-            } else {
-                totalStayAmount = room.total_debt || 0; // For active rooms, this is the source of truth
-            }
+    if (!selectedDate) return [];
+    const operationalDateStr = format(selectedDate, 'yyyy-MM-dd');
 
-            const consumptionsAndCharges = allStayTransactions.filter(t => t.type !== 'Hospedaje Inicial');
-    
-            return {
-                ...room,
-                isFromPreviousShift: room.status === 'Ocupada' && isFromPreviousShift,
-                consumptions: consumptionsAndCharges,
-                totalStayAmount: totalStayAmount,
-            };
-    
-        }).filter((r): r is NonNullable<typeof r> => r !== null);
-        
-        // Sort by check-in time, most recent first
-        return log.sort((a,b) => new Date(b.check_in_time!).getTime() - new Date(a.check_in_time!).getTime());
+    const activeRooms = rooms.filter(r => r.status === 'Ocupada');
 
-    }, [selectedDate, selectedShift, rooms, transactions]);
+    const checkedOutRoomsInShift = rooms.filter(r => {
+      if (r.status === 'Ocupada' || !r.check_out_time) return false;
+      const checkoutShiftInfo = getCurrentShiftInfo(new Date(r.check_out_time));
+      const checkoutOpDateStr = format(checkoutShiftInfo.operationalDate, 'yyyy-MM-dd');
+      return checkoutShiftInfo.shift === selectedShift && checkoutOpDateStr === operationalDateStr;
+    });
+
+    const combinedRooms = [...activeRooms, ...checkedOutRoomsInShift];
+    const uniqueRoomIds = Array.from(new Set(combinedRooms.map(r => r.id)));
+
+    const log = uniqueRoomIds.map(roomId => {
+      const room = rooms.find(r => r.id === roomId)!;
+      if (!room.check_in_time) return null;
+
+      const checkinShiftInfo = getCurrentShiftInfo(new Date(room.check_in_time));
+      const checkinOpDateStr = format(checkinShiftInfo.operationalDate, 'yyyy-MM-dd');
+      const isFromPreviousShift = (checkinShiftInfo.shift !== selectedShift || checkinOpDateStr !== operationalDateStr);
+
+      const allStayTransactions = transactions.filter(t => {
+        if (t.room_id !== roomId) return false;
+        const transactionTime = new Date(t.timestamp).getTime();
+        const checkInTime = new Date(room.check_in_time!).getTime();
+        const endTime = room.status !== 'Ocupada' && room.check_out_time
+          ? new Date(room.check_out_time).getTime()
+          : Date.now();
+        return transactionTime >= checkInTime && transactionTime <= endTime;
+      });
+
+      const initialOccupancyTransaction = allStayTransactions.find(t => t.type === 'Hospedaje Inicial');
+      const initialOccupancyAmount = initialOccupancyTransaction?.amount || 0;
+
+      const productTransactions = allStayTransactions.filter(t => t.type === 'Consumo');
+      const productsAmount = productTransactions.reduce((sum, t) => sum + t.amount, 0);
+
+      const otherChargeTransactions = allStayTransactions.filter(t =>
+        t.type !== 'Hospedaje Inicial' && t.type !== 'Consumo'
+      );
+
+      let totalStayAmount: number;
+      if (room.status !== 'Ocupada') {
+        totalStayAmount = allStayTransactions.reduce((sum, t) => sum + t.amount, 0);
+      } else {
+        totalStayAmount = room.total_debt || 0;
+      }
+
+      return {
+        ...room,
+        isFromPreviousShift: room.status === 'Ocupada' && isFromPreviousShift,
+        initialOccupancyAmount,
+        productsAmount,
+        otherChargeTransactions,
+        totalStayAmount,
+      };
+    }).filter((r): r is NonNullable<typeof r> => r !== null);
+
+    return log.sort((a, b) => new Date(b.check_in_time!).getTime() - new Date(a.check_in_time!).getTime());
+  }, [selectedDate, selectedShift, rooms, transactions]);
 
 
   return (
@@ -329,28 +327,31 @@ export default function ReportsPage({ rooms, transactions, expenses }: ReportsPa
                             </div>
                         </CollapsibleTrigger>
                         <CollapsibleContent className="px-4 pb-4">
-                            <div className="pt-4 border-t">
-                                <h4 className="font-semibold mb-2">Consumos y Cargos:</h4>
-                                {logItem.consumptions.length > 0 ? (
-                                    <Table>
-                                        <TableHeader>
-                                            <TableRow>
-                                                <TableHead>Descripción</TableHead>
-                                                <TableHead className="text-right">Monto</TableHead>
-                                            </TableRow>
-                                        </TableHeader>
-                                        <TableBody>
-                                            {logItem.consumptions.map(c => (
-                                                <TableRow key={c.id}>
-                                                    <TableCell>{c.description}</TableCell>
-                                                    <TableCell className="text-right">${c.amount.toFixed(2)}</TableCell>
-                                                </TableRow>
-                                            ))}
-                                        </TableBody>
-                                    </Table>
-                                ) : (
-                                    <p className="text-sm text-muted-foreground">No hay consumos ni cargos extra para esta estancia.</p>
+                            <div className="pt-4 border-t space-y-2">
+                                <h4 className="font-semibold mb-2">Desglose de la Cuenta:</h4>
+                                <div className="flex justify-between text-sm">
+                                    <span>Hospedaje Inicial:</span>
+                                    <span className="font-medium">${logItem.initialOccupancyAmount.toFixed(2)}</span>
+                                </div>
+                                <div className="flex justify-between text-sm">
+                                    <span>Total en Productos:</span>
+                                    <span className="font-medium">${logItem.productsAmount.toFixed(2)}</span>
+                                </div>
+                                {logItem.otherChargeTransactions.length > 0 && (
+                                    <div className="pl-4 mt-1 border-l-2 border-muted">
+                                    {logItem.otherChargeTransactions.map(c => (
+                                        <div key={c.id} className="flex justify-between text-sm text-muted-foreground">
+                                            <span>{c.description}</span>
+                                            <span className="font-medium">${c.amount.toFixed(2)}</span>
+                                        </div>
+                                    ))}
+                                    </div>
                                 )}
+                                <Separator className="my-2 !mt-4" />
+                                <div className="flex justify-between font-bold text-base">
+                                    <span>Total Habitación:</span>
+                                    <span>${logItem.totalStayAmount.toFixed(2)}</span>
+                                </div>
                             </div>
                         </CollapsibleContent>
                     </Collapsible>
