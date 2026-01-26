@@ -158,7 +158,7 @@ export function AppHeader({ onAddExpenseClick, activeView, setActiveView }: { on
           </nav>
         </SheetContent>
       </Sheet>
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2">
          <h1 className="text-xl font-semibold md:text-2xl font-headline">{title}</h1>
          {shiftInfo ? (
            <Badge variant="outline" className={cn("flex items-center gap-2", shiftColors[shiftInfo.shift])}>

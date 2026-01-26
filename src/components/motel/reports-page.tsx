@@ -212,12 +212,12 @@ export default function ReportsPage({ rooms, transactions, expenses }: ReportsPa
                 </SelectContent>
             </Select>
 
-            <div className="flex-1 flex justify-start sm:justify-end gap-2">
-                 <Button variant="outline">
+            <div className="w-full flex-1 flex flex-col sm:flex-row sm:justify-end gap-2">
+                 <Button variant="outline" className="w-full sm:w-auto">
                     <RefreshCw className="mr-2 h-4 w-4" />
                     Ver Balance General
                 </Button>
-                 <Button className="bg-red-600 hover:bg-red-700">
+                 <Button className="bg-red-600 hover:bg-red-700 w-full sm:w-auto">
                     <Download className="mr-2 h-4 w-4" />
                     Descargar PDF
                 </Button>

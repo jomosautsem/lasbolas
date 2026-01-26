@@ -49,7 +49,7 @@ export default function ChangeRoomModal({ isOpen, onOpenChange, currentRoom, all
             <h4 className="mb-4 text-sm font-medium text-muted-foreground">Habitaciones Disponibles</h4>
             {availableRooms.length > 0 ? (
                 <ScrollArea className="h-64">
-                    <div className="grid grid-cols-3 gap-4 pr-4">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 pr-4">
                         {availableRooms.map(room => (
                         <Button
                             key={room.id}
