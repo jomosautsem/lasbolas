@@ -52,7 +52,7 @@ const ShiftIcon = ({ shift }: { shift: 'Matutino' | 'Vespertino' | 'Nocturno' })
   }
 };
 
-export function AppHeader({ onAddExpenseClick }: { onAddExpenseClick: () => void; }) {
+export function AppHeader({ onAddExpenseClick, setActiveView }: { onAddExpenseClick: () => void; setActiveView: (view: string) => void; }) {
   const [shiftInfo, setShiftInfo] = useState<ShiftInfo | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -64,10 +64,15 @@ export function AppHeader({ onAddExpenseClick }: { onAddExpenseClick: () => void
     return () => clearInterval(timer);
   }, []);
 
+  const handleMenuClick = (view: string) => {
+    setActiveView(view);
+    setMobileMenuOpen(false);
+  };
+  
   const handleGastosClick = (event: React.MouseEvent) => {
     event.preventDefault();
-    setMobileMenuOpen(false); // Close menu
-    onAddExpenseClick(); // Open modal
+    setMobileMenuOpen(false);
+    onAddExpenseClick();
   };
 
   return (
@@ -88,30 +93,30 @@ export function AppHeader({ onAddExpenseClick }: { onAddExpenseClick: () => void
               <Logo className="h-5 w-5 transition-all group-hover:scale-110" />
               <span className="sr-only">Motel las Bolas</span>
             </Link>
-            <Link href="#" className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground" onClick={() => setMobileMenuOpen(false)}>
+            <button onClick={() => handleMenuClick('dashboard')} className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground">
               <Home className="h-5 w-5" />
               Dashboard
-            </Link>
-            <Link href="#" className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground" onClick={() => setMobileMenuOpen(false)}>
+            </button>
+            <button onClick={() => handleMenuClick('dashboard')} className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground">
               <BedDouble className="h-5 w-5" />
               Habitaciones
-            </Link>
-            <Link href="#" className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground" onClick={() => setMobileMenuOpen(false)}>
+            </button>
+            <button onClick={() => {}} className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground">
               <Package className="h-5 w-5" />
               Inventario
-            </Link>
+            </button>
              <a href="#" onClick={handleGastosClick} className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground">
               <Receipt className="h-5 w-5" />
               Gastos
             </a>
-            <Link href="#" className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground" onClick={() => setMobileMenuOpen(false)}>
+            <button onClick={() => handleMenuClick('vehicles')} className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground">
               <Car className="h-5 w-5" />
               Vehículos
-            </Link>
-            <Link href="#" className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground" onClick={() => setMobileMenuOpen(false)}>
+            </button>
+            <button onClick={() => {}} className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground">
               <TrendingUp className="h-5 w-5" />
               Reportes
-            </Link>
+            </button>
             <Link href="#" className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground" onClick={() => setMobileMenuOpen(false)}>
               <Settings className="h-5 w-5" />
               Configuración

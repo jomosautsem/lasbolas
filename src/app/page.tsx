@@ -4,18 +4,21 @@ import { useState } from 'react';
 import { AppLayout } from '@/components/motel/app-layout';
 import DashboardKPIs from '@/components/motel/dashboard-kpis';
 import RoomGrid from '@/components/motel/room-grid';
-import { rooms as initialRooms, products, transactions as initialTransactions, expenses as initialExpenses, rates, roomTypes } from '@/lib/data';
+import { rooms as initialRooms, products, transactions as initialTransactions, expenses as initialExpenses, rates, roomTypes, vehicleHistory as initialVehicleHistory } from '@/lib/data';
 import { getCurrentShiftInfo } from '@/lib/datetime';
-import type { Room, Transaction, Rate, Expense } from '@/lib/types';
+import type { Room, Transaction, Rate, Expense, VehicleHistory } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { addHours } from 'date-fns';
 import AddExpenseModal from '@/components/motel/add-expense-modal';
+import VehicleHistoryPage from '@/components/motel/vehicle-history-page';
 
 export default function Home() {
   const [rooms, setRooms] = useState<Room[]>(initialRooms);
   const [transactions, setTransactions] = useState<Transaction[]>(initialTransactions);
   const [expenses, setExpenses] = useState<Expense[]>(initialExpenses);
+  const [vehicleHistory, setVehicleHistory] = useState<VehicleHistory[]>(initialVehicleHistory);
   const [isAddExpenseModalOpen, setIsAddExpenseModalOpen] = useState(false);
+  const [activeView, setActiveView] = useState('dashboard');
   const { toast } = useToast();
 
   const handleConfirmCheckIn = (roomToUpdate: Room, checkInData: any) => {
@@ -35,6 +38,21 @@ export default function Home() {
       setTransactions(currentTransactions => [...currentTransactions, newTransaction]);
     }
     
+    if (checkInData.plate && (checkInData.entryType === 'Auto' || checkInData.entryType === 'Moto')) {
+      const newVehicleHistoryEntry: VehicleHistory = {
+        id: Date.now(),
+        plate: checkInData.plate,
+        check_in_time: checkInData.startTime.toISOString(),
+        check_out_time: null,
+        room_id: roomToUpdate.id,
+        room_name: roomToUpdate.name,
+        entry_type: checkInData.entryType,
+        vehicle_brand: checkInData.marca,
+        vehicle_details: `${checkInData.modelo} ${checkInData.color}`,
+      };
+      setVehicleHistory(current => [...current, newVehicleHistoryEntry]);
+    }
+
     setRooms(currentRooms => 
       currentRooms.map(r => {
         if (r.id === roomToUpdate.id) {
@@ -102,6 +120,15 @@ export default function Home() {
         description: `La habitación ${room.name} ha sido puesta en limpieza.`,
       });
     }
+
+    setVehicleHistory(current => 
+      current.map(vh => {
+        if (vh.room_id === roomId && vh.check_out_time === null) {
+          return { ...vh, check_out_time: new Date().toISOString() };
+        }
+        return vh;
+      })
+    );
   };
 
   const handleFinishCleaning = (roomId: number) => {
@@ -132,7 +159,6 @@ export default function Home() {
     }
 
     const updatedRooms = rooms.map(r => {
-      // This is the room we are moving FROM. It becomes 'Limpieza'
       if (r.id === fromRoomId) {
         return {
           ...r,
@@ -151,11 +177,9 @@ export default function Home() {
           ac_controls: 0,
         };
       }
-
-      // This is the room we are moving TO. It gets all data from 'fromRoom'.
       if (r.id === toRoomId) {
         return {
-          ...r, // Keep toRoom's own properties like id, name, room_type_id
+          ...r, 
           status: 'Ocupada' as const,
           check_in_time: fromRoom.check_in_time,
           check_out_time: fromRoom.check_out_time,
@@ -171,12 +195,18 @@ export default function Home() {
           ac_controls: fromRoom.ac_controls,
         };
       }
-
-      // Any other room remains unchanged
       return r;
     });
-
     setRooms(updatedRooms);
+
+    setVehicleHistory(current => 
+      current.map(vh => {
+        if (vh.room_id === fromRoomId && vh.check_out_time === null) {
+          return { ...vh, room_id: toRoomId, room_name: toRoom.name };
+        }
+        return vh;
+      })
+    );
 
     toast({
       title: 'Cambio de Habitación Exitoso',
@@ -188,7 +218,6 @@ export default function Home() {
     const roomToUpdate = rooms.find(r => r.id === roomId);
     if (!roomToUpdate || !roomToUpdate.check_in_time) return;
 
-    // Create a new transaction for the difference
     const shiftInfo = getCurrentShiftInfo();
     const newTransaction: Transaction = {
       id: Date.now(),
@@ -203,13 +232,11 @@ export default function Home() {
     };
     setTransactions(currentTransactions => [...currentTransactions, newTransaction]);
 
-    // Update the room
     setRooms(currentRooms => 
       currentRooms.map(r => {
         if (r.id === roomId) {
           const checkInTime = new Date(r.check_in_time!);
           const newCheckOutTime = addHours(checkInTime, newRate.hours);
-
           return {
             ...r,
             rate_id: newRate.id,
@@ -232,7 +259,6 @@ export default function Home() {
     if (!roomToUpdate || !roomToUpdate.check_out_time) return;
 
     const extensionRate = rates.find(r => r.name === 'Extensión 3 Horas' && r.room_type_id === roomToUpdate.room_type_id);
-
     if (!extensionRate) {
       toast({
         variant: 'destructive',
@@ -242,7 +268,6 @@ export default function Home() {
       return;
     }
 
-    // Create a new transaction for the extension
     const shiftInfo = getCurrentShiftInfo();
     const newTransaction: Transaction = {
       id: Date.now(),
@@ -257,13 +282,11 @@ export default function Home() {
     };
     setTransactions(currentTransactions => [...currentTransactions, newTransaction]);
 
-    // Update the room
     setRooms(currentRooms => 
       currentRooms.map(r => {
         if (r.id === roomId) {
           const currentCheckOutTime = new Date(r.check_out_time!);
           const newCheckOutTime = addHours(currentCheckOutTime, extensionRate.hours);
-
           return {
             ...r,
             check_out_time: newCheckOutTime.toISOString(),
@@ -371,28 +394,33 @@ export default function Home() {
 
   return (
     <>
-      <AppLayout onAddExpenseClick={() => setIsAddExpenseModalOpen(true)}>
-        <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-          <DashboardKPIs
-            rooms={rooms}
-            transactions={transactions}
-            expenses={expenses}
-          />
-          <RoomGrid 
-            rooms={rooms} 
-            rates={rates} 
-            roomTypes={roomTypes}
-            onConfirmCheckIn={handleConfirmCheckIn}
-            onUpdateControls={handleUpdateControls}
-            onReleaseRoom={handleReleaseRoom}
-            onFinishCleaning={handleFinishCleaning}
-            onRoomChange={handleChangeRoom}
-            onAdjustPackage={handleAdjustPackage}
-            onExtendStay={handleExtendStay}
-            onAddPerson={handleAddPerson}
-            onRemovePerson={handleRemovePerson}
-          />
-        </div>
+      <AppLayout onAddExpenseClick={() => setIsAddExpenseModalOpen(true)} activeView={activeView} setActiveView={setActiveView}>
+        {activeView === 'dashboard' && (
+          <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
+            <DashboardKPIs
+              rooms={rooms}
+              transactions={transactions}
+              expenses={expenses}
+            />
+            <RoomGrid 
+              rooms={rooms} 
+              rates={rates} 
+              roomTypes={roomTypes}
+              onConfirmCheckIn={handleConfirmCheckIn}
+              onUpdateControls={handleUpdateControls}
+              onReleaseRoom={handleReleaseRoom}
+              onFinishCleaning={handleFinishCleaning}
+              onRoomChange={handleChangeRoom}
+              onAdjustPackage={handleAdjustPackage}
+              onExtendStay={handleExtendStay}
+              onAddPerson={handleAddPerson}
+              onRemovePerson={handleRemovePerson}
+            />
+          </div>
+        )}
+        {activeView === 'vehicles' && (
+          <VehicleHistoryPage vehicleHistory={vehicleHistory} />
+        )}
       </AppLayout>
       <AddExpenseModal
         isOpen={isAddExpenseModalOpen}

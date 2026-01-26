@@ -38,7 +38,6 @@ export interface Rate {
   price: number;
   room_type_id: number;
   is_extra_hour: boolean;
-  color_class?: string;
 }
 
 export interface Product {
@@ -106,4 +105,8 @@ export interface VehicleHistory {
   check_in_time: string;
   check_out_time: string | null;
   room_id: number;
+  room_name: string;
+  entry_type?: EntryType;
+  vehicle_brand?: string;
+  vehicle_details?: string;
 }

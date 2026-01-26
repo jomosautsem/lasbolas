@@ -17,8 +17,9 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { Logo } from '@/components/icons';
+import { cn } from '@/lib/utils';
 
-export function AppSidebar({ onAddExpenseClick }: { onAddExpenseClick: () => void; }) {
+export function AppSidebar({ onAddExpenseClick, activeView, setActiveView }: { onAddExpenseClick: () => void; activeView: string; setActiveView: (view: string) => void; }) {
   return (
     <aside className="fixed inset-y-0 left-0 z-10 hidden w-14 flex-col border-r bg-background sm:flex">
       <TooltipProvider>
@@ -32,37 +33,40 @@ export function AppSidebar({ onAddExpenseClick }: { onAddExpenseClick: () => voi
           </Link>
           <Tooltip>
             <TooltipTrigger asChild>
-              <Link
-                href="#"
-                className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8 bg-accent text-accent-foreground"
+              <button
+                onClick={() => setActiveView('dashboard')}
+                className={cn(
+                  "flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8",
+                  activeView === 'dashboard' && 'bg-accent text-accent-foreground'
+                )}
               >
                 <Home className="h-5 w-5" />
                 <span className="sr-only">Dashboard</span>
-              </Link>
+              </button>
             </TooltipTrigger>
             <TooltipContent side="right">Dashboard</TooltipContent>
           </Tooltip>
           <Tooltip>
             <TooltipTrigger asChild>
-              <Link
-                href="#"
+              <button
+                 onClick={() => setActiveView('dashboard')}
                 className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8"
               >
                 <BedDouble className="h-5 w-5" />
                 <span className="sr-only">Habitaciones</span>
-              </Link>
+              </button>
             </TooltipTrigger>
             <TooltipContent side="right">Habitaciones</TooltipContent>
           </Tooltip>
           <Tooltip>
             <TooltipTrigger asChild>
-              <Link
-                href="#"
+              <button
+                onClick={() => {}}
                 className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8"
               >
                 <Package className="h-5 w-5" />
                 <span className="sr-only">Inventario</span>
-              </Link>
+              </button>
             </TooltipTrigger>
             <TooltipContent side="right">Inventario</TooltipContent>
           </Tooltip>
@@ -80,25 +84,28 @@ export function AppSidebar({ onAddExpenseClick }: { onAddExpenseClick: () => voi
           </Tooltip>
           <Tooltip>
             <TooltipTrigger asChild>
-              <Link
-                href="#"
-                className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8"
+              <button
+                onClick={() => setActiveView('vehicles')}
+                className={cn(
+                  "flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8",
+                  activeView === 'vehicles' && 'bg-accent text-accent-foreground'
+                )}
               >
                 <Car className="h-5 w-5" />
                 <span className="sr-only">Vehículos</span>
-              </Link>
+              </button>
             </TooltipTrigger>
             <TooltipContent side="right">Vehículos</TooltipContent>
           </Tooltip>
            <Tooltip>
             <TooltipTrigger asChild>
-              <Link
-                href="#"
+              <button
+                onClick={() => {}}
                 className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8"
               >
                 <TrendingUp className="h-5 w-5" />
                 <span className="sr-only">Reportes</span>
-              </Link>
+              </button>
             </TooltipTrigger>
             <TooltipContent side="right">Reportes</TooltipContent>
           </Tooltip>
