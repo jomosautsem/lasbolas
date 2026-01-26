@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { AppLayout } from '@/components/motel/app-layout';
 import DashboardKPIs from '@/components/motel/dashboard-kpis';
 import RoomGrid from '@/components/motel/room-grid';
@@ -8,7 +8,7 @@ import { rooms as initialRooms, products as initialProducts, transactions as ini
 import { getCurrentShiftInfo } from '@/lib/datetime';
 import type { Room, Transaction, Rate, Expense, VehicleHistory, Product, Employee, RoomType } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-import { addHours } from 'date-fns';
+import { addHours, differenceInMinutes } from 'date-fns';
 import AddExpenseModal from '@/components/motel/add-expense-modal';
 import VehicleHistoryPage from '@/components/motel/vehicle-history-page';
 import ConsumptionPage from '@/components/motel/consumption-page';
@@ -29,6 +29,67 @@ export default function Home() {
   const [isAddExpenseModalOpen, setIsAddExpenseModalOpen] = useState(false);
   const [activeView, setActiveView] = useState('dashboard');
   const { toast } = useToast();
+
+  // New state and ref for alarm
+  const [expiringRoomIds, setExpiringRoomIds] = useState<number[]>([]);
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const [hasInteracted, setHasInteracted] = useState(false);
+
+  // Effect to detect expiring rooms
+  useEffect(() => {
+    const checkRooms = () => {
+      const now = new Date();
+      const expiringIds = rooms
+        .filter(room => room.status === 'Ocupada' && room.check_out_time)
+        .filter(room => {
+          const timeLeft = differenceInMinutes(new Date(room.check_out_time!), now);
+          return timeLeft <= 10 && timeLeft >= 0;
+        })
+        .map(room => room.id);
+      
+      // Only update state if the array of IDs has actually changed.
+      setExpiringRoomIds(currentIds => {
+        const sortedNewIds = [...expiringIds].sort();
+        const sortedCurrentIds = [...currentIds].sort();
+        if (JSON.stringify(sortedNewIds) !== JSON.stringify(sortedCurrentIds)) {
+          return expiringIds;
+        }
+        return currentIds;
+      });
+    };
+
+    const intervalId = setInterval(checkRooms, 30 * 1000); // Check every 30 seconds
+    checkRooms(); // Initial check
+
+    return () => clearInterval(intervalId);
+  }, [rooms]);
+
+  // Effect to play the alarm sound
+  useEffect(() => {
+    if (expiringRoomIds.length > 0 && hasInteracted) {
+      const playAlarm = () => {
+        audioRef.current?.play().catch(error => {
+          console.error("Error playing alarm sound:", error);
+          // This catch is for browsers that might still block it.
+        });
+      };
+
+      playAlarm(); // Play immediately when a room starts expiring
+      const alarmIntervalId = setInterval(playAlarm, 3 * 60 * 1000); // Repeat every 3 minutes
+
+      return () => clearInterval(alarmIntervalId);
+    }
+  }, [expiringRoomIds, hasInteracted]);
+
+  const handleInteraction = () => {
+    if (!hasInteracted) {
+      setHasInteracted(true);
+      toast({
+        title: "Sonido de Alertas Activado",
+        description: "Recibirá una notificación sonora para habitaciones a punto de vencer.",
+      });
+    }
+  };
 
   const handleConfirmCheckIn = (roomToUpdate: Room, checkInData: any) => {
     if (checkInData.selectedRate?.price > 0) {
@@ -571,7 +632,7 @@ export default function Home() {
 
 
   return (
-    <>
+    <div onClickCapture={handleInteraction}>
       <AppLayout onAddExpenseClick={() => setIsAddExpenseModalOpen(true)} activeView={activeView} setActiveView={setActiveView}>
         {activeView === 'dashboard' && (
           <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
@@ -654,6 +715,7 @@ export default function Home() {
         onOpenChange={setIsAddExpenseModalOpen}
         onConfirm={handleAddExpense}
       />
-    </>
+      <audio ref={audioRef} src="/alarm.mp3" preload="auto" />
+    </div>
   );
 }
