@@ -10,7 +10,7 @@ import {
   LogOut, SlidersHorizontal, ArrowRightLeft, TrendingUp, PlusCircle, MinusCircle, UserPlus, UserMinus, Edit, X, DollarSign, Tv, Wind
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { Room, Rate, RoomType } from '@/lib/types';
+import type { Room, Rate, RoomType, Transaction } from '@/lib/types';
 import { formatToMexicanTime, formatToMexicanDate } from '@/lib/datetime';
 import { MotorcycleIcon } from '@/components/icons';
 import ControlsModal from './controls-modal';
@@ -20,12 +20,14 @@ import AdjustPackageModal from './adjust-package-modal';
 import ExtendStayModal from './extend-stay-modal';
 import AddPersonModal from './add-person-modal';
 import RemovePersonModal from './remove-person-modal';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface RoomCardProps {
   room: Room;
   allRooms: Room[];
   rates: Rate[];
   roomTypes: RoomType[];
+  allTransactions: Transaction[];
   onOccupy: (room: Room) => void;
   onUpdateControls: (roomId: number, tvControls: number, acControls: number) => void;
   onReleaseRoom: (roomId: number) => void;
@@ -54,7 +56,7 @@ const ActionButton = ({ icon: Icon, label, colorClass = '', className = '', ...p
 );
 
 
-export function RoomCard({ room, allRooms, rates, roomTypes, onOccupy, onUpdateControls, onReleaseRoom, onFinishCleaning, onRoomChange, onAdjustPackage, onExtendStay, onAddPerson, onRemovePerson }: RoomCardProps) {
+export function RoomCard({ room, allRooms, rates, roomTypes, allTransactions, onOccupy, onUpdateControls, onReleaseRoom, onFinishCleaning, onRoomChange, onAdjustPackage, onExtendStay, onAddPerson, onRemovePerson }: RoomCardProps) {
   const [isClient, setIsClient] = useState(false);
   const [isExpiredClient, setIsExpiredClient] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -66,9 +68,24 @@ export function RoomCard({ room, allRooms, rates, roomTypes, onOccupy, onUpdateC
   const [isAddPersonModalOpen, setIsAddPersonModalOpen] = useState(false);
   const [isRemovePersonModalOpen, setIsRemovePersonModalOpen] = useState(false);
 
+  const isOccupied = room.status === 'Ocupada';
+
+  const stayTransactions = useMemo(() => {
+    if (!isOccupied || !room.check_in_time) return [];
+    
+    return allTransactions
+      .filter(t => {
+        if (t.room_id !== room.id) return false;
+        const transactionTime = new Date(t.timestamp);
+        const checkInTime = new Date(room.check_in_time!);
+        return transactionTime >= checkInTime;
+      })
+      .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+  }, [allTransactions, room.id, room.check_in_time, isOccupied]);
+
   useEffect(() => {
     setIsClient(true);
-    if (room.status === 'Ocupada' && room.check_out_time) {
+    if (isOccupied && room.check_out_time) {
       const checkExpired = () => {
         const expired = new Date(room.check_out_time!) < new Date();
         setIsExpiredClient(expired);
@@ -77,7 +94,7 @@ export function RoomCard({ room, allRooms, rates, roomTypes, onOccupy, onUpdateC
       const timerId = setInterval(checkExpired, 60000); // Check every minute
       return () => clearInterval(timerId);
     }
-  }, [room.status, room.check_out_time]);
+  }, [isOccupied, room.check_out_time]);
 
   const handleReleaseClick = () => {
     if (room.tv_controls > 0 || room.ac_controls > 0) {
@@ -100,7 +117,6 @@ export function RoomCard({ room, allRooms, rates, roomTypes, onOccupy, onUpdateC
     return rate.hours >= 8;
   }, [rate, extensionRate]);
 
-  const isOccupied = room.status === 'Ocupada';
   const isExpired = isClient && isExpiredClient;
   const effectiveStatus = isExpired ? 'Vencida' : room.status;
   
@@ -153,14 +169,20 @@ export function RoomCard({ room, allRooms, rates, roomTypes, onOccupy, onUpdateC
           isMenuOpen ? (
             <div className="w-full text-sm">
                 <div className={cn("rounded-lg p-2 mb-3", contentBgClass)}>
-                    <div className="flex justify-between items-center text-xs opacity-80 mb-1">
-                        <span className="flex items-center gap-1 font-semibold"><DollarSign className="h-4 w-4" /> CUENTA</span>
+                    <div className="flex justify-between items-center text-xs opacity-80 mb-2">
+                        <span className="flex items-center gap-1 font-semibold"><DollarSign className="h-4 w-4" /> ESTADO DE CUENTA</span>
                         <span>{isClient && room.check_in_time ? formatToMexicanDate(room.check_in_time) : ''}</span>
                     </div>
-                    <div className="flex justify-between items-center font-medium py-1">
-                        <span><Bed className="inline-block mr-2 h-4 w-4" />Hospedaje Inicial</span>
-                        <span>${rate?.price.toFixed(2)}</span>
-                    </div>
+                    <ScrollArea className="h-24 pr-3">
+                      <div className="space-y-1 text-xs">
+                          {stayTransactions.map(t => (
+                            <div key={t.id} className="flex justify-between items-center">
+                                <span className="truncate pr-2">{t.description}</span>
+                                <span className="font-medium whitespace-nowrap">${t.amount.toFixed(2)}</span>
+                            </div>
+                          ))}
+                      </div>
+                    </ScrollArea>
                     <Separator className={cn("my-2", separatorClass)} />
                     <div className="flex justify-between items-center font-bold text-lg">
                         <span>TOTAL</span>
@@ -182,57 +204,28 @@ export function RoomCard({ room, allRooms, rates, roomTypes, onOccupy, onUpdateC
             </div>
           ) : (
            <div className="w-full rounded-lg p-3 space-y-2 text-sm bg-black/10">
-            <div className="flex justify-between items-center">
-              <div className="flex items-center gap-2 font-semibold">
-                <PersonStanding className="h-5 w-5" />
-                <span>{room.customer_name}</span>
-              </div>
-              <Badge variant="outline" className="flex items-center gap-1 border-current/50 bg-transparent">
-                <Users className="h-4 w-4" />
-                {room.persons}
-              </Badge>
+            <div className="flex justify-between items-center font-bold">
+                <span>Hospedaje</span>
+                <span>${rate?.price.toFixed(2) || '0.00'}</span>
             </div>
 
             <div className="text-center rounded-md bg-black/10 p-2">
-              <div className="text-xs font-semibold opacity-80">HORARIO</div>
-              <div className="flex items-center justify-center gap-2 font-mono text-base">
-                {isClient && room.check_in_time && room.check_out_time ? (
-                  <>
-                    <span>{formatToMexicanTime(room.check_in_time)}</span>
-                    <ArrowRight className="h-4 w-4" />
-                    <span>{formatToMexicanTime(room.check_out_time)}</span>
-                  </>
-                ) : (
-                  <span>--:-- → --:--</span>
-                )}
+              <div className="text-xs font-semibold opacity-80">HORA DE SALIDA</div>
+              <div className="flex items-center justify-center gap-2 font-mono text-xl">
+                {isClient && room.check_out_time ? formatToMexicanTime(room.check_out_time) : '--:--'}
               </div>
             </div>
             
             <Separator className={cn("my-1", separatorClass)} />
 
-            {room.entry_type && room.entry_type !== 'Pie' && (
-              <div className="flex justify-between items-center">
-                <div className="flex items-center gap-2">
-                  <VehicleIcon className="h-5 w-5" />
-                  <div>
-                    <div className="font-semibold">{room.entry_type}</div>
-                    <div className="text-xs opacity-80">{room.vehicle_brand} {room.vehicle_details}</div>
-                  </div>
-                </div>
-                <Badge variant="outline" className="border-current/50 bg-transparent">{room.vehicle_plate || 'SIN PLACA'}</Badge>
-              </div>
-            )}
-            
-            <div className="flex justify-between items-center text-xs opacity-80 pt-1">
-                <span className="flex items-center gap-1"><Tv className="h-4 w-4"/> {room.tv_controls}</span>
-                <span className="flex items-center gap-1"><Wind className="h-4 w-4"/> {room.ac_controls}</span>
-            </div>
-
-            <Separator className={cn("my-1", separatorClass)} />
-
-            <div className="flex justify-between items-center text-base font-bold">
-              <span>HOSPEDAJE</span>
-              <span>${rate?.price.toFixed(2)}</span>
+            <div className="flex justify-between items-center text-xs opacity-80">
+                <span className="flex items-center gap-1.5 font-semibold">
+                    {room.entry_type && room.entry_type !== 'Pie' 
+                        ? <VehicleIcon className="h-4 w-4"/> 
+                        : <PersonStanding className="h-4 w-4" />}
+                    {room.vehicle_plate || room.customer_name}
+                </span>
+                <span className="flex items-center gap-1.5 font-semibold"><Users className="h-4 w-4"/>{room.persons}</span>
             </div>
            </div>
           )

@@ -584,6 +584,7 @@ export default function Home() {
               rooms={rooms} 
               rates={rates} 
               roomTypes={roomTypes}
+              transactions={transactions}
               onConfirmCheckIn={handleConfirmCheckIn}
               onUpdateControls={handleUpdateControls}
               onReleaseRoom={handleReleaseRoom}

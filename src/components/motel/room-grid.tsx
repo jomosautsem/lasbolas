@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import type { Room, Rate, RoomType } from '@/lib/types';
+import type { Room, Rate, RoomType, Transaction } from '@/lib/types';
 import { RoomCard } from './room-card';
 import CheckInModal from './check-in-modal';
 
@@ -8,6 +8,7 @@ interface RoomGridProps {
   rooms: Room[];
   rates: Rate[];
   roomTypes: RoomType[];
+  transactions: Transaction[];
   onConfirmCheckIn: (room: Room, data: any) => void;
   onUpdateControls: (roomId: number, tvControls: number, acControls: number) => void;
   onReleaseRoom: (roomId: number) => void;
@@ -19,7 +20,7 @@ interface RoomGridProps {
   onRemovePerson: (roomId: number) => void;
 }
 
-export default function RoomGrid({ rooms, rates, roomTypes, onConfirmCheckIn, onUpdateControls, onReleaseRoom, onFinishCleaning, onRoomChange, onAdjustPackage, onExtendStay, onAddPerson, onRemovePerson }: RoomGridProps) {
+export default function RoomGrid({ rooms, rates, roomTypes, transactions, onConfirmCheckIn, onUpdateControls, onReleaseRoom, onFinishCleaning, onRoomChange, onAdjustPackage, onExtendStay, onAddPerson, onRemovePerson }: RoomGridProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
 
@@ -39,6 +40,7 @@ export default function RoomGrid({ rooms, rates, roomTypes, onConfirmCheckIn, on
             onOccupy={handleOccupyClick}
             rates={rates}
             roomTypes={roomTypes}
+            allTransactions={transactions}
             onUpdateControls={onUpdateControls}
             onReleaseRoom={onReleaseRoom}
             onFinishCleaning={onFinishCleaning}
