@@ -98,7 +98,7 @@ export function RoomCard({ room, rates, roomTypes, onOccupy, onUpdateControls, o
 
   return (
     <>
-    <Card className={cn('rounded-2xl shadow-lg transition-all hover:shadow-xl flex flex-col', cardColorClass, cardTextColorClass)}>
+    <Card className={cn('rounded-2xl shadow-lg transition-all hover:shadow-xl flex flex-col', cardColorClass)}>
       <CardHeader className="flex flex-row items-start justify-between space-y-0 p-3">
         <div>
           <CardTitle className="text-xl font-bold font-headline">{room.name.replace('Habitación ', 'Hab ')}</CardTitle>
