@@ -4,9 +4,9 @@ import { useState } from 'react';
 import { AppLayout } from '@/components/motel/app-layout';
 import DashboardKPIs from '@/components/motel/dashboard-kpis';
 import RoomGrid from '@/components/motel/room-grid';
-import { rooms as initialRooms, products as initialProducts, transactions as initialTransactions, expenses as initialExpenses, rates, roomTypes, vehicleHistory as initialVehicleHistory, employees as initialEmployees } from '@/lib/data';
+import { rooms as initialRooms, products as initialProducts, transactions as initialTransactions, expenses as initialExpenses, rates as initialRates, roomTypes as initialRoomTypes, vehicleHistory as initialVehicleHistory, employees as initialEmployees } from '@/lib/data';
 import { getCurrentShiftInfo } from '@/lib/datetime';
-import type { Room, Transaction, Rate, Expense, VehicleHistory, Product, Employee } from '@/lib/types';
+import type { Room, Transaction, Rate, Expense, VehicleHistory, Product, Employee, RoomType } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { addHours } from 'date-fns';
 import AddExpenseModal from '@/components/motel/add-expense-modal';
@@ -15,14 +15,17 @@ import ConsumptionPage from '@/components/motel/consumption-page';
 import EmployeesPage from '@/components/motel/employees-page';
 import ReportsPage from '@/components/motel/reports-page';
 import OccupancyMonitorPage from '@/components/motel/occupancy-monitor-page';
+import SettingsPage from '@/components/motel/settings-page';
 
 export default function Home() {
   const [rooms, setRooms] = useState<Room[]>(initialRooms);
+  const [products, setProducts] = useState<Product[]>(initialProducts);
   const [transactions, setTransactions] = useState<Transaction[]>(initialTransactions);
   const [expenses, setExpenses] = useState<Expense[]>(initialExpenses);
   const [vehicleHistory, setVehicleHistory] = useState<VehicleHistory[]>(initialVehicleHistory);
-  const [products, setProducts] = useState<Product[]>(initialProducts);
   const [employees, setEmployees] = useState<Employee[]>(initialEmployees);
+  const [rates, setRates] = useState<Rate[]>(initialRates);
+  const [roomTypes, setRoomTypes] = useState<RoomType[]>(initialRoomTypes);
   const [isAddExpenseModalOpen, setIsAddExpenseModalOpen] = useState(false);
   const [activeView, setActiveView] = useState('dashboard');
   const { toast } = useToast();
@@ -506,6 +509,64 @@ export default function Home() {
     });
   };
 
+  const handleAddRate = (newRateData: Omit<Rate, 'id'>) => {
+    setRates(current => {
+      const newRate: Rate = {
+        id: current.length > 0 ? Math.max(...current.map(r => r.id)) + 1 : 1,
+        ...newRateData,
+      };
+      return [...current, newRate];
+    });
+    toast({ title: 'Tarifa Creada', description: `La tarifa "${newRateData.name}" ha sido creada.` });
+  };
+
+  const handleUpdateRate = (updatedRate: Rate) => {
+    setRates(current =>
+      current.map(r => (r.id === updatedRate.id ? updatedRate : r))
+    );
+    toast({ title: 'Tarifa Actualizada', description: `La tarifa "${updatedRate.name}" ha sido actualizada.` });
+  };
+
+  const handleDeleteRate = (rateId: number) => {
+    const rateName = rates.find(r => r.id === rateId)?.name || '';
+    setRates(current => current.filter(r => r.id !== rateId));
+    toast({ variant: 'destructive', title: 'Tarifa Eliminada', description: `La tarifa "${rateName}" ha sido eliminada.` });
+  };
+
+  const handleAddRoomType = (newRoomTypeData: Omit<RoomType, 'id'>) => {
+    setRoomTypes(current => {
+      const newRoomType: RoomType = {
+        id: current.length > 0 ? Math.max(...current.map(rt => rt.id)) + 1 : 1,
+        ...newRoomTypeData,
+      };
+      return [...current, newRoomType];
+    });
+    toast({ title: 'Tipo de Habitación Creado', description: `El tipo "${newRoomTypeData.name}" ha sido creado.` });
+  };
+
+  const handleUpdateRoomType = (updatedRoomType: RoomType) => {
+    setRoomTypes(current =>
+      current.map(rt => (rt.id === updatedRoomType.id ? updatedRoomType : rt))
+    );
+    toast({ title: 'Tipo de Habitación Actualizado', description: `El tipo "${updatedRoomType.name}" ha sido actualizado.` });
+  };
+
+  const handleDeleteRoomType = (roomTypeId: number) => {
+    const isUsed = rooms.some(r => r.room_type_id === roomTypeId);
+    if (isUsed) {
+      toast({
+        variant: 'destructive',
+        title: 'Error al Eliminar',
+        description: 'No se puede eliminar un tipo de habitación que está en uso.'
+      });
+      return;
+    }
+    const roomTypeName = roomTypes.find(rt => rt.id === roomTypeId)?.name || '';
+    setRoomTypes(current => current.filter(rt => rt.id !== roomTypeId));
+    toast({ variant: 'destructive', title: 'Tipo de Habitación Eliminado', description: `El tipo "${roomTypeName}" ha sido eliminado.` });
+  };
+
+
   const occupiedRooms = rooms.filter(r => r.status === 'Ocupada');
 
 
@@ -571,6 +632,19 @@ export default function Home() {
             rooms={rooms}
             transactions={transactions}
             expenses={expenses}
+          />
+        )}
+        {activeView === 'settings' && (
+          <SettingsPage
+            rooms={rooms}
+            rates={rates}
+            roomTypes={roomTypes}
+            onAddRate={handleAddRate}
+            onUpdateRate={handleUpdateRate}
+            onDeleteRate={handleDeleteRate}
+            onAddRoomType={handleAddRoomType}
+            onUpdateRoomType={handleUpdateRoomType}
+            onDeleteRoomType={handleDeleteRoomType}
           />
         )}
       </AppLayout>
