@@ -39,6 +39,9 @@ import { getCurrentShiftInfo, formatToMexicanDate, type ShiftInfo } from '@/lib/
 import { Logo } from '../icons';
 import { useEffect, useState } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { cn } from '@/lib/utils';
+import type { Shift } from '@/lib/types';
+
 
 const ShiftIcon = ({ shift }: { shift: 'Matutino' | 'Vespertino' | 'Nocturno' }) => {
   switch (shift) {
@@ -52,6 +55,13 @@ const ShiftIcon = ({ shift }: { shift: 'Matutino' | 'Vespertino' | 'Nocturno' })
       return <Clock className="h-4 w-4" />;
   }
 };
+
+const shiftColors: Record<Shift, string> = {
+  Matutino: 'bg-orange-200 text-orange-800 border-orange-300',
+  Vespertino: 'bg-pink-200 text-pink-800 border-pink-300',
+  Nocturno: 'bg-yellow-200 text-yellow-800 border-yellow-300',
+};
+
 
 export function AppHeader({ onAddExpenseClick, activeView, setActiveView }: { onAddExpenseClick: () => void; activeView: string; setActiveView: (view: string) => void; }) {
   const [shiftInfo, setShiftInfo] = useState<ShiftInfo | null>(null);
@@ -143,7 +153,7 @@ export function AppHeader({ onAddExpenseClick, activeView, setActiveView }: { on
       <div className="flex items-center gap-2">
          <h1 className="text-xl font-semibold md:text-2xl font-headline">{title}</h1>
          {shiftInfo ? (
-           <Badge variant="outline" className="flex items-center gap-2">
+           <Badge variant="outline" className={cn("flex items-center gap-2", shiftColors[shiftInfo.shift])}>
               <ShiftIcon shift={shiftInfo.shift} />
               Turno {shiftInfo.shift} - {formatToMexicanDate(shiftInfo.operationalDate)}
            </Badge>
