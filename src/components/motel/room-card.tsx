@@ -176,11 +176,9 @@ export function RoomCard({ room, allRooms, rates, roomTypes, allTransactions, on
                     <ScrollArea className="h-24 pr-3">
                       <div className="space-y-1 text-xs">
                           {stayTransactions.map(t => (
-                            <div key={t.id} className="flex justify-between items-center gap-2">
-                                <div className="flex-1 min-w-0">
-                                    <p className="truncate">{t.description}</p>
-                                </div>
-                                <span className="font-medium whitespace-nowrap">${t.amount.toFixed(2)}</span>
+                            <div key={t.id} className="grid grid-cols-[1fr_auto] items-center gap-x-2">
+                                <p className="truncate">{t.description}</p>
+                                <span className="font-medium whitespace-nowrap text-right">${t.amount.toFixed(2)}</span>
                             </div>
                           ))}
                       </div>
