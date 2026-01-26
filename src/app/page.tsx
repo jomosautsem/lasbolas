@@ -9,28 +9,39 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Logo } from '@/components/icons';
 import { Eye, EyeOff } from 'lucide-react';
+import { supabase } from '@/lib/supabaseClient';
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState('motellasbolas@gmail.com');
+  const [password, setPassword] = useState('j5s82QSM.motel');
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (email === 'motellasbolas@gmail.com' && password === 'j5s82QSM.motel') {
+    setIsLoading(true);
+
+    const { error } = await supabase.auth.signInWithPassword({
+      email: email,
+      password: password,
+    });
+
+    setIsLoading(false);
+
+    if (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Error de Autenticación',
+        description: error.message || 'El correo o la contraseña son incorrectos.',
+      });
+    } else {
       toast({
         title: 'Inicio de Sesión Exitoso',
         description: 'Bienvenido al sistema.',
       });
       router.push('/dashboard');
-    } else {
-      toast({
-        variant: 'destructive',
-        title: 'Error de Autenticación',
-        description: 'El correo o la contraseña son incorrectos.',
-      });
     }
   };
 
@@ -56,6 +67,7 @@ export default function LoginPage() {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  disabled={isLoading}
                 />
               </div>
               <div className="grid gap-2">
@@ -69,6 +81,7 @@ export default function LoginPage() {
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
+                    disabled={isLoading}
                   />
                   <Button
                     type="button"
@@ -76,14 +89,15 @@ export default function LoginPage() {
                     size="icon"
                     className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7"
                     onClick={() => setShowPassword(!showPassword)}
+                    disabled={isLoading}
                   >
                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     <span className="sr-only">{showPassword ? 'Hide password' : 'Show password'}</span>
                   </Button>
                 </div>
               </div>
-              <Button type="submit" className="w-full">
-                Ingresar
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading ? 'Ingresando...' : 'Ingresar'}
               </Button>
             </div>
           </form>

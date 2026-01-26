@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { AppLayout } from '@/components/motel/app-layout';
 import DashboardKPIs from '@/components/motel/dashboard-kpis';
 import RoomGrid from '@/components/motel/room-grid';
@@ -16,9 +17,14 @@ import ReportsPage from '@/components/motel/reports-page';
 import OccupancyMonitorPage from '@/components/motel/occupancy-monitor-page';
 import SettingsPage from '@/components/motel/settings-page';
 import { supabase } from '@/lib/supabaseClient';
-import type { RealtimeChannel } from '@supabase/supabase-js';
+import type { RealtimeChannel, User } from '@supabase/supabase-js';
+import Loading from '../loading';
 
 export default function DashboardPage() {
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+  const router = useRouter();
+
   const [rooms, setRooms] = useState<Room[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -35,11 +41,39 @@ export default function DashboardPage() {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [hasInteracted, setHasInteracted] = useState(false);
 
+  useEffect(() => {
+    const checkUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        router.push('/');
+      } else {
+        setUser(session.user);
+        setLoading(false);
+      }
+    };
+
+    checkUser();
+
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_OUT') {
+        router.push('/');
+      } else if (session) {
+        setUser(session.user);
+      }
+    });
+
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
+  }, [router]);
+
   const showToast = useCallback((...args: Parameters<typeof toast>) => {
     toast(...args);
   }, [toast]);
 
   useEffect(() => {
+    if (loading) return;
+
     const tableSetterMap = {
       rooms: setRooms,
       products: setProducts,
@@ -78,7 +112,7 @@ export default function DashboardPage() {
     return () => {
       channels.forEach(channel => supabase.removeChannel(channel));
     };
-  }, [showToast]);
+  }, [showToast, loading]);
   
 
   useEffect(() => {
@@ -583,6 +617,9 @@ export default function DashboardPage() {
 
   const occupiedRooms = rooms.filter(r => r.status === 'Ocupada');
 
+  if (loading) {
+    return <Loading />;
+  }
 
   return (
     <div onClickCapture={handleInteraction}>

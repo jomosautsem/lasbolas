@@ -41,6 +41,8 @@ import { useEffect, useState } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import type { Shift } from '@/lib/types';
+import { supabase } from '@/lib/supabaseClient';
+import { useRouter } from 'next/navigation';
 
 
 const ShiftIcon = ({ shift }: { shift: 'Matutino' | 'Vespertino' | 'Nocturno' }) => {
@@ -66,6 +68,12 @@ const shiftColors: Record<Shift, string> = {
 export function AppHeader({ onAddExpenseClick, activeView, setActiveView }: { onAddExpenseClick: () => void; activeView: string; setActiveView: (view: string) => void; }) {
   const [shiftInfo, setShiftInfo] = useState<ShiftInfo | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    router.push('/');
+  };
 
   useEffect(() => {
     setShiftInfo(getCurrentShiftInfo());
@@ -186,7 +194,7 @@ export function AppHeader({ onAddExpenseClick, activeView, setActiveView }: { on
           <DropdownMenuItem>Configuración</DropdownMenuItem>
           <DropdownMenuItem>Soporte</DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem>Cerrar Sesión</DropdownMenuItem>
+          <DropdownMenuItem onClick={handleLogout}>Cerrar Sesión</DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
     </header>
