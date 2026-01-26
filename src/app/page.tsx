@@ -4,16 +4,33 @@ import { useState } from 'react';
 import { AppLayout } from '@/components/motel/app-layout';
 import DashboardKPIs from '@/components/motel/dashboard-kpis';
 import RoomGrid from '@/components/motel/room-grid';
-import { rooms as initialRooms, products, transactions, expenses, rates, roomTypes } from '@/lib/data';
+import { rooms as initialRooms, products, transactions as initialTransactions, expenses, rates, roomTypes } from '@/lib/data';
 import { getCurrentShiftInfo } from '@/lib/datetime';
-import type { Room } from '@/lib/types';
+import type { Room, Transaction } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 
 export default function Home() {
   const [rooms, setRooms] = useState<Room[]>(initialRooms);
+  const [transactions, setTransactions] = useState<Transaction[]>(initialTransactions);
   const { toast } = useToast();
 
   const handleConfirmCheckIn = (roomToUpdate: Room, checkInData: any) => {
+    if (checkInData.selectedRate?.price > 0) {
+      const shiftInfo = getCurrentShiftInfo();
+      const newTransaction: Transaction = {
+        id: Date.now(),
+        room_id: roomToUpdate.id,
+        amount: checkInData.selectedRate.price,
+        type: 'Hospedaje Inicial',
+        timestamp: new Date().toISOString(),
+        shift: shiftInfo.shift,
+        description: `Renta ${checkInData.selectedRate.name} - Hab ${roomToUpdate.name}`,
+        turno_calculado: shiftInfo.shift,
+        fecha_operativa: shiftInfo.operationalDate.toISOString().split('T')[0],
+      };
+      setTransactions(currentTransactions => [...currentTransactions, newTransaction]);
+    }
+    
     setRooms(currentRooms => 
       currentRooms.map(r => {
         if (r.id === roomToUpdate.id) {
@@ -83,6 +100,23 @@ export default function Home() {
     }
   };
 
+  const handleFinishCleaning = (roomId: number) => {
+    setRooms(currentRooms =>
+      currentRooms.map(r => {
+        if (r.id === roomId) {
+          return { ...r, status: 'Disponible' };
+        }
+        return r;
+      })
+    );
+    const room = rooms.find(r => r.id === roomId);
+    if(room) {
+      toast({
+        title: 'Habitación Lista',
+        description: `La habitación ${room.name} ahora está disponible.`,
+      });
+    }
+  };
 
   return (
     <AppLayout>
@@ -99,6 +133,7 @@ export default function Home() {
           onConfirmCheckIn={handleConfirmCheckIn}
           onUpdateControls={handleUpdateControls}
           onReleaseRoom={handleReleaseRoom}
+          onFinishCleaning={handleFinishCleaning}
         />
       </div>
     </AppLayout>

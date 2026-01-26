@@ -23,6 +23,7 @@ interface RoomCardProps {
   onOccupy: (room: Room) => void;
   onUpdateControls: (roomId: number, tvControls: number, acControls: number) => void;
   onReleaseRoom: (roomId: number) => void;
+  onFinishCleaning: (roomId: number) => void;
 }
 
 const statusConfig: { [key: string]: { icon: React.ElementType, color: string, labelColor: string, textColor: string } } = {
@@ -42,7 +43,7 @@ const ActionButton = ({ icon: Icon, label, colorClass = '', className = '', ...p
 );
 
 
-export function RoomCard({ room, rates, roomTypes, onOccupy, onUpdateControls, onReleaseRoom }: RoomCardProps) {
+export function RoomCard({ room, rates, roomTypes, onOccupy, onUpdateControls, onReleaseRoom, onFinishCleaning }: RoomCardProps) {
   const [isClient, setIsClient] = useState(false);
   const [isExpiredClient, setIsExpiredClient] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -87,7 +88,6 @@ export function RoomCard({ room, rates, roomTypes, onOccupy, onUpdateControls, o
   
   const isDarkBg = cardColorClass.includes('purple-500') || cardColorClass.includes('blue-500') || cardColorClass.includes('red-500') || cardColorClass.includes('green-500') || cardColorClass.includes('orange-500');
   let textColor = isDarkBg ? 'text-white' : 'text-black';
-  const cardTextColorClass = (isOccupied && !isMenuOpen) ? textColor : baseConfig.textColor;
   if(rate?.id === 9 || rate?.id === 3) {
       cardColorClass = 'bg-yellow-500 border-yellow-600 text-black';
       textColor = 'text-black';
@@ -211,6 +211,10 @@ export function RoomCard({ room, rates, roomTypes, onOccupy, onUpdateControls, o
              ) : (
                 <Button className="w-full bg-white text-black hover:bg-gray-200 font-semibold border border-slate-300" onClick={() => setIsMenuOpen(true)}><Menu className="mr-2 h-4 w-4"/> Gestionar Habitación</Button>
              )
+          ) : room.status === 'Limpieza' ? (
+            <Button className="w-full" variant="outline" onClick={() => onFinishCleaning(room.id)}>
+              <Sparkles className="mr-2 h-4 w-4 text-cyan-500" /> Poner Disponible
+            </Button>
           ) : (
             <div className="h-10"></div>
           )}
