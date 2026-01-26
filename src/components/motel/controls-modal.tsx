@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Tv, Wind, Plus, Minus } from 'lucide-react';
+import { Tv, Wind, Plus, Minus, RotateCcw } from 'lucide-react';
 import type { Room } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 
@@ -55,6 +55,16 @@ export default function ControlsModal({ isOpen, onOpenChange, room, onSave }: Co
     onOpenChange(false);
   };
 
+  const handleResetControls = () => {
+    setTvControls(0);
+    setAcControls(0);
+    toast({
+      variant: 'destructive',
+      title: '¡Atención!',
+      description: 'Recuerda nunca liberar una habitación si no se te han entregado los controles.',
+    });
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md rounded-2xl">
@@ -79,6 +89,10 @@ export default function ControlsModal({ isOpen, onOpenChange, room, onSave }: Co
            <div className="text-sm text-muted-foreground text-center">
             Puede seleccionar un máximo de 2 controles de cada tipo.
           </div>
+          <Button type="button" variant="outline" onClick={handleResetControls}>
+            <RotateCcw className="mr-2 h-4 w-4" />
+            Poner Controles en Cero
+          </Button>
         </div>
         <DialogFooter>
           <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>Cancelar</Button>
