@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useMemo } from 'react';
-import type { Product, Employee, EmployeeRole } from '@/lib/types';
+import React, { useState, useMemo } from 'react';
+import type { Product, Employee, EmployeeRole, Transaction } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -9,15 +9,18 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Separator } from '@/components/ui/separator';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { ShoppingCart, Plus, Minus, X, Beer, UtensilsCrossed, GlassWater, PlusCircle, Edit, Trash2, Users, DollarSign } from 'lucide-react';
+import { ShoppingCart, Plus, Minus, X, Beer, UtensilsCrossed, GlassWater, PlusCircle, Edit, Trash2, Users, DollarSign, History } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import EmployeeFormModal from './employee-form-modal';
 import DeleteEmployeeDialog from './delete-employee-dialog';
+import { getCurrentShiftInfo, formatToMexicanTime } from '@/lib/datetime';
+import { format } from 'date-fns';
 
 interface EmployeesPageProps {
   employees: Employee[];
   products: Product[];
+  transactions: Transaction[];
   onAddEmployee: (employeeData: Omit<Employee, 'id' | 'status'>) => void;
   onUpdateEmployee: (employee: Employee) => void;
   onDeleteEmployee: (employeeId: number) => void;
@@ -33,13 +36,36 @@ const categoryIcons: { [key: string]: React.ElementType } = {
   Otro: GlassWater,
 };
 
-export default function EmployeesPage({ employees, products, onAddEmployee, onUpdateEmployee, onDeleteEmployee, onConfirmSale }: EmployeesPageProps) {
+export default function EmployeesPage({ employees, products, transactions, onAddEmployee, onUpdateEmployee, onDeleteEmployee, onConfirmSale }: EmployeesPageProps) {
   const [cart, setCart] = useState<EmployeeCartItem[]>([]);
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<string>('');
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
+  const [openEmployeeId, setOpenEmployeeId] = useState<number | null>(null);
   const { toast } = useToast();
+
+  const shiftInfo = useMemo(() => getCurrentShiftInfo(), []);
+  const operationalDateStr = useMemo(() => format(shiftInfo.operationalDate, 'yyyy-MM-dd'), [shiftInfo]);
+
+  const shiftEmployeeSales = useMemo(() => {
+      const sales = transactions.filter(t => 
+          t.type === 'Venta a Empleado' &&
+          t.turno_calculado === shiftInfo.shift &&
+          t.fecha_operativa === operationalDateStr
+      );
+      
+      return sales.reduce((acc, t) => {
+          if (t.employee_id) {
+              if (!acc[t.employee_id]) {
+                  acc[t.employee_id] = [];
+              }
+              acc[t.employee_id].push(t);
+          }
+          return acc;
+      }, {} as { [key: number]: Transaction[] });
+
+  }, [transactions, shiftInfo, operationalDateStr]);
 
   const handleQuantityChange = (product: Product, change: number) => {
     setCart(currentCart => {
@@ -245,7 +271,7 @@ export default function EmployeesPage({ employees, products, onAddEmployee, onUp
                 <div className="flex items-center justify-between">
                 <div>
                     <CardTitle>Gestión de Empleados</CardTitle>
-                    <CardDescription>Crea, edita y elimina empleados.</CardDescription>
+                    <CardDescription>Crea, edita, elimina empleados y revisa su historial de consumo.</CardDescription>
                 </div>
                 <Button onClick={() => handleOpenFormModal()}>
                     <PlusCircle className="mr-2 h-4 w-4" />
@@ -265,21 +291,63 @@ export default function EmployeesPage({ employees, products, onAddEmployee, onUp
                 </TableHeader>
                 <TableBody>
                     {employees.length > 0 ? (
-                    employees.map((employee) => (
-                        <TableRow key={employee.id}>
-                        <TableCell className="font-medium">{employee.name}</TableCell>
-                        <TableCell>{employee.role}</TableCell>
-                        <TableCell>{employee.status}</TableCell>
-                        <TableCell className="text-right">
-                            <Button variant="ghost" size="icon" onClick={() => handleOpenFormModal(employee)}>
-                            <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button variant="ghost" size="icon" onClick={() => handleOpenDeleteDialog(employee)}>
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                            </Button>
-                        </TableCell>
-                        </TableRow>
-                    ))
+                    employees.map((employee) => {
+                      const employeeSales = shiftEmployeeSales[employee.id] || [];
+                      return (
+                        <React.Fragment key={employee.id}>
+                            <TableRow 
+                                onClick={() => setOpenEmployeeId(prev => prev === employee.id ? null : employee.id)}
+                                className="cursor-pointer hover:bg-muted/50"
+                            >
+                                <TableCell className="font-medium">{employee.name}</TableCell>
+                                <TableCell>{employee.role}</TableCell>
+                                <TableCell>{employee.status}</TableCell>
+                                <TableCell className="text-right">
+                                    <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); handleOpenFormModal(employee); }}>
+                                    <Edit className="h-4 w-4" />
+                                    </Button>
+                                    <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); handleOpenDeleteDialog(employee); }}>
+                                    <Trash2 className="h-4 w-4 text-destructive" />
+                                    </Button>
+                                </TableCell>
+                            </TableRow>
+                            {openEmployeeId === employee.id && (
+                                <TableRow>
+                                    <TableCell colSpan={4} className="p-0">
+                                        <div className="p-4 bg-muted/20">
+                                            <div className="flex items-center gap-2 mb-2 font-semibold">
+                                                <History className="h-5 w-5 text-primary" />
+                                                Historial de Consumo del Turno
+                                            </div>
+                                            {employeeSales.length > 0 ? (
+                                                <Table>
+                                                    <TableHeader>
+                                                        <TableRow>
+                                                            <TableHead>Hora</TableHead>
+                                                            <TableHead>Descripción</TableHead>
+                                                            <TableHead className="text-right">Monto</TableHead>
+                                                        </TableRow>
+                                                    </TableHeader>
+                                                    <TableBody>
+                                                        {employeeSales.map(sale => (
+                                                            <TableRow key={sale.id}>
+                                                                <TableCell>{formatToMexicanTime(sale.timestamp)}</TableCell>
+                                                                <TableCell>{sale.description}</TableCell>
+                                                                <TableCell className="text-right">${sale.amount.toFixed(2)}</TableCell>
+                                                            </TableRow>
+                                                        ))}
+                                                    </TableBody>
+                                                </Table>
+                                            ) : (
+                                                <p className="text-sm text-muted-foreground text-center py-4">No hay consumos para este empleado en el turno actual.</p>
+                                            )}
+                                        </div>
+                                    </TableCell>
+                                </TableRow>
+                            )}
+                        </React.Fragment>
+                      )
+                    })
                     ) : (
                     <TableRow>
                         <TableCell colSpan={4} className="text-center">

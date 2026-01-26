@@ -551,6 +551,7 @@ export default function Home() {
           <EmployeesPage
             employees={employees}
             products={products}
+            transactions={transactions}
             onAddEmployee={handleAddEmployee}
             onUpdateEmployee={handleUpdateEmployee}
             onDeleteEmployee={handleDeleteEmployee}
