@@ -193,7 +193,7 @@ export function AppHeader({ onAddExpenseClick, activeView, setActiveView }: { on
         <DropdownMenuContent align="end">
           <DropdownMenuLabel>Mi Cuenta</DropdownMenuLabel>
           <DropdownMenuSeparator />
-          <DropdownMenuItem>Configuración</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => setActiveView('settings')}>Configuración</DropdownMenuItem>
           <DropdownMenuItem>Soporte</DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={handleLogout}>Cerrar Sesión</DropdownMenuItem>
