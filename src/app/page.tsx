@@ -559,6 +559,7 @@ export default function Home() {
         )}
          {activeView === 'reports' && (
           <ReportsPage
+            rooms={rooms}
             transactions={transactions}
             expenses={expenses}
           />

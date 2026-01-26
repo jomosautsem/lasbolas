@@ -1,21 +1,23 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import type { Transaction, Expense, Shift } from '@/lib/types';
+import type { Transaction, Expense, Shift, Room, TransactionType } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { Calendar as CalendarIcon, DollarSign, Bed, ShoppingCart, Users, UserPlus, Clock, Download, RefreshCw, FileText, ChevronDown } from 'lucide-react';
-import { getCurrentShiftInfo, getMexicoCityTime } from '@/lib/datetime';
+import { Calendar as CalendarIcon, DollarSign, Bed, ShoppingCart, Users, UserPlus, Clock, Download, RefreshCw, FileText, ChevronDown, History, ArrowRight } from 'lucide-react';
+import { getCurrentShiftInfo, getMexicoCityTime, formatToMexicanTime } from '@/lib/datetime';
 import { cn } from '@/lib/utils';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 interface ReportsPageProps {
+  rooms: Room[];
   transactions: Transaction[];
   expenses: Expense[];
 }
@@ -36,7 +38,7 @@ const StatCard = ({ title, value, icon: Icon, className }: { title: string; valu
     </div>
 );
 
-export default function ReportsPage({ transactions, expenses }: ReportsPageProps) {
+export default function ReportsPage({ rooms, transactions, expenses }: ReportsPageProps) {
     const [selectedDate, setSelectedDate] = useState<Date | undefined>(getMexicoCityTime());
     const [selectedShift, setSelectedShift] = useState<Shift>(getCurrentShiftInfo().shift);
 
@@ -100,6 +102,73 @@ export default function ReportsPage({ transactions, expenses }: ReportsPageProps
             expensesList: filteredExpenses
         };
     }, [filteredData]);
+    
+    const roomLogData = useMemo(() => {
+        if (!selectedDate) return [];
+        const operationalDateStr = format(selectedDate, 'yyyy-MM-dd');
+    
+        // 1. Rooms that are currently active
+        const activeRooms = rooms.filter(r => r.status === 'Ocupada');
+    
+        // 2. Rooms that checked out during the selected shift
+        const checkedOutRoomsInShift = rooms.filter(r => {
+            if (r.status === 'Ocupada' || !r.check_out_time) return false;
+            
+            const checkoutShiftInfo = getCurrentShiftInfo(new Date(r.check_out_time));
+            const checkoutOpDateStr = format(checkoutShiftInfo.operationalDate, 'yyyy-MM-dd');
+            
+            return checkoutShiftInfo.shift === selectedShift && checkoutOpDateStr === operationalDateStr;
+        });
+    
+        // 3. Combine and create log entries
+        const combinedRooms = [...activeRooms, ...checkedOutRoomsInShift];
+        const uniqueRoomIds = Array.from(new Set(combinedRooms.map(r => r.id)));
+    
+        const log = uniqueRoomIds.map(roomId => {
+            const room = rooms.find(r => r.id === roomId)!;
+            if (!room.check_in_time) return null;
+    
+            // Check if check-in was in a previous shift
+            const checkinShiftInfo = getCurrentShiftInfo(new Date(room.check_in_time));
+            const checkinOpDateStr = format(checkinShiftInfo.operationalDate, 'yyyy-MM-dd');
+            
+            const isFromPreviousShift = (checkinShiftInfo.shift !== selectedShift || checkinOpDateStr !== operationalDateStr);
+    
+            // Get all transactions for this specific stay
+            const allStayTransactions = transactions.filter(t => {
+                if (t.room_id !== roomId) return false;
+                const transactionTime = new Date(t.timestamp).getTime();
+                const checkInTime = new Date(room.check_in_time!).getTime();
+                // If it checked out, use that time. If not, use now.
+                const endTime = room.status !== 'Ocupada' && room.check_out_time 
+                    ? new Date(room.check_out_time).getTime() 
+                    : Date.now();
+                return transactionTime >= checkInTime && transactionTime <= endTime;
+            });
+    
+            let totalStayAmount: number;
+            // If the room has checked out, we must recalculate the total from its transactions for that stay.
+            if (room.status !== 'Ocupada') {
+                totalStayAmount = allStayTransactions.reduce((sum, t) => sum + t.amount, 0);
+            } else {
+                totalStayAmount = room.total_debt || 0; // For active rooms, this is the source of truth
+            }
+
+            const consumptionsAndCharges = allStayTransactions.filter(t => t.type !== 'Hospedaje Inicial');
+    
+            return {
+                ...room,
+                isFromPreviousShift: room.status === 'Ocupada' && isFromPreviousShift,
+                consumptions: consumptionsAndCharges,
+                totalStayAmount: totalStayAmount,
+            };
+    
+        }).filter((r): r is NonNullable<typeof r> => r !== null);
+        
+        // Sort by check-in time, most recent first
+        return log.sort((a,b) => new Date(b.check_in_time!).getTime() - new Date(a.check_in_time!).getTime());
+
+    }, [selectedDate, selectedShift, rooms, transactions]);
 
 
   return (
@@ -221,6 +290,76 @@ export default function ReportsPage({ transactions, expenses }: ReportsPageProps
                  <StatCard title="PERSONAS EXTRA" value={`$${summary.extraPersonIncome.toFixed(2)}`} icon={UserPlus} className="bg-gray-100" />
                  <StatCard title="TIEMPOS EXTRA" value={`$${summary.extraTimeIncome.toFixed(2)}`} icon={Clock} className="bg-gray-100" />
             </div>
+        </CardContent>
+      </Card>
+      
+      <Card>
+        <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-lg"><History />Bitácora de Habitaciones del Turno</CardTitle>
+            <CardDescription>Muestra habitaciones activas y las que salieron durante el turno seleccionado.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-2">
+            {roomLogData.length > 0 ? (
+                roomLogData.map(logItem => (
+                    <Collapsible key={logItem.id} className="border rounded-lg">
+                        <CollapsibleTrigger className="w-full text-left p-4 hover:bg-muted/50 rounded-lg transition-colors">
+                            <div className="flex justify-between items-center">
+                                <div className="flex items-center gap-4">
+                                    <span className={`px-3 py-1 rounded-md font-bold ${logItem.status === 'Ocupada' ? 'bg-blue-100 text-blue-800' : 'bg-gray-200 text-gray-800'}`}>{logItem.name}</span>
+                                    {logItem.isFromPreviousShift && <Badge variant="outline" className="border-yellow-500 text-yellow-600">Turno Anterior</Badge>}
+                                </div>
+                                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                    <span className={`font-semibold ${logItem.status === 'Ocupada' ? 'text-green-600' : 'text-red-600'}`}>{logItem.status === 'Ocupada' ? 'ACTIVA' : 'SALIDA'}</span>
+                                    <ChevronDown className="h-4 w-4 transition-transform data-[state=open]:rotate-180" />
+                                </div>
+                            </div>
+                            <div className="flex flex-wrap items-center gap-x-6 gap-y-2 mt-2 text-sm">
+                                <div className="flex items-center gap-2">
+                                    <Clock className="h-4 w-4 text-muted-foreground" />
+                                    <span>Entrada: {formatToMexicanTime(logItem.check_in_time!)}</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                                    <span>Salida: {logItem.check_out_time ? formatToMexicanTime(logItem.check_out_time) : '...'}</span>
+                                </div>
+                                <div className="flex items-center gap-2 font-bold">
+                                    <DollarSign className="h-4 w-4 text-muted-foreground" />
+                                    <span>Total: ${logItem.totalStayAmount.toFixed(2)}</span>
+                                </div>
+                            </div>
+                        </CollapsibleTrigger>
+                        <CollapsibleContent className="px-4 pb-4">
+                            <div className="pt-4 border-t">
+                                <h4 className="font-semibold mb-2">Consumos y Cargos:</h4>
+                                {logItem.consumptions.length > 0 ? (
+                                    <Table>
+                                        <TableHeader>
+                                            <TableRow>
+                                                <TableHead>Descripción</TableHead>
+                                                <TableHead className="text-right">Monto</TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {logItem.consumptions.map(c => (
+                                                <TableRow key={c.id}>
+                                                    <TableCell>{c.description}</TableCell>
+                                                    <TableCell className="text-right">${c.amount.toFixed(2)}</TableCell>
+                                                </TableRow>
+                                            ))}
+                                        </TableBody>
+                                    </Table>
+                                ) : (
+                                    <p className="text-sm text-muted-foreground">No hay consumos ni cargos extra para esta estancia.</p>
+                                )}
+                            </div>
+                        </CollapsibleContent>
+                    </Collapsible>
+                ))
+            ) : (
+                <div className="text-center text-muted-foreground py-8">
+                    <p>No hay actividad de habitaciones para mostrar en este turno.</p>
+                </div>
+            )}
         </CardContent>
       </Card>
     </div>
