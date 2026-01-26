@@ -115,8 +115,8 @@ export default function DashboardKPIs({ rooms, transactions, expenses }: Dashboa
         amount={`$${kpiData.totalExpenses.toFixed(2)}`}
         description={`${kpiData.shiftExpensesCount} gastos registrados`}
         icon={ArrowDownCircle}
-        color="text-red-500"
-        borderColor="border-red-500"
+        isGradient={true}
+        gradientClassName="bg-gradient-to-br from-red-600 to-rose-800"
       />
       <KPICard
         title="Utilidad Neta en Caja"
@@ -124,6 +124,7 @@ export default function DashboardKPIs({ rooms, transactions, expenses }: Dashboa
         description="Ingresos - Gastos"
         icon={Wallet}
         isGradient={true}
+        gradientClassName="bg-gradient-to-br from-blue-600 to-indigo-800"
       />
     </div>
   );
