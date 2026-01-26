@@ -61,14 +61,17 @@ export function AppSidebar({ onAddExpenseClick, activeView, setActiveView }: { o
           <Tooltip>
             <TooltipTrigger asChild>
               <button
-                onClick={() => {}}
-                className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8"
+                onClick={() => setActiveView('consumption')}
+                className={cn(
+                  "flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8",
+                  activeView === 'consumption' && 'bg-accent text-accent-foreground'
+                )}
               >
                 <Package className="h-5 w-5" />
-                <span className="sr-only">Inventario</span>
+                <span className="sr-only">Alimentos y Bebidas</span>
               </button>
             </TooltipTrigger>
-            <TooltipContent side="right">Inventario</TooltipContent>
+            <TooltipContent side="right">Alimentos y Bebidas</TooltipContent>
           </Tooltip>
            <Tooltip>
             <TooltipTrigger asChild>

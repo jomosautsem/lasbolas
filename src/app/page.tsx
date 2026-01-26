@@ -6,11 +6,12 @@ import DashboardKPIs from '@/components/motel/dashboard-kpis';
 import RoomGrid from '@/components/motel/room-grid';
 import { rooms as initialRooms, products, transactions as initialTransactions, expenses as initialExpenses, rates, roomTypes, vehicleHistory as initialVehicleHistory } from '@/lib/data';
 import { getCurrentShiftInfo } from '@/lib/datetime';
-import type { Room, Transaction, Rate, Expense, VehicleHistory } from '@/lib/types';
+import type { Room, Transaction, Rate, Expense, VehicleHistory, Product } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { addHours } from 'date-fns';
 import AddExpenseModal from '@/components/motel/add-expense-modal';
 import VehicleHistoryPage from '@/components/motel/vehicle-history-page';
+import ConsumptionPage from '@/components/motel/consumption-page';
 
 export default function Home() {
   const [rooms, setRooms] = useState<Room[]>(initialRooms);
@@ -391,6 +392,41 @@ export default function Home() {
     });
   };
 
+  const handleAddConsumption = (roomId: number, items: (Product & { quantity: number })[], totalPrice: number) => {
+    const roomToUpdate = rooms.find(r => r.id === roomId);
+    if (!roomToUpdate) return;
+
+    const shiftInfo = getCurrentShiftInfo();
+    const description = items.map(item => `${item.quantity}x ${item.name}`).join(', ');
+
+    const newTransaction: Transaction = {
+      id: Date.now(),
+      room_id: roomId,
+      amount: totalPrice,
+      type: 'Consumo',
+      timestamp: new Date().toISOString(),
+      shift: shiftInfo.shift,
+      description,
+      turno_calculado: shiftInfo.shift,
+      fecha_operativa: shiftInfo.operationalDate.toISOString().split('T')[0],
+    };
+    setTransactions(currentTransactions => [...currentTransactions, newTransaction]);
+    
+    setRooms(currentRooms => 
+      currentRooms.map(r => {
+        if (r.id === roomId) {
+          return {
+            ...r,
+            total_debt: (r.total_debt || 0) + totalPrice,
+          };
+        }
+        return r;
+      })
+    );
+  };
+  
+  const occupiedRooms = rooms.filter(r => r.status === 'Ocupada');
+
 
   return (
     <>
@@ -420,6 +456,13 @@ export default function Home() {
         )}
         {activeView === 'vehicles' && (
           <VehicleHistoryPage vehicleHistory={vehicleHistory} />
+        )}
+        {activeView === 'consumption' && (
+          <ConsumptionPage 
+            products={products}
+            occupiedRooms={occupiedRooms}
+            onConfirm={handleAddConsumption}
+          />
         )}
       </AppLayout>
       <AddExpenseModal

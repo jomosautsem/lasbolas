@@ -101,9 +101,9 @@ export function AppHeader({ onAddExpenseClick, setActiveView }: { onAddExpenseCl
               <BedDouble className="h-5 w-5" />
               Habitaciones
             </button>
-            <button onClick={() => {}} className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground">
+            <button onClick={() => handleMenuClick('consumption')} className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground">
               <Package className="h-5 w-5" />
-              Inventario
+              Alimentos y Bebidas
             </button>
              <a href="#" onClick={handleGastosClick} className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground">
               <Receipt className="h-5 w-5" />
