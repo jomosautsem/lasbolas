@@ -99,8 +99,8 @@ export default function DashboardKPIs({ rooms, transactions, expenses }: Dashboa
         amount={`${kpiData.occupiedRooms} de ${rooms.length}`}
         description={`${occupiedPercentage.toFixed(0)}% de ocupación`}
         icon={Bed}
-        color="text-orange-500"
-        borderColor="border-orange-500"
+        isGradient={true}
+        gradientClassName="bg-gradient-to-br from-yellow-500 to-orange-600"
       />
       <KPICard
         title="Ingresos del Turno"
