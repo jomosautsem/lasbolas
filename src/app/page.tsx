@@ -317,6 +317,38 @@ export default function Home() {
     });
   };
 
+  const handleRemovePerson = (roomId: number) => {
+    const roomToUpdate = rooms.find(r => r.id === roomId);
+    if (!roomToUpdate) return;
+    
+    const currentPersons = parseInt(roomToUpdate.persons || '0', 10);
+    if (currentPersons <= 0) {
+      toast({
+        variant: "destructive",
+        title: 'Acción no válida',
+        description: `La habitación ${roomToUpdate.name} no tiene personas para reducir.`,
+      });
+      return;
+    }
+
+    setRooms(currentRooms => 
+      currentRooms.map(r => {
+        if (r.id === roomId) {
+          return {
+            ...r,
+            persons: (currentPersons - 1).toString(),
+          };
+        }
+        return r;
+      })
+    );
+
+    toast({
+      title: 'Persona Removida',
+      description: `Se redujo una persona de la habitación ${roomToUpdate.name}.`,
+    });
+  };
+
 
   return (
     <AppLayout>
@@ -338,6 +370,7 @@ export default function Home() {
           onAdjustPackage={handleAdjustPackage}
           onExtendStay={handleExtendStay}
           onAddPerson={handleAddPerson}
+          onRemovePerson={handleRemovePerson}
         />
       </div>
     </AppLayout>

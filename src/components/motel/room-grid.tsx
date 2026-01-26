@@ -16,9 +16,10 @@ interface RoomGridProps {
   onAdjustPackage: (roomId: number, newRate: Rate, difference: number) => void;
   onExtendStay: (roomId: number) => void;
   onAddPerson: (roomId: number, amount: number) => void;
+  onRemovePerson: (roomId: number) => void;
 }
 
-export default function RoomGrid({ rooms, rates, roomTypes, onConfirmCheckIn, onUpdateControls, onReleaseRoom, onFinishCleaning, onRoomChange, onAdjustPackage, onExtendStay, onAddPerson }: RoomGridProps) {
+export default function RoomGrid({ rooms, rates, roomTypes, onConfirmCheckIn, onUpdateControls, onReleaseRoom, onFinishCleaning, onRoomChange, onAdjustPackage, onExtendStay, onAddPerson, onRemovePerson }: RoomGridProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
 
@@ -45,6 +46,7 @@ export default function RoomGrid({ rooms, rates, roomTypes, onConfirmCheckIn, on
             onAdjustPackage={onAdjustPackage}
             onExtendStay={onExtendStay}
             onAddPerson={onAddPerson}
+            onRemovePerson={onRemovePerson}
           />
         ))}
       </div>
