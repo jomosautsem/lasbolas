@@ -3,10 +3,10 @@
 import { useState, useEffect, useMemo } from 'react';
 import type { Room, Rate } from '@/lib/types';
 import { cn } from '@/lib/utils';
-import { format, differenceInMinutes, formatDistanceToNow } from 'date-fns';
+import { differenceInMinutes, formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Bed, Car, PersonStanding, Tv, Wind, Clock } from 'lucide-react';
+import { Car, PersonStanding, Tv, Wind, Clock } from 'lucide-react';
 import { MotorcycleIcon } from '@/components/icons';
 import { formatToMexicanTime } from '@/lib/datetime';
 import { Progress } from '@/components/ui/progress';
@@ -24,9 +24,9 @@ export function OccupancyMonitorCard({ room, rate }: OccupancyMonitorCardProps) 
     return () => clearInterval(timer);
   }, []);
 
-  const { status, timeLeft, timePassed, totalDuration, progress } = useMemo(() => {
+  const { status, timeLeft, progress } = useMemo(() => {
     if (!room.check_in_time || !room.check_out_time) {
-      return { status: 'Error', timeLeft: null, timePassed: null, totalDuration: null, progress: 0 };
+      return { status: 'Error', timeLeft: null, progress: 0 };
     }
 
     const checkIn = new Date(room.check_in_time);
@@ -35,50 +35,79 @@ export function OccupancyMonitorCard({ room, rate }: OccupancyMonitorCardProps) 
     
     const totalDuration = differenceInMinutes(checkOut, checkIn);
     const timePassed = totalDuration - minutesLeft;
-    const progress = totalDuration > 0 ? (timePassed / totalDuration) * 100 : 0;
+    const progressValue = totalDuration > 0 ? (timePassed / totalDuration) * 100 : 0;
 
     if (minutesLeft <= 0) {
-      return { status: 'Vencida', timeLeft: `Venció hace ${formatDistanceToNow(checkOut, { locale: es, addSuffix: true })}`, timePassed, totalDuration, progress: 100 };
+      return { status: 'Vencida', timeLeft: `Venció ${formatDistanceToNow(checkOut, { locale: es, addSuffix: true })}`, progress: 100 };
     }
     if (minutesLeft <= 15) {
-      return { status: 'Por Vencer', timeLeft: `Vence en ${minutesLeft} min`, timePassed, totalDuration, progress };
+      return { status: 'Por Vencer', timeLeft: `Vence en ${minutesLeft} min`, progress: progressValue };
     }
-    return { status: 'Ocupada', timeLeft: `Vence en ${formatDistanceToNow(checkOut, { locale: es, addSuffix: true })}`, timePassed, totalDuration, progress };
+    return { status: 'Ocupada', timeLeft: `Faltan ${formatDistanceToNow(checkOut, { locale: es, addSuffix: false })}`, progress: progressValue };
   }, [room.check_in_time, room.check_out_time, now]);
 
-  const statusConfig = {
-    Ocupada: 'border-blue-500 bg-blue-50',
-    'Por Vencer': 'border-yellow-500 bg-yellow-50 animate-pulse',
-    Vencida: 'border-red-500 bg-red-50',
-    Error: 'border-gray-500 bg-gray-50',
-  };
+  const { cardColorClass, textColor, isVibrant } = useMemo(() => {
+    const rateColorMap: { [key: number]: string } = {
+      1: 'bg-green-500 border-green-600',
+      2: 'bg-orange-500 border-orange-600',
+      3: 'bg-yellow-500 border-yellow-600',
+      4: 'bg-purple-500 border-purple-600',
+      5: 'bg-blue-500 border-blue-600',
+      7: 'bg-green-500 border-green-600',
+      8: 'bg-orange-500 border-orange-600',
+      9: 'bg-yellow-500 border-yellow-600',
+      10: 'bg-purple-500 border-purple-600',
+      11: 'bg-blue-500 border-blue-600',
+    };
+    const blackTextRates = [3, 9];
+
+    if (status === 'Vencida') {
+        return { cardColorClass: 'bg-red-500 border-red-600', textColor: 'text-white', isVibrant: true };
+    }
+    if (status === 'Por Vencer') {
+        return { cardColorClass: 'bg-yellow-500 border-yellow-600 animate-pulse', textColor: 'text-black', isVibrant: true };
+    }
+    
+    if (status === 'Ocupada' && rate && rate.id in rateColorMap) {
+      const cardClass = rateColorMap[rate.id];
+      const textClass = blackTextRates.includes(rate.id) ? 'text-black' : 'text-white';
+      return { cardColorClass: cardClass, textColor: textClass, isVibrant: true };
+    }
+    
+    if (status === 'Error') {
+        return { cardColorClass: 'border-gray-500 bg-gray-50', textColor: 'text-gray-700', isVibrant: false };
+    }
+    
+    return { cardColorClass: 'border-blue-500 bg-blue-50', textColor: 'text-blue-700', isVibrant: false };
+  }, [status, rate]);
 
   const VehicleIcon = room.entry_type === 'Auto' ? Car : room.entry_type === 'Moto' ? MotorcycleIcon : PersonStanding;
+  const contentBgClass = isVibrant ? 'bg-black/10' : 'bg-background/70';
 
   return (
-    <Card className={cn("rounded-2xl shadow-md", statusConfig[status])}>
+    <Card className={cn("rounded-2xl shadow-md", cardColorClass, textColor)}>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 p-4">
         <CardTitle className="text-2xl font-bold font-headline">{room.name}</CardTitle>
         <div className="flex items-center gap-4">
-          <VehicleIcon className="h-6 w-6 text-muted-foreground" />
+          <VehicleIcon className="h-6 w-6" />
           <div className="text-right">
             <p className="font-semibold text-sm">{rate?.name}</p>
-            <p className="text-xs text-muted-foreground">{rate?.hours} horas</p>
+            <p className="text-xs opacity-80">{rate?.hours} horas</p>
           </div>
         </div>
       </CardHeader>
       <CardContent className="p-4 pt-0">
-        <div className="text-center rounded-lg bg-background/70 p-3 mb-3">
-          <p className="text-xs font-semibold text-muted-foreground">HORA DE SALIDA</p>
+        <div className={cn("text-center rounded-lg p-3 mb-3", contentBgClass)}>
+          <p className="text-xs font-semibold opacity-80">HORA DE SALIDA</p>
           <p className="text-3xl font-bold font-mono tracking-tight">{formatToMexicanTime(room.check_out_time!)}</p>
-          <p className={cn("text-sm font-semibold", status === 'Vencida' ? 'text-red-600' : status === 'Por Vencer' ? 'text-yellow-600' : 'text-blue-600')}>
+          <p className="text-sm font-semibold">
             {timeLeft}
           </p>
         </div>
         
-        <Progress value={progress} className="h-2 mb-3" />
+        <Progress value={progress} className={cn("h-2 mb-3", {'[&>div]:bg-white': isVibrant && textColor === 'text-white'}, {'[&>div]:bg-black': isVibrant && textColor === 'text-black'})} />
 
-        <div className="flex justify-around items-center text-sm text-muted-foreground font-semibold">
+        <div className="flex justify-around items-center text-sm font-semibold opacity-80">
            <div className="flex items-center gap-1.5">
             <Tv className="h-4 w-4" />
             <span>{room.tv_controls}</span>
