@@ -49,10 +49,10 @@ export const rates: Rate[] = [
 ];
 
 export const products: Product[] = [
-    { id: 1, name: 'Cerveza', price: 35, category: 'Bebida', stock: 100 },
-    { id: 2, name: 'Papas Fritas', price: 25, category: 'Snack', stock: 50 },
-    { id: 3, name: 'Agua', price: 20, category: 'Bebida', stock: 120 },
-    { id: 4, name: 'Club Sandwich', price: 120, category: 'Cocina', stock: 20 },
+    { id: 1, name: 'Cerveza', price: 35, category: 'Bebida' },
+    { id: 2, name: 'Papas Fritas', price: 25, category: 'Snack' },
+    { id: 3, name: 'Agua', price: 20, category: 'Bebida' },
+    { id: 4, name: 'Club Sandwich', price: 120, category: 'Cocina' },
 ];
 
 export const transactions: Transaction[] = [

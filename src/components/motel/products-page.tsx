@@ -71,7 +71,6 @@ export default function ProductsPage({ products, onAddProduct, onUpdateProduct, 
                   <TableHead>Nombre</TableHead>
                   <TableHead>Categoría</TableHead>
                   <TableHead>Precio</TableHead>
-                  <TableHead>Stock</TableHead>
                   <TableHead className="text-right">Acciones</TableHead>
                 </TableRow>
               </TableHeader>
@@ -82,7 +81,6 @@ export default function ProductsPage({ products, onAddProduct, onUpdateProduct, 
                       <TableCell className="font-medium">{product.name}</TableCell>
                       <TableCell>{product.category}</TableCell>
                       <TableCell>${product.price.toFixed(2)}</TableCell>
-                      <TableCell>{product.stock}</TableCell>
                       <TableCell className="text-right">
                         <Button variant="ghost" size="icon" onClick={() => handleOpenFormModal(product)}>
                           <Edit className="h-4 w-4" />
@@ -95,7 +93,7 @@ export default function ProductsPage({ products, onAddProduct, onUpdateProduct, 
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center">
+                    <TableCell colSpan={4} className="text-center">
                       No hay productos registrados.
                     </TableCell>
                   </TableRow>

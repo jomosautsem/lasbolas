@@ -45,7 +45,6 @@ export interface Product {
   name: string;
   price: number;
   category: ProductCategory;
-  stock: number;
 }
 
 export interface Transaction {
