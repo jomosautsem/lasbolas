@@ -18,6 +18,7 @@ import ReleaseWarningModal from './release-warning-modal';
 import ChangeRoomModal from './change-room-modal';
 import AdjustPackageModal from './adjust-package-modal';
 import ExtendStayModal from './extend-stay-modal';
+import AddPersonModal from './add-person-modal';
 
 interface RoomCardProps {
   room: Room;
@@ -31,6 +32,7 @@ interface RoomCardProps {
   onRoomChange: (fromRoomId: number, toRoomId: number) => void;
   onAdjustPackage: (roomId: number, newRate: Rate, difference: number) => void;
   onExtendStay: (roomId: number) => void;
+  onAddPerson: (roomId: number, amount: number) => void;
 }
 
 const statusConfig: { [key: string]: { icon: React.ElementType, color: string, labelColor: string, textColor: string } } = {
@@ -50,7 +52,7 @@ const ActionButton = ({ icon: Icon, label, colorClass = '', className = '', ...p
 );
 
 
-export function RoomCard({ room, allRooms, rates, roomTypes, onOccupy, onUpdateControls, onReleaseRoom, onFinishCleaning, onRoomChange, onAdjustPackage, onExtendStay }: RoomCardProps) {
+export function RoomCard({ room, allRooms, rates, roomTypes, onOccupy, onUpdateControls, onReleaseRoom, onFinishCleaning, onRoomChange, onAdjustPackage, onExtendStay, onAddPerson }: RoomCardProps) {
   const [isClient, setIsClient] = useState(false);
   const [isExpiredClient, setIsExpiredClient] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -59,6 +61,7 @@ export function RoomCard({ room, allRooms, rates, roomTypes, onOccupy, onUpdateC
   const [isChangeRoomModalOpen, setIsChangeRoomModalOpen] = useState(false);
   const [isAdjustPackageModalOpen, setIsAdjustPackageModalOpen] = useState(false);
   const [isExtendStayModalOpen, setIsExtendStayModalOpen] = useState(false);
+  const [isAddPersonModalOpen, setIsAddPersonModalOpen] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
@@ -101,27 +104,22 @@ export function RoomCard({ room, allRooms, rates, roomTypes, onOccupy, onUpdateC
   const baseConfig = statusConfig[effectiveStatus] || statusConfig['Disponible'];
 
   const { cardColorClass, textColor } = useMemo(() => {
-    const rateColorMap: { [key: number]: string } = {
-      1: 'bg-green-500 border-green-600',
-      2: 'bg-orange-500 border-orange-600',
-      3: 'bg-yellow-500 border-yellow-600',
-      4: 'bg-purple-500 border-purple-600',
-      5: 'bg-blue-500 border-blue-600',
-      7: 'bg-green-500 border-green-600',
-      8: 'bg-orange-500 border-orange-600',
-      9: 'bg-yellow-500 border-yellow-600',
-      10: 'bg-purple-500 border-purple-600',
-      11: 'bg-blue-500 border-blue-600',
+    const rateColorMap: { [key: number]: { bg: string, text: string } } = {
+      1: { bg: 'bg-green-500 border-green-600', text: 'text-white' }, // 2h
+      2: { bg: 'bg-orange-500 border-orange-600', text: 'text-white' }, // 4h
+      3: { bg: 'bg-yellow-500 border-yellow-600', text: 'text-black' }, // 5h
+      4: { bg: 'bg-purple-500 border-purple-600', text: 'text-white' }, // 8h
+      5: { bg: 'bg-blue-500 border-blue-600', text: 'text-white' }, // 12h
+      7: { bg: 'bg-green-500 border-green-600', text: 'text-white' }, // 2h Jacuzzi
+      8: { bg: 'bg-orange-500 border-orange-600', text: 'text-white' }, // 4h Jacuzzi
+      9: { bg: 'bg-yellow-500 border-yellow-600', text: 'text-black' }, // 5h Jacuzzi
+      10: { bg: 'bg-purple-500 border-purple-600', text: 'text-white' }, // 8h Jacuzzi
+      11: { bg: 'bg-blue-500 border-blue-600', text: 'text-white' }, // 12h Jacuzzi
     };
-    
-    const darkTextBgs = ['bg-yellow-500', 'bg-green-500', 'bg-orange-500'];
 
-    if (isOccupied && !isExpired && rate) {
-        const colorClass = rateColorMap[rate.id];
-        if (colorClass) {
-            const useDarkText = darkTextBgs.some(bg => colorClass.includes(bg));
-            return { cardColorClass: colorClass, textColor: useDarkText ? 'text-black' : 'text-white' };
-        }
+    if (isOccupied && !isExpired && rate && rate.id in rateColorMap) {
+        const colors = rateColorMap[rate.id];
+        return { cardColorClass: colors.bg, textColor: colors.text };
     }
     return { cardColorClass: baseConfig.color, textColor: baseConfig.textColor };
   }, [isOccupied, isExpired, rate, baseConfig]);
@@ -170,7 +168,7 @@ export function RoomCard({ room, allRooms, rates, roomTypes, onOccupy, onUpdateC
                     <ActionButton icon={TrendingUp} label="Ajustar Paq." onClick={() => setIsAdjustPackageModalOpen(true)} />
                     <ActionButton icon={PlusCircle} label="Aumentar" colorClass="text-green-600" onClick={() => setIsExtendStayModalOpen(true)} disabled={!canExtendStay} />
                     <ActionButton icon={MinusCircle} label="Reducir" colorClass="text-red-500" />
-                    <ActionButton icon={UserPlus} label="+ Persona" />
+                    <ActionButton icon={UserPlus} label="+ Persona" onClick={() => setIsAddPersonModalOpen(true)} />
                     <ActionButton icon={UserMinus} label="- Persona" />
                     <ActionButton icon={Edit} label="Editar E/S" />
                 </div>
@@ -293,6 +291,14 @@ export function RoomCard({ room, allRooms, rates, roomTypes, onOccupy, onUpdateC
         currentRoom={room}
         extensionRate={extensionRate}
         onConfirm={onExtendStay}
+      />
+    )}
+    {isOccupied && (
+      <AddPersonModal
+        isOpen={isAddPersonModalOpen}
+        onOpenChange={setIsAddPersonModalOpen}
+        currentRoom={room}
+        onConfirm={onAddPerson}
       />
     )}
     </>

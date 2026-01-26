@@ -42,7 +42,7 @@ export default function DashboardKPIs({ rooms, transactions, expenses }: Dashboa
     });
 
     const rentIncome = shiftTransactions
-      .filter(t => t.type === 'Hospedaje Inicial' || t.type === 'Tiempo Extra')
+      .filter(t => t.type === 'Hospedaje Inicial' || t.type === 'Tiempo Extra' || t.type === 'Ajuste de Paquete' || t.type === 'Persona Extra')
       .reduce((sum, t) => sum + t.amount, 0);
 
     const consumptionIncome = shiftTransactions

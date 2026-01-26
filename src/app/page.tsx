@@ -277,6 +277,46 @@ export default function Home() {
     });
   };
 
+  const handleAddPerson = (roomId: number, amount: number) => {
+    const roomToUpdate = rooms.find(r => r.id === roomId);
+    if (!roomToUpdate) return;
+
+    if (amount > 0) {
+      const shiftInfo = getCurrentShiftInfo();
+      const newTransaction: Transaction = {
+        id: Date.now(),
+        room_id: roomId,
+        amount: amount,
+        type: 'Persona Extra',
+        timestamp: new Date().toISOString(),
+        shift: shiftInfo.shift,
+        description: `Persona Extra - Hab ${roomToUpdate.name}`,
+        turno_calculado: shiftInfo.shift,
+        fecha_operativa: shiftInfo.operationalDate.toISOString().split('T')[0],
+      };
+      setTransactions(currentTransactions => [...currentTransactions, newTransaction]);
+    }
+
+    setRooms(currentRooms => 
+      currentRooms.map(r => {
+        if (r.id === roomId) {
+          const currentPersons = parseInt(r.persons || '0', 10);
+          return {
+            ...r,
+            persons: (currentPersons + 1).toString(),
+            total_debt: (r.total_debt || 0) + amount,
+          };
+        }
+        return r;
+      })
+    );
+
+    toast({
+      title: 'Persona Agregada',
+      description: `Se agregó una persona a la habitación ${roomToUpdate.name}. ${amount > 0 ? `Se cobraron $${amount.toFixed(2)}.` : 'Sin costo.'}`,
+    });
+  };
+
 
   return (
     <AppLayout>
@@ -297,6 +337,7 @@ export default function Home() {
           onRoomChange={handleChangeRoom}
           onAdjustPackage={handleAdjustPackage}
           onExtendStay={handleExtendStay}
+          onAddPerson={handleAddPerson}
         />
       </div>
     </AppLayout>
