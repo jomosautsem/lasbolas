@@ -1,7 +1,7 @@
 'use client';
 import type { Room, Transaction, Expense } from '@/lib/types';
 import KPICard from './kpi-card';
-import { DollarSign, Bed, ArrowDownCircle } from 'lucide-react';
+import { DollarSign, Bed, ArrowDownCircle, Banknote } from 'lucide-react';
 import { getCurrentShiftInfo } from '@/lib/datetime';
 import { useEffect, useState } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -17,6 +17,7 @@ interface KpiData {
     totalIncome: number;
     rentIncome: number;
     consumptionIncome: number;
+    employeeSaleIncome: number;
     occupiedRooms: number;
     totalExpenses: number;
     shiftExpensesCount: number;
@@ -49,7 +50,11 @@ export default function DashboardKPIs({ rooms, transactions, expenses }: Dashboa
       .filter(t => t.type === 'Consumo')
       .reduce((sum, t) => sum + t.amount, 0);
 
-    const totalIncome = rentIncome + consumptionIncome;
+    const employeeSaleIncome = shiftTransactions
+      .filter(t => t.type === 'Venta a Empleado')
+      .reduce((sum, t) => sum + t.amount, 0);
+
+    const totalIncome = rentIncome + consumptionIncome + employeeSaleIncome;
     const totalExpenses = shiftExpenses.reduce((sum, e) => sum + e.amount, 0);
     const netProfit = totalIncome - totalExpenses;
     
@@ -57,6 +62,7 @@ export default function DashboardKPIs({ rooms, transactions, expenses }: Dashboa
         totalIncome,
         rentIncome,
         consumptionIncome,
+        employeeSaleIncome,
         occupiedRooms,
         totalExpenses,
         shiftExpensesCount: shiftExpenses.length,
@@ -84,22 +90,25 @@ export default function DashboardKPIs({ rooms, transactions, expenses }: Dashboa
   }
 
   const occupiedPercentage = rooms.length > 0 ? ((kpiData.occupiedRooms ?? 0) / rooms.length) * 100 : 0;
+  const incomeDescription = `Renta: $${kpiData.rentIncome.toFixed(2)} | Consumo: $${kpiData.consumptionIncome.toFixed(2)} | Empleados: $${kpiData.employeeSaleIncome.toFixed(2)}`;
 
   return (
     <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
       <KPICard
         title="Ingresos del Turno"
         amount={`$${kpiData.totalIncome.toFixed(2)}`}
-        description={`Renta: $${kpiData.rentIncome.toFixed(2)} | Consumo: $${kpiData.consumptionIncome.toFixed(2)}`}
+        description={incomeDescription}
         icon={DollarSign}
         color="text-green-500"
+        borderColor="border-green-500"
       />
       <KPICard
         title="Habitaciones Ocupadas"
         amount={`${kpiData.occupiedRooms} de ${rooms.length}`}
         description={`${occupiedPercentage.toFixed(0)}% de ocupación`}
         icon={Bed}
-        color="text-blue-500"
+        color="text-orange-500"
+        borderColor="border-orange-500"
       />
       <KPICard
         title="Gastos del Turno"
@@ -107,13 +116,15 @@ export default function DashboardKPIs({ rooms, transactions, expenses }: Dashboa
         description={`${kpiData.shiftExpensesCount} gastos registrados`}
         icon={ArrowDownCircle}
         color="text-red-500"
+        borderColor="border-red-500"
       />
       <KPICard
         title="Utilidad Neta en Caja"
         amount={`$${kpiData.netProfit.toFixed(2)}`}
         description="Ingresos - Gastos"
-        icon={DollarSign}
-        color="text-violet-500"
+        icon={Banknote}
+        color="text-blue-500"
+        borderColor="border-blue-500"
       />
     </div>
   );
