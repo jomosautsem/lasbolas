@@ -17,6 +17,7 @@ import {
   Receipt,
   ShoppingCart,
   Users,
+  LayoutGrid,
 } from 'lucide-react';
 import {
   Sheet,
@@ -96,6 +97,10 @@ export function AppHeader({ onAddExpenseClick, setActiveView }: { onAddExpenseCl
             <button onClick={() => handleMenuClick('dashboard')} className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground">
               <Home className="h-5 w-5" />
               Dashboard
+            </button>
+            <button onClick={() => handleMenuClick('occupancy-monitor')} className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground">
+              <LayoutGrid className="h-5 w-5" />
+              Monitor
             </button>
             <button onClick={() => handleMenuClick('consumption')} className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground">
               <ShoppingCart className="h-5 w-5" />

@@ -14,6 +14,7 @@ import VehicleHistoryPage from '@/components/motel/vehicle-history-page';
 import ConsumptionPage from '@/components/motel/consumption-page';
 import EmployeesPage from '@/components/motel/employees-page';
 import ReportsPage from '@/components/motel/reports-page';
+import OccupancyMonitorPage from '@/components/motel/occupancy-monitor-page';
 
 export default function Home() {
   const [rooms, setRooms] = useState<Room[]>(initialRooms);
@@ -533,6 +534,13 @@ export default function Home() {
               onRemovePerson={handleRemovePerson}
             />
           </div>
+        )}
+        {activeView === 'occupancy-monitor' && (
+          <OccupancyMonitorPage
+            rooms={rooms}
+            rates={rates}
+            roomTypes={roomTypes}
+          />
         )}
         {activeView === 'vehicles' && (
           <VehicleHistoryPage vehicleHistory={vehicleHistory} />

@@ -8,6 +8,7 @@ import {
   Receipt,
   ShoppingCart,
   Users,
+  LayoutGrid,
 } from 'lucide-react';
 import {
   Tooltip,
@@ -44,6 +45,21 @@ export function AppSidebar({ onAddExpenseClick, activeView, setActiveView }: { o
               </button>
             </TooltipTrigger>
             <TooltipContent side="right">Dashboard</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={() => setActiveView('occupancy-monitor')}
+                className={cn(
+                  "flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8",
+                  activeView === 'occupancy-monitor' && 'bg-accent text-accent-foreground'
+                )}
+              >
+                <LayoutGrid className="h-5 w-5" />
+                <span className="sr-only">Monitor de Ocupación</span>
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="right">Monitor de Ocupación</TooltipContent>
           </Tooltip>
           <Tooltip>
             <TooltipTrigger asChild>
