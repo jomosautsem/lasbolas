@@ -255,7 +255,6 @@ export default function DashboardPage() {
       total_debt: 0,
       tv_controls: 0,
       ac_controls: 0,
-      maintenance_note: null,
     }).eq('id', roomId);
     
     if (error) {
@@ -277,7 +276,7 @@ export default function DashboardPage() {
   };
 
   const handleFinishCleaning = async (roomId: number) => {
-    const { error } = await supabase.from('rooms').update({ status: 'Disponible', maintenance_note: null }).eq('id', roomId);
+    const { error } = await supabase.from('rooms').update({ status: 'Disponible' }).eq('id', roomId);
     const room = rooms.find(r => r.id === roomId);
     if (error) {
       toast({ variant: 'destructive', title: 'Error', description: error.message });
@@ -296,8 +295,8 @@ export default function DashboardPage() {
     }
   };
 
-  const handleSetMaintenance = async (roomId: number, note: string) => {
-    const { error } = await supabase.from('rooms').update({ status: 'Mantenimiento', maintenance_note: note }).eq('id', roomId);
+  const handleSetMaintenance = async (roomId: number) => {
+    const { error } = await supabase.from('rooms').update({ status: 'Mantenimiento' }).eq('id', roomId);
     const room = rooms.find(r => r.id === roomId);
     if (error) {
       toast({ variant: 'destructive', title: 'Error', description: error.message });
