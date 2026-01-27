@@ -88,39 +88,39 @@ export function OccupancyMonitorCard({ room, rate }: OccupancyMonitorCardProps) 
 
   return (
     <Card className={cn("rounded-2xl shadow-md", cardColorClass, textColor)}>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 p-4">
-        <CardTitle className="text-2xl font-bold font-headline">{room.name}</CardTitle>
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 p-3">
+        <CardTitle className="text-xl font-bold font-headline">{room.name}</CardTitle>
         <div className="flex items-center gap-2">
-          {isVencida && <AlertTriangle className="h-6 w-6" />}
-          <VehicleIcon className="h-6 w-6" />
+          {isVencida && <AlertTriangle className="h-5 w-5" />}
+          <VehicleIcon className="h-5 w-5" />
           <div className="text-right">
-            <p className="font-semibold text-sm">{rate?.name}</p>
+            <p className="font-semibold text-xs">{rate?.name}</p>
             <p className="text-xs opacity-80">{rate?.hours} horas</p>
           </div>
         </div>
       </CardHeader>
-      <CardContent className="p-4 pt-0">
-        <div className={cn("text-center rounded-lg p-3 mb-3", contentBgClass)}>
+      <CardContent className="p-3 pt-0">
+        <div className={cn("text-center rounded-lg p-2 mb-2", contentBgClass)}>
           <p className="text-xs font-semibold opacity-80">{isVencida ? 'HABITACIÓN VENCIDA' : 'HORA DE SALIDA'}</p>
-          <p className="text-3xl font-bold font-mono tracking-tight">{formatToMexicanTime(room.check_out_time!)}</p>
-          <p className="text-sm font-semibold">
+          <p className="text-2xl font-bold font-mono tracking-tight">{formatToMexicanTime(room.check_out_time!)}</p>
+          <p className="text-xs font-semibold">
             {timeLeft}
           </p>
         </div>
         
-        <Progress value={progress} className={cn("h-2 mb-3", {'[&>div]:bg-white': isVibrant && textColor === 'text-white'}, {'[&>div]:bg-black': isVibrant && textColor === 'text-black'})} />
+        <Progress value={progress} className={cn("h-1.5 mb-2", {'[&>div]:bg-white': isVibrant && textColor === 'text-white'}, {'[&>div]:bg-black': isVibrant && textColor === 'text-black'})} />
 
-        <div className="flex justify-around items-center text-sm font-semibold opacity-80">
-           <div className="flex items-center gap-1.5">
-            <Tv className="h-4 w-4" />
+        <div className="flex justify-around items-center text-xs font-semibold opacity-80">
+           <div className="flex items-center gap-1">
+            <Tv className="h-3 w-3" />
             <span>{room.tv_controls}</span>
           </div>
-          <div className="flex items-center gap-1.5">
-            <Wind className="h-4 w-4" />
+          <div className="flex items-center gap-1">
+            <Wind className="h-3 w-3" />
             <span>{room.ac_controls}</span>
           </div>
-           <div className="flex items-center gap-1.5">
-            <Clock className="h-4 w-4" />
+           <div className="flex items-center gap-1">
+            <Clock className="h-3 w-3" />
             <span>{formatDistanceToNow(new Date(room.check_in_time!), { locale: es })}</span>
           </div>
         </div>
