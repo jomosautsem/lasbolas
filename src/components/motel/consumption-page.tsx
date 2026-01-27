@@ -8,11 +8,12 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
-import { ShoppingCart, Plus, Minus, X, Beer, UtensilsCrossed, GlassWater, PlusCircle, Edit, Trash2 } from 'lucide-react';
+import { ShoppingCart, Plus, Minus, X, Beer, UtensilsCrossed, GlassWater, PlusCircle, Edit, Trash2, Search } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import ProductFormModal from './product-form-modal';
 import DeleteProductDialog from './delete-product-dialog';
+import { Input } from '@/components/ui/input';
 
 
 interface ConsumptionPageProps {
@@ -40,6 +41,16 @@ export default function ConsumptionPage({ products, occupiedRooms, onConfirm, on
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const { toast } = useToast();
+  const [searchTerm, setSearchTerm] = useState('');
+
+  const filteredProducts = useMemo(() => {
+    if (!searchTerm) {
+      return products;
+    }
+    return products.filter(p =>
+      p.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [products, searchTerm]);
 
   const handleQuantityChange = (product: Product, change: number) => {
     setCart(currentCart => {
@@ -136,11 +147,20 @@ export default function ConsumptionPage({ products, occupiedRooms, onConfirm, on
                 <CardHeader>
                 <CardTitle>Menú de Alimentos y Bebidas</CardTitle>
                 <CardDescription>Seleccione productos para agregar al consumo de una habitación.</CardDescription>
+                <div className="relative pt-2">
+                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                        placeholder="Buscar producto..."
+                        className="pl-8"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                </div>
                 </CardHeader>
                 <CardContent>
                 <ScrollArea className="h-[60vh]">
                     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 pr-4">
-                    {products.map(product => {
+                    {filteredProducts.map(product => {
                         const Icon = categoryIcons[product.category] || UtensilsCrossed;
                         const quantity = getProductQuantity(product.id);
                         return (

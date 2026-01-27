@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Separator } from '@/components/ui/separator';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { ShoppingCart, Plus, Minus, X, Beer, UtensilsCrossed, GlassWater, PlusCircle, Edit, Trash2, Users, DollarSign, History } from 'lucide-react';
+import { ShoppingCart, Plus, Minus, X, Beer, UtensilsCrossed, GlassWater, PlusCircle, Edit, Trash2, Users, DollarSign, History, Search } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import EmployeeFormModal from './employee-form-modal';
@@ -44,6 +44,16 @@ export default function EmployeesPage({ employees, products, transactions, onAdd
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
   const [openEmployeeId, setOpenEmployeeId] = useState<number | null>(null);
   const { toast } = useToast();
+  const [searchTerm, setSearchTerm] = useState('');
+
+  const filteredProducts = useMemo(() => {
+    if (!searchTerm) {
+      return products;
+    }
+    return products.filter(p =>
+      p.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [products, searchTerm]);
 
   const shiftInfo = useMemo(() => getCurrentShiftInfo(), []);
   const operationalDateStr = useMemo(() => format(shiftInfo.operationalDate, 'yyyy-MM-dd'), [shiftInfo]);
@@ -168,11 +178,20 @@ export default function EmployeesPage({ employees, products, transactions, onAdd
                 <CardHeader>
                 <CardTitle>Menú de Productos</CardTitle>
                 <CardDescription>Seleccione productos para vender a un empleado.</CardDescription>
+                <div className="relative pt-2">
+                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                        placeholder="Buscar producto..."
+                        className="pl-8"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                </div>
                 </CardHeader>
                 <CardContent>
                 <ScrollArea className="h-[60vh]">
                     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 pr-4">
-                    {products.map(product => {
+                    {filteredProducts.map(product => {
                         const Icon = categoryIcons[product.category] || UtensilsCrossed;
                         const quantity = getProductQuantity(product.id);
                         return (
