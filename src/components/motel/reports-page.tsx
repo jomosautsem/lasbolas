@@ -8,14 +8,15 @@ import { Badge } from '@/components/ui/badge';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { format } from 'date-fns';
+import { format, isAfter, formatDistance } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { Calendar as CalendarIcon, DollarSign, Bed, ShoppingCart, Users, UserPlus, Clock, Download, RefreshCw, FileText, ChevronDown, History, ArrowRight } from 'lucide-react';
+import { Calendar as CalendarIcon, DollarSign, Bed, ShoppingCart, Users, UserPlus, Clock, Download, RefreshCw, FileText, ChevronDown, History, ArrowRight, AlertTriangle } from 'lucide-react';
 import { getCurrentShiftInfo, getMexicoCityTime, formatToMexicanTime } from '@/lib/datetime';
 import { cn } from '@/lib/utils';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Separator } from '@/components/ui/separator';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface ReportsPageProps {
   rooms: Room[];
@@ -39,6 +40,49 @@ const StatCard = ({ title, value, icon: Icon, className }: { title: string; valu
         <p className="text-2xl font-bold">{value}</p>
     </div>
 );
+
+interface ExpiredRoomInfo {
+    name: string;
+    time: string;
+}
+
+const ExpiredRoomsCard = ({ rooms }: { rooms: ExpiredRoomInfo[] }) => {
+    if (rooms.length === 0) {
+        return (
+            <div className="bg-teal-50 border-l-4 border-teal-500 text-teal-900 rounded-xl p-4">
+                <div className="flex items-center justify-between">
+                <p className="text-sm font-semibold">HABITACIONES VENCIDAS</p>
+                <Clock className="h-5 w-5 text-teal-500" />
+                </div>
+                <p className="text-3xl font-bold">0</p>
+                <p className="text-xs">Ninguna habitación vencida en el turno</p>
+            </div>
+        );
+    }
+    
+    return (
+        <Card className="rounded-xl shadow-md text-white bg-gradient-to-br from-red-600 to-rose-800">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 p-4 pb-2">
+                <CardTitle className="text-sm font-medium">Habitaciones Vencidas</CardTitle>
+                <AlertTriangle className="h-5 w-5" />
+            </CardHeader>
+            <CardContent className="p-4 pt-0">
+                <div className="text-3xl font-bold font-headline">{rooms.length}</div>
+                <ScrollArea className="h-[3.5rem] mt-1 pr-2">
+                    <div className="text-xs space-y-1">
+                    {rooms.map(room => (
+                        <div key={room.name} className="flex justify-between gap-2">
+                            <span className="font-semibold">{room.name}</span>
+                            <span className="text-right whitespace-nowrap">{room.time}</span>
+                        </div>
+                    ))}
+                    </div>
+                </ScrollArea>
+            </CardContent>
+        </Card>
+    )
+}
+
 
 export default function ReportsPage({ rooms, transactions, expenses, products }: ReportsPageProps) {
     const [selectedDate, setSelectedDate] = useState<Date | undefined>(getMexicoCityTime());
@@ -191,6 +235,31 @@ export default function ReportsPage({ rooms, transactions, expenses, products }:
     return log.sort((a, b) => new Date(b.check_in_time!).getTime() - new Date(a.check_in_time!).getTime());
   }, [selectedDate, selectedShift, rooms, transactions, products]);
 
+   const expiredRoomsReport = useMemo(() => {
+        if (!selectedDate) return [];
+
+        const shiftEndDate = getMexicoCityTime(new Date(selectedDate));
+        if (selectedShift === 'Matutino') {
+            shiftEndDate.setHours(14, 0, 0, 0);
+        } else if (selectedShift === 'Vespertino') {
+            shiftEndDate.setHours(21, 0, 0, 0);
+        } else { // Nocturno
+            shiftEndDate.setDate(shiftEndDate.getDate() + 1);
+            shiftEndDate.setHours(7, 0, 0, 0);
+        }
+        
+        return roomLogData
+            .filter(log => {
+                if (!log.check_out_time) return false;
+                return isAfter(shiftEndDate, new Date(log.check_out_time));
+            })
+            .map(log => ({
+                name: log.name,
+                time: `Vencida por ${formatDistance(new Date(log.check_out_time!), shiftEndDate, { locale: es })}`
+            }));
+
+    }, [roomLogData, selectedDate, selectedShift]);
+
 
   return (
     <div className="flex-1 space-y-6 p-4 md:p-8 pt-6">
@@ -253,7 +322,7 @@ export default function ReportsPage({ rooms, transactions, expenses, products }:
             <CardTitle className="flex items-center gap-2 text-lg"><FileText />Resumen Financiero del Turno</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-            <div className="grid md:grid-cols-3 gap-4">
+            <div className="grid md:grid-cols-4 gap-4">
                 <div className="bg-blue-50 border-l-4 border-blue-500 text-blue-900 rounded-xl p-4">
                     <div className="flex items-center justify-between">
                       <p className="text-sm font-semibold">TOTAL INGRESOS</p>
@@ -302,6 +371,8 @@ export default function ReportsPage({ rooms, transactions, expenses, products }:
                       <p className="text-3xl font-bold">${summary.netProfit.toFixed(2)}</p>
                     </div>
                 </div>
+
+                <ExpiredRoomsCard rooms={expiredRoomsReport} />
             </div>
             
             <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
