@@ -35,6 +35,7 @@ interface RoomCardProps {
   onReleaseRoom: (roomId: number) => void;
   onFinishCleaning: (roomId: number) => void;
   onSetDeepCleaning: (roomId: number) => void;
+  onSetMaintenance: (roomId: number) => void;
   onRoomChange: (fromRoomId: number, toRoomId: number) => void;
   onAdjustPackage: (roomId: number, newRate: Rate, difference: number) => void;
   onExtendStay: (roomId: number) => void;
@@ -69,7 +70,7 @@ const ActionButton = ({ icon: Icon, label, colorClass = '', className = '', ...p
 );
 
 
-export function RoomCard({ room, allRooms, rates, roomTypes, allTransactions, onOccupy, onUpdateControls, onReleaseRoom, onFinishCleaning, onSetDeepCleaning, onRoomChange, onAdjustPackage, onExtendStay, onAddPerson, onRemovePerson }: RoomCardProps) {
+export function RoomCard({ room, allRooms, rates, roomTypes, allTransactions, onOccupy, onUpdateControls, onReleaseRoom, onFinishCleaning, onSetDeepCleaning, onSetMaintenance, onRoomChange, onAdjustPackage, onExtendStay, onAddPerson, onRemovePerson }: RoomCardProps) {
   const [isClient, setIsClient] = useState(false);
   const [now, setNow] = useState(new Date());
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -268,16 +269,36 @@ export function RoomCard({ room, allRooms, rates, roomTypes, allTransactions, on
             </div>
            </div>
           )
+        ) : room.status === 'Disponible' ? (
+           isMenuOpen ? (
+            <div className="w-full grid grid-cols-2 gap-2 text-center text-card-foreground">
+                <ActionButton icon={Trash2} label="Profunda" colorClass="text-purple-500" onClick={() => { onSetDeepCleaning(room.id); setIsMenuOpen(false); }} />
+                <ActionButton icon={Wrench} label="Mante." colorClass="text-gray-500" onClick={() => { onSetMaintenance(room.id); setIsMenuOpen(false); }} />
+            </div>
+          ) : (
+            <div className={cn("text-center text-sm py-8", baseConfig.textColor, "opacity-70")}>
+              Lista para rentar
+            </div>
+          )
         ) : (
           <div className={cn("text-center text-sm py-8", baseConfig.textColor, "opacity-70")}>
-            {room.status === 'Disponible' ? 'Lista para rentar' : `En ${room.status}`}
+            {`En ${room.status}`}
           </div>
         )}
       </CardContent>
 
       <CardFooter className={cn("p-2 rounded-b-2xl bg-black/5", textColor === 'text-black' ? 'border-t border-black/10' : '')}>
           {room.status === 'Disponible' ? (
-            <Button className="w-full" onClick={() => onOccupy(room)}>Ocupar</Button>
+            isMenuOpen ? (
+                <Button className="w-full bg-white text-black hover:bg-gray-200 font-semibold border border-slate-300" onClick={() => setIsMenuOpen(false)}><X className="mr-2 h-4 w-4"/> Cerrar Menú</Button>
+            ) : (
+                <div className="flex w-full gap-2">
+                    <Button className="flex-grow" onClick={() => onOccupy(room)}>Ocupar</Button>
+                    <Button size="icon" variant="outline" className="bg-white/80" onClick={() => setIsMenuOpen(true)}>
+                        <Menu className="h-4 w-4 text-black"/>
+                    </Button>
+                </div>
+            )
           ) : isOccupied || effectiveStatus === 'Vencida' ? (
              isMenuOpen ? (
                 <Button className="w-full bg-white text-black hover:bg-gray-200 font-semibold border border-slate-300" onClick={() => setIsMenuOpen(false)}><X className="mr-2 h-4 w-4"/> Cerrar Menú</Button>
@@ -296,6 +317,10 @@ export function RoomCard({ room, allRooms, rates, roomTypes, allTransactions, on
           ) : room.status === 'Profunda' ? (
              <Button className="w-full" onClick={() => onFinishCleaning(room.id)}>
                 <Sparkles className="mr-2 h-4 w-4" /> Finalizar Limpieza
+            </Button>
+          ) : room.status === 'Mantenimiento' ? (
+            <Button className="w-full" onClick={() => onFinishCleaning(room.id)}>
+              <Sparkles className="mr-2 h-4 w-4" /> Marcar como Disponible
             </Button>
           ) : (
             <div className="h-10"></div>

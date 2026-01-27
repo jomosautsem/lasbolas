@@ -295,6 +295,16 @@ export default function DashboardPage() {
     }
   };
 
+  const handleSetMaintenance = async (roomId: number) => {
+    const { error } = await supabase.from('rooms').update({ status: 'Mantenimiento' }).eq('id', roomId);
+    const room = rooms.find(r => r.id === roomId);
+    if (error) {
+      toast({ variant: 'destructive', title: 'Error', description: error.message });
+    } else if (room) {
+      toast({ title: 'Mantenimiento', description: `La habitación ${room.name} ahora está en mantenimiento.` });
+    }
+  };
+
   const handleChangeRoom = async (fromRoomId: number, toRoomId: number) => {
     const fromRoom = rooms.find(r => r.id === fromRoomId);
     const toRoom = rooms.find(r => r.id === toRoomId);
@@ -651,6 +661,7 @@ export default function DashboardPage() {
               onReleaseRoom={handleReleaseRoom}
               onFinishCleaning={handleFinishCleaning}
               onSetDeepCleaning={handleSetDeepCleaning}
+              onSetMaintenance={handleSetMaintenance}
               onRoomChange={handleChangeRoom}
               onAdjustPackage={handleAdjustPackage}
               onExtendStay={handleExtendStay}

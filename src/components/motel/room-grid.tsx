@@ -14,6 +14,7 @@ interface RoomGridProps {
   onReleaseRoom: (roomId: number) => void;
   onFinishCleaning: (roomId: number) => void;
   onSetDeepCleaning: (roomId: number) => void;
+  onSetMaintenance: (roomId: number) => void;
   onRoomChange: (fromRoomId: number, toRoomId: number) => void;
   onAdjustPackage: (roomId: number, newRate: Rate, difference: number) => void;
   onExtendStay: (roomId: number) => void;
@@ -21,7 +22,7 @@ interface RoomGridProps {
   onRemovePerson: (roomId: number) => void;
 }
 
-export default function RoomGrid({ rooms, rates, roomTypes, transactions, onConfirmCheckIn, onUpdateControls, onReleaseRoom, onFinishCleaning, onSetDeepCleaning, onRoomChange, onAdjustPackage, onExtendStay, onAddPerson, onRemovePerson }: RoomGridProps) {
+export default function RoomGrid({ rooms, rates, roomTypes, transactions, onConfirmCheckIn, onUpdateControls, onReleaseRoom, onFinishCleaning, onSetDeepCleaning, onSetMaintenance, onRoomChange, onAdjustPackage, onExtendStay, onAddPerson, onRemovePerson }: RoomGridProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
 
@@ -46,6 +47,7 @@ export default function RoomGrid({ rooms, rates, roomTypes, transactions, onConf
             onReleaseRoom={onReleaseRoom}
             onFinishCleaning={onFinishCleaning}
             onSetDeepCleaning={onSetDeepCleaning}
+            onSetMaintenance={onSetMaintenance}
             onRoomChange={onRoomChange}
             onAdjustPackage={onAdjustPackage}
             onExtendStay={onExtendStay}
