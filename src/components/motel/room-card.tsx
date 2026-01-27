@@ -1,13 +1,40 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import {
-  Bed, Car, Sparkles, Wrench, Trash2, Menu, PersonStanding, Users, ArrowRight,
-  LogOut, SlidersHorizontal, ArrowRightLeft, TrendingUp, PlusCircle, MinusCircle, UserPlus, UserMinus, Edit, X, DollarSign, Tv, Wind, ShoppingCart
+  Bed,
+  Car,
+  Sparkles,
+  Wrench,
+  Trash2,
+  Menu,
+  PersonStanding,
+  Users,
+  ArrowRight,
+  LogOut,
+  SlidersHorizontal,
+  ArrowRightLeft,
+  TrendingUp,
+  PlusCircle,
+  MinusCircle,
+  UserPlus,
+  UserMinus,
+  Edit,
+  X,
+  DollarSign,
+  Tv,
+  Wind,
+  ShoppingCart,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { Room, Rate, RoomType, Transaction } from '@/lib/types';
@@ -45,34 +72,100 @@ interface RoomCardProps {
   onRemovePerson: (roomId: number) => void;
 }
 
-const statusConfig: { [key: string]: { icon: React.ElementType, color: string, labelColor: string, textColor: string } } = {
-    Disponible: { icon: Bed, color: 'bg-green-100 border-green-500 text-green-700', labelColor: 'bg-green-500', textColor: 'text-green-700' },
-    Ocupada: { icon: Bed, color: 'bg-blue-100 border-blue-500 text-blue-700', labelColor: 'bg-blue-500', textColor: 'text-blue-700' },
-    Limpieza: { icon: Sparkles, color: 'bg-cyan-100 border-cyan-500 text-cyan-700', labelColor: 'bg-cyan-500', textColor: 'text-cyan-700' },
-    Mantenimiento: { icon: Wrench, color: 'bg-gradient-to-br from-yellow-400 via-yellow-500 to-emerald-500', labelColor: 'bg-yellow-600', textColor: 'text-white' },
-    Profunda: { icon: Trash2, color: 'bg-gradient-to-br from-gray-900 to-purple-900', labelColor: 'bg-purple-700', textColor: 'text-white' },
-    Vencida: { icon: Bed, color: 'bg-red-500 border-red-600 text-white animate-pulse', labelColor: 'bg-red-600', textColor: 'text-white' },
+const statusConfig: {
+  [key: string]: {
+    icon: React.ElementType;
+    color: string;
+    labelColor: string;
+    textColor: string;
+  };
+} = {
+  Disponible: {
+    icon: Bed,
+    color: 'bg-green-100 border-green-500 text-green-700',
+    labelColor: 'bg-green-500',
+    textColor: 'text-green-700',
+  },
+  Ocupada: {
+    icon: Bed,
+    color: 'bg-blue-100 border-blue-500 text-blue-700',
+    labelColor: 'bg-blue-500',
+    textColor: 'text-blue-700',
+  },
+  Limpieza: {
+    icon: Sparkles,
+    color: 'bg-cyan-100 border-cyan-500 text-cyan-700',
+    labelColor: 'bg-cyan-500',
+    textColor: 'text-cyan-700',
+  },
+  Mantenimiento: {
+    icon: Wrench,
+    color: 'bg-gradient-to-br from-yellow-400 via-yellow-500 to-emerald-500',
+    labelColor: 'bg-yellow-600',
+    textColor: 'text-white',
+  },
+  Profunda: {
+    icon: Trash2,
+    color: 'bg-gradient-to-br from-gray-900 to-purple-900',
+    labelColor: 'bg-purple-700',
+    textColor: 'text-white',
+  },
+  Vencida: {
+    icon: Bed,
+    color: 'bg-red-500 border-red-600 text-white animate-pulse',
+    labelColor: 'bg-red-600',
+    textColor: 'text-white',
+  },
 };
 
-const ActionButton = ({ icon: Icon, label, colorClass = '', className = '', ...props }: { icon: React.ElementType, label: string, colorClass?: string, className?: string, onClick?: () => void, disabled?: boolean }) => (
-    <Button 
-        variant="ghost" 
-        className={cn(
-            "h-auto flex-col p-2 space-y-1 rounded-lg transition-colors duration-150 border",
-            "bg-white border-slate-200 text-slate-700 shadow-sm",
-            "hover:bg-slate-100",
-            "active:bg-slate-200 active:shadow-inner",
-            className
-        )} 
-        {...props}
-    >
-        <Icon className={cn("h-6 w-6", colorClass)} />
-        <span className={cn("text-xs font-semibold", colorClass)}>{label}</span>
-    </Button>
+const ActionButton = ({
+  icon: Icon,
+  label,
+  colorClass = '',
+  className = '',
+  ...props
+}: {
+  icon: React.ElementType;
+  label: string;
+  colorClass?: string;
+  className?: string;
+  onClick?: () => void;
+  disabled?: boolean;
+}) => (
+  <Button
+    variant="ghost"
+    className={cn(
+      'h-auto flex-col p-2 space-y-1 rounded-lg transition-colors duration-150 border',
+      'bg-white border-slate-200 text-slate-700 shadow-sm',
+      'hover:bg-slate-100',
+      'active:bg-slate-200 active:shadow-inner',
+      className
+    )}
+    {...props}
+  >
+    <Icon className={cn('h-6 w-6', colorClass)} />
+    <span className={cn('text-xs font-semibold', colorClass)}>{label}</span>
+  </Button>
 );
 
-
-export function RoomCard({ room, allRooms, rates, roomTypes, allTransactions, onOccupy, onUpdateControls, onReleaseRoom, onFinishCleaning, onSetDeepCleaning, onSetMaintenance, onRoomChange, onAdjustPackage, onExtendStay, onAddPerson, onRemovePerson }: RoomCardProps) {
+export function RoomCard({
+  room,
+  allRooms,
+  rates,
+  roomTypes,
+  allTransactions,
+  onOccupy,
+  onUpdateControls,
+  onReleaseRoom,
+  onFinishCleaning,
+  onSetDeepCleaning,
+  onSetMaintenance,
+  onRoomChange,
+  onAdjustPackage,
+  onExtendStay,
+  onAddPerson,
+  onRemovePerson,
+}: RoomCardProps) {
   const [isClient, setIsClient] = useState(false);
   const [now, setNow] = useState(new Date());
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -90,19 +183,22 @@ export function RoomCard({ room, allRooms, rates, roomTypes, allTransactions, on
 
   const stayTransactions = useMemo(() => {
     if (!isOccupied || !room.check_in_time) return [];
-    
+
     return allTransactions
-      .filter(t => {
+      .filter((t) => {
         if (t.room_id !== room.id) return false;
         const transactionTime = new Date(t.timestamp);
         const checkInTime = new Date(room.check_in_time!);
         return transactionTime >= checkInTime;
       })
-      .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+      .sort(
+        (a, b) =>
+          new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+      );
   }, [allTransactions, room.id, room.check_in_time, isOccupied]);
 
   const hasConsumption = useMemo(() => {
-    return stayTransactions.some(t => t.type === 'Consumo');
+    return stayTransactions.some((t) => t.type === 'Consumo');
   }, [stayTransactions]);
 
   useEffect(() => {
@@ -113,11 +209,17 @@ export function RoomCard({ room, allRooms, rates, roomTypes, allTransactions, on
     return () => clearInterval(timerId);
   }, []);
 
-  const isExpired = isClient && isOccupied && room.check_out_time ? new Date(room.check_out_time) < now : false;
+  const isExpired =
+    isClient && isOccupied && room.check_out_time
+      ? new Date(room.check_out_time) < now
+      : false;
 
   const timeDifferenceText = useMemo(() => {
     if (!isExpired || !room.check_out_time) return null;
-    return `Venció ${formatDistanceToNow(new Date(room.check_out_time), { locale: es, addSuffix: true })}`;
+    return `Venció ${formatDistanceToNow(new Date(room.check_out_time), {
+      locale: es,
+      addSuffix: true,
+    })}`;
   }, [now, room.check_out_time, isExpired]);
 
   const handleReleaseClick = () => {
@@ -134,11 +236,17 @@ export function RoomCard({ room, allRooms, rates, roomTypes, allTransactions, on
     setIsReleaseRoomModalOpen(false);
   };
 
-  const roomType = roomTypes.find(rt => rt.id === room.room_type_id);
-  const rate = useMemo(() => room.rate_id ? rates.find(r => r.id === room.rate_id) : null, [room.rate_id, rates]);
-  
+  const roomType = roomTypes.find((rt) => rt.id === room.room_type_id);
+  const rate = useMemo(
+    () => (room.rate_id ? rates.find((r) => r.id === room.rate_id) : null),
+    [room.rate_id, rates]
+  );
+
   const extensionRate = useMemo(() => {
-    return rates.find(r => r.name === 'Extensión 3 Horas' && r.room_type_id === room.room_type_id);
+    return rates.find(
+      (r) =>
+        r.name === 'Extensión 3 Horas' && r.room_type_id === room.room_type_id
+    );
   }, [rates, room.room_type_id]);
 
   const canExtendStay = useMemo(() => {
@@ -147,7 +255,7 @@ export function RoomCard({ room, allRooms, rates, roomTypes, allTransactions, on
   }, [rate, extensionRate]);
 
   const effectiveStatus = isExpired ? 'Vencida' : room.status;
-  
+
   const baseConfig = statusConfig[effectiveStatus] || statusConfig['Disponible'];
 
   const { cardColorClass, textColor } = useMemo(() => {
@@ -168,244 +276,403 @@ export function RoomCard({ room, allRooms, rates, roomTypes, allTransactions, on
 
     if (isOccupied && !isExpired && rate && rate.id in rateColorMap) {
       const cardClass = rateColorMap[rate.id];
-      const textClass = blackTextRates.includes(rate.id) ? 'text-black' : 'text-white';
+      const textClass = blackTextRates.includes(rate.id)
+        ? 'text-black'
+        : 'text-white';
       return { cardColorClass: cardClass, textColor: textClass };
     }
-    
+
     return { cardColorClass: baseConfig.color, textColor: baseConfig.textColor };
   }, [isOccupied, isExpired, rate, baseConfig]);
 
+  const separatorClass =
+    textColor === 'text-black' ? 'bg-black/20' : 'bg-white/20';
+  const contentBgClass =
+    textColor === 'text-black' ? 'bg-white/70 text-black' : 'bg-black/20 text-white';
 
-  const separatorClass = textColor === 'text-black' ? 'bg-black/20' : 'bg-white/20';
-  const contentBgClass = textColor === 'text-black' ? 'bg-white/70 text-black' : 'bg-black/20 text-white';
-
-  const VehicleIcon = room.entry_type === 'Auto' ? Car : MotorcycleIcon;
+  const VehicleIcon =
+    room.entry_type === 'Auto' ? Car : MotorcycleIcon;
 
   return (
     <>
-    <Card className={cn('rounded-2xl shadow-lg transition-all hover:shadow-xl flex flex-col', cardColorClass, textColor)}>
-      <CardHeader className="flex flex-row items-start justify-between space-y-0 p-3">
-        <div>
-          <CardTitle className="text-xl font-bold font-headline">{room.name.replace('Habitación ', 'Hab ')}</CardTitle>
-          {roomType && <span className="text-xs font-semibold">{roomType.name.toUpperCase()}</span>}
-        </div>
-        <Badge className={cn('text-white', baseConfig.labelColor)}>{effectiveStatus}</Badge>
-      </CardHeader>
-
-      <CardContent className="p-3 flex-grow flex flex-col justify-center items-center gap-2">
-        {room.status === 'Limpieza' ? (
-          <div className="flex flex-col items-center justify-center h-full w-full">
-            <AnimatedBucketIcon className="h-24 w-24" />
-          </div>
-        ) : room.status === 'Profunda' ? (
-          <div className="flex flex-col items-center justify-center h-full w-full">
-            <Trash2 className="h-24 w-24" />
-          </div>
-        ) : room.status === 'Mantenimiento' ? (
-          <div className="flex flex-col items-center justify-center h-full w-full p-2 text-center">
-            <Wrench className="h-16 w-16 mb-2" />
-            {room.maintenance_note && (
-                <p className="text-xs italic px-2 py-1 bg-black/20 rounded-md">
-                    {room.maintenance_note}
-                </p>
+      <Card
+        className={cn(
+          'rounded-2xl shadow-lg transition-all hover:shadow-xl flex flex-col',
+          cardColorClass,
+          textColor
+        )}
+      >
+        <CardHeader className="flex flex-row items-start justify-between space-y-0 p-3">
+          <div>
+            <CardTitle className="text-xl font-bold font-headline">
+              {room.name.replace('Habitación ', 'Hab ')}
+            </CardTitle>
+            {roomType && (
+              <span className="text-xs font-semibold">
+                {roomType.name.toUpperCase()}
+              </span>
             )}
           </div>
-        ) : isOccupied ? (
-          isMenuOpen ? (
-            <div className="w-full text-sm">
-                <div className={cn("rounded-lg p-2 mb-3", contentBgClass)}>
-                    <div className="flex justify-between items-center text-xs opacity-80 mb-2">
-                        <span className="flex items-center gap-1 font-semibold"><DollarSign className="h-4 w-4" /> ESTADO DE CUENTA</span>
-                        <span>{isClient && room.check_in_time ? formatToMexicanDate(room.check_in_time) : ''}</span>
+          <Badge className={cn('text-white', baseConfig.labelColor)}>
+            {effectiveStatus}
+          </Badge>
+        </CardHeader>
+
+        <CardContent className="p-3 flex-grow flex flex-col justify-center items-center gap-2">
+          {room.status === 'Limpieza' ? (
+            <div className="flex flex-col items-center justify-center h-full w-full">
+              <AnimatedBucketIcon className="h-24 w-24" />
+            </div>
+          ) : room.status === 'Profunda' ? (
+            <div className="flex flex-col items-center justify-center h-full w-full">
+              <Trash2 className="h-24 w-24" />
+            </div>
+          ) : room.status === 'Mantenimiento' ? (
+            <div className="flex flex-col items-center justify-center h-full w-full p-2 text-center">
+              <Wrench className="h-16 w-16 mb-2" />
+              {room.maintenance_note && (
+                <p className="text-xs italic px-2 py-1 bg-black/20 rounded-md">
+                  {room.maintenance_note}
+                </p>
+              )}
+            </div>
+          ) : isOccupied ? (
+            isMenuOpen ? (
+              <div className="w-full text-sm">
+                <div className={cn('rounded-lg p-2 mb-3', contentBgClass)}>
+                  <div className="flex justify-between items-center text-xs opacity-80 mb-2">
+                    <span className="flex items-center gap-1 font-semibold">
+                      <DollarSign className="h-4 w-4" /> ESTADO DE CUENTA
+                    </span>
+                    <span>
+                      {isClient && room.check_in_time
+                        ? formatToMexicanDate(room.check_in_time)
+                        : ''}
+                    </span>
+                  </div>
+                  <ScrollArea className="h-24 pr-3">
+                    <div className="space-y-1 text-xs">
+                      {stayTransactions.map((t) => (
+                        <div
+                          key={t.id}
+                          className="grid grid-cols-[1fr_auto] items-center gap-x-2"
+                        >
+                          <p className="truncate">{t.description}</p>
+                          <span className="font-medium whitespace-nowrap text-right">
+                            ${t.amount.toFixed(2)}
+                          </span>
+                        </div>
+                      ))}
                     </div>
-                    <ScrollArea className="h-24 pr-3">
-                      <div className="space-y-1 text-xs">
-                          {stayTransactions.map(t => (
-                            <div key={t.id} className="grid grid-cols-[1fr_auto] items-center gap-x-2">
-                                <p className="truncate">{t.description}</p>
-                                <span className="font-medium whitespace-nowrap text-right">${t.amount.toFixed(2)}</span>
-                            </div>
-                          ))}
-                      </div>
-                    </ScrollArea>
-                    <Separator className={cn("my-2", separatorClass)} />
-                    <div className="flex justify-between items-center font-bold text-lg">
-                        <span>TOTAL</span>
-                        <span className="rounded-md bg-green-200 text-green-800 px-2 py-1">${room.total_debt?.toFixed(2)}</span>
-                    </div>
+                  </ScrollArea>
+                  <Separator className={cn('my-2', separatorClass)} />
+                  <div className="flex justify-between items-center font-bold text-lg">
+                    <span>TOTAL</span>
+                    <span className="rounded-md bg-green-200 text-green-800 px-2 py-1">
+                      ${room.total_debt?.toFixed(2)}
+                    </span>
+                  </div>
                 </div>
 
-                <div className={cn("grid grid-cols-3 gap-2 text-center", textColor === 'text-black' ? 'text-black' : 'text-card-foreground' )}>
-                    <ActionButton icon={LogOut} label="Liberar" colorClass="text-red-500" onClick={handleReleaseClick} />
-                    <ActionButton icon={SlidersHorizontal} label="Controles" onClick={() => setIsControlsModalOpen(true)}/>
-                    <ActionButton icon={ArrowRightLeft} label="Cambiar Hab." onClick={() => setIsChangeRoomModalOpen(true)}/>
-                    <ActionButton icon={TrendingUp} label="Ajustar Paq." onClick={() => setIsAdjustPackageModalOpen(true)} />
-                    <ActionButton icon={PlusCircle} label="Aumentar" colorClass="text-green-600" onClick={() => setIsExtendStayModalOpen(true)} disabled={!canExtendStay} />
-                    <ActionButton icon={MinusCircle} label="Reducir" colorClass="text-red-500" />
-                    <ActionButton icon={UserPlus} label="+ Persona" onClick={() => setIsAddPersonModalOpen(true)} />
-                    <ActionButton icon={UserMinus} label="- Persona" onClick={() => setIsRemovePersonModalOpen(true)} />
-                    <ActionButton icon={Edit} label="Editar E/S" />
+                <div
+                  className={cn(
+                    'grid grid-cols-3 gap-2 text-center',
+                    textColor === 'text-black'
+                      ? 'text-black'
+                      : 'text-card-foreground'
+                  )}
+                >
+                  <ActionButton
+                    icon={LogOut}
+                    label="Liberar"
+                    colorClass="text-red-500"
+                    onClick={handleReleaseClick}
+                  />
+                  <ActionButton
+                    icon={SlidersHorizontal}
+                    label="Controles"
+                    onClick={() => setIsControlsModalOpen(true)}
+                  />
+                  <ActionButton
+                    icon={ArrowRightLeft}
+                    label="Cambiar Hab."
+                    onClick={() => setIsChangeRoomModalOpen(true)}
+                  />
+                  <ActionButton
+                    icon={TrendingUp}
+                    label="Ajustar Paq."
+                    onClick={() => setIsAdjustPackageModalOpen(true)}
+                  />
+                  <ActionButton
+                    icon={PlusCircle}
+                    label="Aumentar"
+                    colorClass="text-green-600"
+                    onClick={() => setIsExtendStayModalOpen(true)}
+                    disabled={!canExtendStay}
+                  />
+                  <ActionButton
+                    icon={MinusCircle}
+                    label="Reducir"
+                    colorClass="text-red-500"
+                  />
+                  <ActionButton
+                    icon={UserPlus}
+                    label="+ Persona"
+                    onClick={() => setIsAddPersonModalOpen(true)}
+                  />
+                  <ActionButton
+                    icon={UserMinus}
+                    label="- Persona"
+                    onClick={() => setIsRemovePersonModalOpen(true)}
+                  />
+                  <ActionButton icon={Edit} label="Editar E/S" />
                 </div>
-            </div>
-          ) : (
-           <div className="w-full rounded-lg p-3 space-y-2 text-sm bg-black/10">
-            <div className="flex justify-between items-center font-bold">
-                <span>Hospedaje</span>
-                <span>${rate?.price.toFixed(2) || '0.00'}</span>
-            </div>
-
-            <div className={cn("text-center rounded-md p-2", isExpired ? "bg-black/20" : "bg-black/10")}>
-                <div className={cn("text-xs font-semibold opacity-80", isExpired && "text-yellow-300")}>{isExpired ? 'TIEMPO VENCIDO' : 'HORA DE SALIDA'}</div>
-                <div className={cn(
-                    "flex items-center justify-center gap-2",
-                    isExpired ? "font-sans text-sm text-yellow-300" : "font-mono text-xl"
-                )}>
-                    {isExpired 
-                        ? timeDifferenceText 
-                        : (isClient && room.check_out_time ? formatToMexicanTime(room.check_out_time) : '--:--')
-                    }
+              </div>
+            ) : (
+              <div className="w-full rounded-lg p-3 space-y-2 text-sm bg-black/10">
+                <div className="flex justify-between items-center font-bold">
+                  <span>Hospedaje</span>
+                  <span>${rate?.price.toFixed(2) || '0.00'}</span>
                 </div>
-            </div>
-            
-            <Separator className={cn("my-1", separatorClass)} />
 
-            <div className="flex justify-between items-center text-xs opacity-80">
-                <span className="flex items-center gap-1.5 font-semibold">
-                    {room.entry_type && room.entry_type !== 'Pie' 
-                        ? <VehicleIcon className="h-4 w-4"/> 
-                        : <PersonStanding className="h-4 w-4" />}
-                    {room.vehicle_plate || room.customer_name}
-                </span>
-                <div className="flex items-center gap-3">
-                    {hasConsumption && (
-                        <span className="flex items-center gap-1 font-semibold text-black">
-                            <ShoppingCart className="h-4 w-4" />
-                        </span>
+                <div
+                  className={cn(
+                    'text-center rounded-md p-2',
+                    isExpired ? 'bg-black/20' : 'bg-black/10'
+                  )}
+                >
+                  <div
+                    className={cn(
+                      'text-xs font-semibold opacity-80',
+                      isExpired && 'text-yellow-300'
                     )}
-                    <span className="flex items-center gap-1.5 font-semibold"><Users className="h-4 w-4"/>{room.persons}</span>
+                  >
+                    {isExpired ? 'TIEMPO VENCIDO' : 'HORA DE SALIDA'}
+                  </div>
+                  <div
+                    className={cn(
+                      'flex items-center justify-center gap-2',
+                      isExpired
+                        ? 'font-sans text-sm text-yellow-300'
+                        : 'font-mono text-xl'
+                    )}
+                  >
+                    {room.is_manual_time && <Edit className="h-3 w-3" />}
+                    {isExpired
+                      ? timeDifferenceText
+                      : isClient && room.check_out_time
+                      ? formatToMexicanTime(room.check_out_time)
+                      : '--:--'}
+                  </div>
                 </div>
-            </div>
-           </div>
-          )
-        ) : room.status === 'Disponible' ? (
-           isMenuOpen ? (
-            <div className="w-full grid grid-cols-2 gap-2 text-center text-card-foreground">
-                <ActionButton icon={Trash2} label="Profunda" colorClass="text-purple-500" onClick={() => { onSetDeepCleaning(room.id); setIsMenuOpen(false); }} />
-                <ActionButton icon={Wrench} label="Mante." colorClass="text-gray-500" onClick={() => { setIsMaintenanceModalOpen(true); setIsMenuOpen(false); }} />
-            </div>
-          ) : (
-            <div className={cn("text-center text-sm py-8", baseConfig.textColor, "opacity-70")}>
-              Lista para rentar
-            </div>
-          )
-        ) : (
-          <div className={cn("text-center text-sm py-8", baseConfig.textColor, "opacity-70")}>
-            {`En ${room.status}`}
-          </div>
-        )}
-      </CardContent>
 
-      <CardFooter className={cn("p-2 rounded-b-2xl bg-black/5", textColor === 'text-black' ? 'border-t border-black/10' : '')}>
+                <Separator className={cn('my-1', separatorClass)} />
+
+                <div className="flex justify-between items-center text-xs opacity-80">
+                  <span className="flex items-center gap-1.5 font-semibold">
+                    {room.entry_type && room.entry_type !== 'Pie' ? (
+                      <VehicleIcon className="h-4 w-4" />
+                    ) : (
+                      <PersonStanding className="h-4 w-4" />
+                    )}
+                    {room.vehicle_plate || room.customer_name}
+                  </span>
+                  <div className="flex items-center gap-3">
+                    {hasConsumption && (
+                      <span className="flex items-center gap-1 font-semibold text-black">
+                        <ShoppingCart className="h-4 w-4" />
+                      </span>
+                    )}
+                    <span className="flex items-center gap-1.5 font-semibold">
+                      <Users className="h-4 w-4" />
+                      {room.persons}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )
+          ) : room.status === 'Disponible' ? (
+            isMenuOpen ? (
+              <div className="w-full grid grid-cols-2 gap-2 text-center text-card-foreground">
+                <ActionButton
+                  icon={Trash2}
+                  label="Profunda"
+                  colorClass="text-purple-500"
+                  onClick={() => {
+                    onSetDeepCleaning(room.id);
+                    setIsMenuOpen(false);
+                  }}
+                />
+                <ActionButton
+                  icon={Wrench}
+                  label="Mante."
+                  colorClass="text-gray-500"
+                  onClick={() => {
+                    setIsMaintenanceModalOpen(true);
+                    setIsMenuOpen(false);
+                  }}
+                />
+              </div>
+            ) : (
+              <div
+                className={cn(
+                  'text-center text-sm py-8',
+                  baseConfig.textColor,
+                  'opacity-70'
+                )}
+              >
+                Lista para rentar
+              </div>
+            )
+          ) : (
+            <div
+              className={cn(
+                'text-center text-sm py-8',
+                baseConfig.textColor,
+                'opacity-70'
+              )}
+            >
+              {`En ${room.status}`}
+            </div>
+          )}
+        </CardContent>
+
+        <CardFooter
+          className={cn(
+            'p-2 rounded-b-2xl bg-black/5',
+            textColor === 'text-black' ? 'border-t border-black/10' : ''
+          )}
+        >
           {room.status === 'Disponible' ? (
             isMenuOpen ? (
-                <Button className="w-full bg-white text-black hover:bg-gray-200 font-semibold border border-slate-300" onClick={() => setIsMenuOpen(false)}><X className="mr-2 h-4 w-4"/> Cerrar Menú</Button>
+              <Button
+                className="w-full bg-white text-black hover:bg-gray-200 font-semibold border border-slate-300"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                <X className="mr-2 h-4 w-4" /> Cerrar Menú
+              </Button>
             ) : (
-                <div className="flex w-full gap-2">
-                    <Button className="flex-grow" onClick={() => onOccupy(room)}>Ocupar</Button>
-                    <Button size="icon" variant="outline" className="bg-white/80" onClick={() => setIsMenuOpen(true)}>
-                        <Menu className="h-4 w-4 text-black"/>
-                    </Button>
-                </div>
+              <div className="flex w-full gap-2">
+                <Button className="flex-grow" onClick={() => onOccupy(room)}>
+                  Ocupar
+                </Button>
+                <Button
+                  size="icon"
+                  variant="outline"
+                  className="bg-white/80"
+                  onClick={() => setIsMenuOpen(true)}
+                >
+                  <Menu className="h-4 w-4 text-black" />
+                </Button>
+              </div>
             )
           ) : isOccupied || effectiveStatus === 'Vencida' ? (
-             isMenuOpen ? (
-                <Button className="w-full bg-white text-black hover:bg-gray-200 font-semibold border border-slate-300" onClick={() => setIsMenuOpen(false)}><X className="mr-2 h-4 w-4"/> Cerrar Menú</Button>
-             ) : (
-                <Button className="w-full bg-white text-black hover:bg-gray-200 font-semibold border border-slate-300" onClick={() => setIsMenuOpen(true)}><Menu className="mr-2 h-4 w-4"/> Gestionar Habitación</Button>
-             )
+            isMenuOpen ? (
+              <Button
+                className="w-full bg-white text-black hover:bg-gray-200 font-semibold border border-slate-300"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                <X className="mr-2 h-4 w-4" /> Cerrar Menú
+              </Button>
+            ) : (
+              <Button
+                className="w-full bg-white text-black hover:bg-gray-200 font-semibold border border-slate-300"
+                onClick={() => setIsMenuOpen(true)}
+              >
+                <Menu className="mr-2 h-4 w-4" /> Gestionar Habitación
+              </Button>
+            )
           ) : room.status === 'Limpieza' ? (
             <div className="flex w-full gap-2">
-              <Button className="w-full" variant="outline" onClick={() => onFinishCleaning(room.id)}>
+              <Button
+                className="w-full"
+                variant="outline"
+                onClick={() => onFinishCleaning(room.id)}
+              >
                 <Sparkles className="mr-2 h-4 w-4 text-cyan-500" /> Disponible
               </Button>
-              <Button className="w-full" variant="outline" onClick={() => onSetDeepCleaning(room.id)}>
+              <Button
+                className="w-full"
+                variant="outline"
+                onClick={() => onSetDeepCleaning(room.id)}
+              >
                 <Trash2 className="mr-2 h-4 w-4 text-purple-500" /> Profunda
               </Button>
             </div>
           ) : (
-             <Button className="w-full" onClick={() => onFinishCleaning(room.id)}>
-                <Sparkles className="mr-2 h-4 w-4" /> Finalizar
+            <Button className="w-full" onClick={() => onFinishCleaning(room.id)}>
+              <Sparkles className="mr-2 h-4 w-4" /> Finalizar
             </Button>
           )}
         </CardFooter>
-    </Card>
-    <SetMaintenanceModal
+      </Card>
+      <SetMaintenanceModal
         isOpen={isMaintenanceModalOpen}
         onOpenChange={setIsMaintenanceModalOpen}
         room={room}
         onConfirm={onSetMaintenance}
-    />
-    {isOccupied && (
-      <ControlsModal 
-        isOpen={isControlsModalOpen}
-        onOpenChange={setIsControlsModalOpen}
-        room={room}
-        onSave={onUpdateControls}
       />
-    )}
-    <ReleaseWarningModal 
-      isOpen={isReleaseWarningOpen}
-      onOpenChange={setIsReleaseWarningOpen}
-    />
-    <ReleaseRoomModal
-      isOpen={isReleaseRoomModalOpen}
-      onOpenChange={setIsReleaseRoomModalOpen}
-      onConfirm={handleConfirmRelease}
-      roomName={room.name}
-    />
-    {isOccupied && (
-        <ChangeRoomModal
-            isOpen={isChangeRoomModalOpen}
-            onOpenChange={setIsChangeRoomModalOpen}
-            currentRoom={room}
-            allRooms={allRooms}
-            onConfirmChange={onRoomChange}
+      {isOccupied && (
+        <ControlsModal
+          isOpen={isControlsModalOpen}
+          onOpenChange={setIsControlsModalOpen}
+          room={room}
+          onSave={onUpdateControls}
         />
-    )}
-    {isOccupied && (
-      <AdjustPackageModal
-        isOpen={isAdjustPackageModalOpen}
-        onOpenChange={setIsAdjustPackageModalOpen}
-        currentRoom={room}
-        allRates={rates}
-        onConfirmAdjust={onAdjustPackage}
+      )}
+      <ReleaseWarningModal
+        isOpen={isReleaseWarningOpen}
+        onOpenChange={setIsReleaseWarningOpen}
       />
-    )}
-    {isOccupied && canExtendStay && extensionRate && (
-      <ExtendStayModal 
-        isOpen={isExtendStayModalOpen}
-        onOpenChange={setIsExtendStayModalOpen}
-        currentRoom={room}
-        extensionRate={extensionRate}
-        onConfirm={onExtendStay}
+      <ReleaseRoomModal
+        isOpen={isReleaseRoomModalOpen}
+        onOpenChange={setIsReleaseRoomModalOpen}
+        onConfirm={handleConfirmRelease}
+        roomName={room.name}
       />
-    )}
-    {isOccupied && (
-      <AddPersonModal
-        isOpen={isAddPersonModalOpen}
-        onOpenChange={setIsAddPersonModalOpen}
-        currentRoom={room}
-        onConfirm={onAddPerson}
-      />
-    )}
-    {isOccupied && (
-      <RemovePersonModal
-        isOpen={isRemovePersonModalOpen}
-        onOpenChange={setIsRemovePersonModalOpen}
-        currentRoom={room}
-        onConfirm={onRemovePerson}
-      />
-    )}
+      {isOccupied && (
+        <ChangeRoomModal
+          isOpen={isChangeRoomModalOpen}
+          onOpenChange={setIsChangeRoomModalOpen}
+          currentRoom={room}
+          allRooms={allRooms}
+          onConfirmChange={onRoomChange}
+        />
+      )}
+      {isOccupied && (
+        <AdjustPackageModal
+          isOpen={isAdjustPackageModalOpen}
+          onOpenChange={setIsAdjustPackageModalOpen}
+          currentRoom={room}
+          allRates={rates}
+          onConfirmAdjust={onAdjustPackage}
+        />
+      )}
+      {isOccupied && canExtendStay && extensionRate && (
+        <ExtendStayModal
+          isOpen={isExtendStayModalOpen}
+          onOpenChange={setIsExtendStayModalOpen}
+          currentRoom={room}
+          extensionRate={extensionRate}
+          onConfirm={onExtendStay}
+        />
+      )}
+      {isOccupied && (
+        <AddPersonModal
+          isOpen={isAddPersonModalOpen}
+          onOpenChange={setIsAddPersonModalOpen}
+          currentRoom={room}
+          onConfirm={onAddPerson}
+        />
+      )}
+      {isOccupied && (
+        <RemovePersonModal
+          isOpen={isRemovePersonModalOpen}
+          onOpenChange={setIsRemovePersonModalOpen}
+          currentRoom={room}
+          onConfirm={onRemovePerson}
+        />
+      )}
     </>
   );
 }

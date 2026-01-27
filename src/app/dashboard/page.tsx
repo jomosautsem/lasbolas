@@ -6,7 +6,16 @@ import { AppLayout } from '@/components/motel/app-layout';
 import DashboardKPIs from '@/components/motel/dashboard-kpis';
 import RoomGrid from '@/components/motel/room-grid';
 import { getCurrentShiftInfo } from '@/lib/datetime';
-import type { Room, Transaction, Rate, Expense, VehicleHistory, Product, Employee, RoomType } from '@/lib/types';
+import type {
+  Room,
+  Transaction,
+  Rate,
+  Expense,
+  VehicleHistory,
+  Product,
+  Employee,
+  RoomType,
+} from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { addHours, differenceInMinutes } from 'date-fns';
 import AddExpenseModal from '@/components/motel/add-expense-modal';
@@ -43,7 +52,9 @@ export default function DashboardPage() {
 
   useEffect(() => {
     const checkUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       if (!session) {
         router.push('/');
       } else {
@@ -54,22 +65,27 @@ export default function DashboardPage() {
 
     checkUser();
 
-    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'SIGNED_OUT') {
-        router.push('/');
-      } else if (session) {
-        setUser(session.user);
+    const { data: authListener } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        if (event === 'SIGNED_OUT') {
+          router.push('/');
+        } else if (session) {
+          setUser(session.user);
+        }
       }
-    });
+    );
 
     return () => {
       authListener.subscription.unsubscribe();
     };
   }, [router]);
 
-  const showToast = useCallback((...args: Parameters<typeof toast>) => {
-    toast(...args);
-  }, [toast]);
+  const showToast = useCallback(
+    (...args: Parameters<typeof toast>) => {
+      toast(...args);
+    },
+    [toast]
+  );
 
   useEffect(() => {
     if (loading) return;
@@ -89,11 +105,18 @@ export default function DashboardPage() {
 
     Object.entries(tableSetterMap).forEach(([table, setter]) => {
       const fetchAndSet = async () => {
-        const { data, error } = await supabase.from(table).select('*').order('id');
+        const { data, error } = await supabase
+          .from(table)
+          .select('*')
+          .order('id');
         if (error) {
-          showToast({ variant: 'destructive', title: `Error cargando ${table}`, description: error.message });
+          showToast({
+            variant: 'destructive',
+            title: `Error cargando ${table}`,
+            description: error.message,
+          });
         } else {
-          setter(data as any[] || []);
+          setter((data as any[]) || []);
         }
       };
 
@@ -101,32 +124,38 @@ export default function DashboardPage() {
 
       const channel = supabase
         .channel(`public:${table}`)
-        .on('postgres_changes', { event: '*', schema: 'public', table: table }, payload => {
-          fetchAndSet();
-        })
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: table },
+          (payload) => {
+            fetchAndSet();
+          }
+        )
         .subscribe();
-      
+
       channels.push(channel);
     });
 
     return () => {
-      channels.forEach(channel => supabase.removeChannel(channel));
+      channels.forEach((channel) => supabase.removeChannel(channel));
     };
   }, [showToast, loading]);
-  
 
   useEffect(() => {
     const checkRooms = () => {
       const now = new Date();
       const expiringIds = rooms
-        .filter(room => room.status === 'Ocupada' && room.check_out_time)
-        .filter(room => {
-          const timeLeft = differenceInMinutes(new Date(room.check_out_time!), now);
+        .filter((room) => room.status === 'Ocupada' && room.check_out_time)
+        .filter((room) => {
+          const timeLeft = differenceInMinutes(
+            new Date(room.check_out_time!),
+            now
+          );
           return timeLeft <= 10 && timeLeft >= 0;
         })
-        .map(room => room.id);
-      
-      setExpiringRoomIds(currentIds => {
+        .map((room) => room.id);
+
+      setExpiringRoomIds((currentIds) => {
         const sortedNewIds = [...expiringIds].sort();
         const sortedCurrentIds = [...currentIds].sort();
         if (JSON.stringify(sortedNewIds) !== JSON.stringify(sortedCurrentIds)) {
@@ -157,8 +186,9 @@ export default function DashboardPage() {
     if (!hasInteracted) {
       setHasInteracted(true);
       toast({
-        title: "Sonido de Alertas Activado",
-        description: "Recibirá una notificación sonora para habitaciones a punto de vencer.",
+        title: 'Sonido de Alertas Activado',
+        description:
+          'Recibirá una notificación sonora para habitaciones a punto de vencer.',
       });
     }
   };
@@ -177,14 +207,23 @@ export default function DashboardPage() {
         turno_calculado: shiftInfo.shift,
         fecha_operativa: shiftInfo.operationalDate.toISOString().split('T')[0],
       };
-      const { error } = await supabase.from('transactions').insert([newTransaction]);
+      const { error } = await supabase
+        .from('transactions')
+        .insert([newTransaction]);
       if (error) {
-        toast({ variant: 'destructive', title: 'Error al crear transacción', description: error.message });
+        toast({
+          variant: 'destructive',
+          title: 'Error al crear transacción',
+          description: error.message,
+        });
         return;
       }
     }
-    
-    if (checkInData.plate && (checkInData.entryType === 'Auto' || checkInData.entryType === 'Moto')) {
+
+    if (
+      checkInData.plate &&
+      (checkInData.entryType === 'Auto' || checkInData.entryType === 'Moto')
+    ) {
       const newVehicleHistoryEntry: Omit<VehicleHistory, 'id'> = {
         plate: checkInData.plate,
         check_in_time: checkInData.startTime.toISOString(),
@@ -195,9 +234,15 @@ export default function DashboardPage() {
         vehicle_brand: checkInData.marca,
         vehicle_details: `${checkInData.modelo} ${checkInData.color}`,
       };
-      const { error } = await supabase.from('vehicle_history').insert([newVehicleHistoryEntry]);
+      const { error } = await supabase
+        .from('vehicle_history')
+        .insert([newVehicleHistoryEntry]);
       if (error) {
-        toast({ variant: 'destructive', title: 'Error al guardar vehículo', description: error.message });
+        toast({
+          variant: 'destructive',
+          title: 'Error al guardar vehículo',
+          description: error.message,
+        });
         return;
       }
     }
@@ -218,48 +263,78 @@ export default function DashboardPage() {
         total_debt: checkInData.selectedRate?.price || 0,
         tv_controls: 0,
         ac_controls: 0,
+        is_manual_time: checkInData.isManualTime,
       })
       .eq('id', roomToUpdate.id);
 
     if (error) {
-      toast({ variant: 'destructive', title: 'Error en Check-in', description: error.message });
+      toast({
+        variant: 'destructive',
+        title: 'Error en Check-in',
+        description: error.message,
+      });
     } else {
-      toast({ title: 'Check-in Exitoso', description: `Habitación ${roomToUpdate.name} ocupada.` });
+      toast({
+        title: 'Check-in Exitoso',
+        description: `Habitación ${roomToUpdate.name} ocupada.`,
+      });
     }
   };
 
-  const handleUpdateControls = async (roomId: number, tvControls: number, acControls: number) => {
-    const { error } = await supabase.from('rooms').update({ tv_controls: tvControls, ac_controls: acControls }).eq('id', roomId);
+  const handleUpdateControls = async (
+    roomId: number,
+    tvControls: number,
+    acControls: number
+  ) => {
+    const { error } = await supabase
+      .from('rooms')
+      .update({ tv_controls: tvControls, ac_controls: acControls })
+      .eq('id', roomId);
     if (error) {
-      toast({ variant: 'destructive', title: 'Error al actualizar', description: error.message });
+      toast({
+        variant: 'destructive',
+        title: 'Error al actualizar',
+        description: error.message,
+      });
     } else {
-      toast({ title: 'Controles Actualizados', description: 'Se han guardado los controles.' });
+      toast({
+        title: 'Controles Actualizados',
+        description: 'Se han guardado los controles.',
+      });
     }
   };
 
   const handleReleaseRoom = async (roomId: number) => {
-    const room = rooms.find(r => r.id === roomId);
+    const room = rooms.find((r) => r.id === roomId);
     if (!room) return;
-    
-    const { error } = await supabase.from('rooms').update({
-      status: 'Limpieza',
-      check_in_time: null,
-      check_out_time: null,
-      customer_name: '',
-      persons: '0',
-      entry_type: undefined,
-      vehicle_plate: '',
-      vehicle_brand: '',
-      vehicle_details: '',
-      rate_id: null,
-      total_debt: 0,
-      tv_controls: 0,
-      ac_controls: 0,
-      maintenance_note: null,
-    }).eq('id', roomId);
-    
+
+    const { error } = await supabase
+      .from('rooms')
+      .update({
+        status: 'Limpieza',
+        check_in_time: null,
+        check_out_time: null,
+        customer_name: '',
+        persons: '0',
+        entry_type: undefined,
+        vehicle_plate: '',
+        vehicle_brand: '',
+        vehicle_details: '',
+        rate_id: null,
+        total_debt: 0,
+        tv_controls: 0,
+        ac_controls: 0,
+        maintenance_note: null,
+        is_manual_time: false,
+      })
+      .eq('id', roomId);
+
     if (error) {
-      toast({ variant: 'destructive', title: 'Error al liberar', description: error.message });
+      toast({
+        variant: 'destructive',
+        title: 'Error al liberar',
+        description: error.message,
+      });
       return;
     }
 
@@ -270,49 +345,76 @@ export default function DashboardPage() {
       .is('check_out_time', null);
 
     if (vehicleError) {
-      toast({ variant: 'destructive', title: 'Error al actualizar vehículo', description: vehicleError.message });
+      toast({
+        variant: 'destructive',
+        title: 'Error al actualizar vehículo',
+        description: vehicleError.message,
+      });
     } else {
-      toast({ title: 'Habitación Liberada', description: `La habitación ${room.name} ha sido puesta en limpieza.` });
+      toast({
+        title: 'Habitación Liberada',
+        description: `La habitación ${room.name} ha sido puesta en limpieza.`,
+      });
     }
   };
 
   const handleFinishCleaning = async (roomId: number) => {
-    const { error } = await supabase.from('rooms').update({ status: 'Disponible', maintenance_note: null }).eq('id', roomId);
-    const room = rooms.find(r => r.id === roomId);
+    const { error } = await supabase
+      .from('rooms')
+      .update({ status: 'Disponible', maintenance_note: null })
+      .eq('id', roomId);
+    const room = rooms.find((r) => r.id === roomId);
     if (error) {
       toast({ variant: 'destructive', title: 'Error', description: error.message });
     } else if (room) {
-      toast({ title: 'Habitación Lista', description: `La habitación ${room.name} ahora está disponible.` });
+      toast({
+        title: 'Habitación Lista',
+        description: `La habitación ${room.name} ahora está disponible.`,
+      });
     }
   };
 
   const handleSetDeepCleaning = async (roomId: number) => {
-    const { error } = await supabase.from('rooms').update({ status: 'Profunda' }).eq('id', roomId);
-    const room = rooms.find(r => r.id === roomId);
+    const { error } = await supabase
+      .from('rooms')
+      .update({ status: 'Profunda' })
+      .eq('id', roomId);
+    const room = rooms.find((r) => r.id === roomId);
     if (error) {
       toast({ variant: 'destructive', title: 'Error', description: error.message });
     } else if (room) {
-      toast({ title: 'Limpieza Profunda', description: `La habitación ${room.name} ahora está en limpieza profunda.` });
+      toast({
+        title: 'Limpieza Profunda',
+        description: `La habitación ${room.name} ahora está en limpieza profunda.`,
+      });
     }
   };
 
   const handleSetMaintenance = async (roomId: number, note: string) => {
-    const { error } = await supabase.from('rooms').update({ status: 'Mantenimiento', maintenance_note: note }).eq('id', roomId);
-    const room = rooms.find(r => r.id === roomId);
+    const { error } = await supabase
+      .from('rooms')
+      .update({ status: 'Mantenimiento', maintenance_note: note })
+      .eq('id', roomId);
+    const room = rooms.find((r) => r.id === roomId);
     if (error) {
       toast({ variant: 'destructive', title: 'Error', description: error.message });
     } else if (room) {
-      toast({ title: 'Mantenimiento', description: `La habitación ${room.name} ahora está en mantenimiento.` });
+      toast({
+        title: 'Mantenimiento',
+        description: `La habitación ${room.name} ahora está en mantenimiento.`,
+      });
     }
   };
 
   const handleChangeRoom = async (fromRoomId: number, toRoomId: number) => {
-    const fromRoom = rooms.find(r => r.id === fromRoomId);
-    const toRoom = rooms.find(r => r.id === toRoomId);
+    const fromRoom = rooms.find((r) => r.id === fromRoomId);
+    const toRoom = rooms.find((r) => r.id === toRoomId);
 
     if (!fromRoom || !toRoom) return;
 
-    const { error: toRoomError } = await supabase.from('rooms').update({
+    const { error: toRoomError } = await supabase
+      .from('rooms')
+      .update({
         status: 'Ocupada',
         check_in_time: fromRoom.check_in_time,
         check_out_time: fromRoom.check_out_time,
@@ -326,197 +428,366 @@ export default function DashboardPage() {
         total_debt: fromRoom.total_debt,
         tv_controls: fromRoom.tv_controls,
         ac_controls: fromRoom.ac_controls,
-    }).eq('id', toRoomId);
+        is_manual_time: fromRoom.is_manual_time,
+      })
+      .eq('id', toRoomId);
 
     if (toRoomError) {
-      toast({ variant: 'destructive', title: 'Error al cambiar habitación (1)', description: toRoomError.message });
+      toast({
+        variant: 'destructive',
+        title: 'Error al cambiar habitación (1)',
+        description: toRoomError.message,
+      });
       return;
     }
 
-    const { error: fromRoomError } = await supabase.from('rooms').update({
-      status: 'Limpieza',
-      check_in_time: null, check_out_time: null, customer_name: '', persons: '0', entry_type: undefined,
-      vehicle_plate: '', vehicle_brand: '', vehicle_details: '', rate_id: null, total_debt: 0, tv_controls: 0, ac_controls: 0,
-    }).eq('id', fromRoomId);
-    
+    const { error: fromRoomError } = await supabase
+      .from('rooms')
+      .update({
+        status: 'Limpieza',
+        check_in_time: null,
+        check_out_time: null,
+        customer_name: '',
+        persons: '0',
+        entry_type: undefined,
+        vehicle_plate: '',
+        vehicle_brand: '',
+        vehicle_details: '',
+        rate_id: null,
+        total_debt: 0,
+        tv_controls: 0,
+        ac_controls: 0,
+        is_manual_time: false,
+      })
+      .eq('id', fromRoomId);
+
     if (fromRoomError) {
-      toast({ variant: 'destructive', title: 'Error al cambiar habitación (2)', description: fromRoomError.message });
+      toast({
+        variant: 'destructive',
+        title: 'Error al cambiar habitación (2)',
+        description: fromRoomError.message,
+      });
       return;
     }
 
-    const { error: vehicleError } = await supabase.from('vehicle_history').update({ room_id: toRoomId, room_name: toRoom.name }).eq('room_id', fromRoomId).is('check_out_time', null);
+    const { error: vehicleError } = await supabase
+      .from('vehicle_history')
+      .update({ room_id: toRoomId, room_name: toRoom.name })
+      .eq('room_id', fromRoomId)
+      .is('check_out_time', null);
 
     if (vehicleError) {
-      toast({ variant: 'destructive', title: 'Error al actualizar vehículo', description: vehicleError.message });
+      toast({
+        variant: 'destructive',
+        title: 'Error al actualizar vehículo',
+        description: vehicleError.message,
+      });
     } else {
-      toast({ title: 'Cambio de Habitación Exitoso', description: `Cliente movido de ${fromRoom.name} a ${toRoom.name}.` });
+      toast({
+        title: 'Cambio de Habitación Exitoso',
+        description: `Cliente movido de ${fromRoom.name} a ${toRoom.name}.`,
+      });
     }
   };
 
-  const handleAdjustPackage = async (roomId: number, newRate: Rate, difference: number) => {
-    const roomToUpdate = rooms.find(r => r.id === roomId);
+  const handleAdjustPackage = async (
+    roomId: number,
+    newRate: Rate,
+    difference: number
+  ) => {
+    const roomToUpdate = rooms.find((r) => r.id === roomId);
     if (!roomToUpdate || !roomToUpdate.check_in_time) return;
 
     const shiftInfo = getCurrentShiftInfo();
     const newTransaction = {
-      room_id: roomId, amount: difference, type: 'Ajuste de Paquete', timestamp: new Date().toISOString(),
-      shift: shiftInfo.shift, description: `Ajuste a paquete ${newRate.name} - Hab ${roomToUpdate.name}`,
-      turno_calculado: shiftInfo.shift, fecha_operativa: shiftInfo.operationalDate.toISOString().split('T')[0],
+      room_id: roomId,
+      amount: difference,
+      type: 'Ajuste de Paquete',
+      timestamp: new Date().toISOString(),
+      shift: shiftInfo.shift,
+      description: `Ajuste a paquete ${newRate.name} - Hab ${roomToUpdate.name}`,
+      turno_calculado: shiftInfo.shift,
+      fecha_operativa: shiftInfo.operationalDate.toISOString().split('T')[0],
     };
-    const { error: transError } = await supabase.from('transactions').insert([newTransaction]);
+    const { error: transError } = await supabase
+      .from('transactions')
+      .insert([newTransaction]);
     if (transError) {
-      toast({ variant: 'destructive', title: 'Error', description: transError.message });
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: transError.message,
+      });
       return;
     }
 
     const checkInTime = new Date(roomToUpdate.check_in_time);
     const newCheckOutTime = addHours(checkInTime, newRate.hours);
-    const { error: roomError } = await supabase.from('rooms').update({
-      rate_id: newRate.id,
-      check_out_time: newCheckOutTime.toISOString(),
-      total_debt: (roomToUpdate.total_debt || 0) + difference,
-    }).eq('id', roomId);
+    const { error: roomError } = await supabase
+      .from('rooms')
+      .update({
+        rate_id: newRate.id,
+        check_out_time: newCheckOutTime.toISOString(),
+        total_debt: (roomToUpdate.total_debt || 0) + difference,
+      })
+      .eq('id', roomId);
 
     if (roomError) {
-      toast({ variant: 'destructive', title: 'Error', description: roomError.message });
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: roomError.message,
+      });
     } else {
-      toast({ title: 'Paquete Ajustado Exitosamente', description: `Habitación ${roomToUpdate.name} ahora tiene ${newRate.name}.` });
+      toast({
+        title: 'Paquete Ajustado Exitosamente',
+        description: `Habitación ${roomToUpdate.name} ahora tiene ${newRate.name}.`,
+      });
     }
   };
 
   const handleExtendStay = async (roomId: number) => {
-    const roomToUpdate = rooms.find(r => r.id === roomId);
+    const roomToUpdate = rooms.find((r) => r.id === roomId);
     if (!roomToUpdate || !roomToUpdate.check_out_time) return;
 
-    const extensionRate = rates.find(r => r.name === 'Extensión 3 Horas' && r.room_type_id === roomToUpdate.room_type_id);
+    const extensionRate = rates.find(
+      (r) =>
+        r.name === 'Extensión 3 Horas' && r.room_type_id === roomToUpdate.room_type_id
+    );
     if (!extensionRate) {
-      toast({ variant: 'destructive', title: 'Configuración Faltante', description: "Tarifa de 'Extensión 3 Horas' no encontrada." });
+      toast({
+        variant: 'destructive',
+        title: 'Configuración Faltante',
+        description: "Tarifa de 'Extensión 3 Horas' no encontrada.",
+      });
       return;
     }
 
     const shiftInfo = getCurrentShiftInfo();
     const newTransaction = {
-      room_id: roomId, amount: extensionRate.price, type: 'Tiempo Extra', timestamp: new Date().toISOString(),
-      shift: shiftInfo.shift, description: `Extensión 3 Horas - Hab ${roomToUpdate.name}`,
-      turno_calculado: shiftInfo.shift, fecha_operativa: shiftInfo.operationalDate.toISOString().split('T')[0],
+      room_id: roomId,
+      amount: extensionRate.price,
+      type: 'Tiempo Extra',
+      timestamp: new Date().toISOString(),
+      shift: shiftInfo.shift,
+      description: `Extensión 3 Horas - Hab ${roomToUpdate.name}`,
+      turno_calculado: shiftInfo.shift,
+      fecha_operativa: shiftInfo.operationalDate.toISOString().split('T')[0],
     };
-    const { error: transError } = await supabase.from('transactions').insert([newTransaction]);
+    const { error: transError } = await supabase
+      .from('transactions')
+      .insert([newTransaction]);
     if (transError) {
-      toast({ variant: 'destructive', title: 'Error', description: transError.message });
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: transError.message,
+      });
       return;
     }
 
     const currentCheckOutTime = new Date(roomToUpdate.check_out_time);
     const newCheckOutTime = addHours(currentCheckOutTime, extensionRate.hours);
-    const { error: roomError } = await supabase.from('rooms').update({
-      check_out_time: newCheckOutTime.toISOString(),
-      total_debt: (roomToUpdate.total_debt || 0) + extensionRate.price,
-    }).eq('id', roomId);
-    
+    const { error: roomError } = await supabase
+      .from('rooms')
+      .update({
+        check_out_time: newCheckOutTime.toISOString(),
+        total_debt: (roomToUpdate.total_debt || 0) + extensionRate.price,
+      })
+      .eq('id', roomId);
+
     if (roomError) {
-      toast({ variant: 'destructive', title: 'Error', description: roomError.message });
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: roomError.message,
+      });
     } else {
-      toast({ title: 'Estancia Extendida', description: `Se agregaron ${extensionRate.hours} horas a la habitación ${roomToUpdate.name}.` });
+      toast({
+        title: 'Estancia Extendida',
+        description: `Se agregaron ${extensionRate.hours} horas a la habitación ${roomToUpdate.name}.`,
+      });
     }
   };
 
   const handleAddPerson = async (roomId: number, amount: number) => {
-    const roomToUpdate = rooms.find(r => r.id === roomId);
+    const roomToUpdate = rooms.find((r) => r.id === roomId);
     if (!roomToUpdate) return;
     const currentPersons = parseInt(roomToUpdate.persons || '0', 10);
 
     if (amount > 0) {
       const shiftInfo = getCurrentShiftInfo();
       const newTransaction = {
-        room_id: roomId, amount: amount, type: 'Persona Extra', timestamp: new Date().toISOString(),
-        shift: shiftInfo.shift, description: `Persona Extra - Hab ${roomToUpdate.name}`,
-        turno_calculado: shiftInfo.shift, fecha_operativa: shiftInfo.operationalDate.toISOString().split('T')[0],
+        room_id: roomId,
+        amount: amount,
+        type: 'Persona Extra',
+        timestamp: new Date().toISOString(),
+        shift: shiftInfo.shift,
+        description: `Persona Extra - Hab ${roomToUpdate.name}`,
+        turno_calculado: shiftInfo.shift,
+        fecha_operativa: shiftInfo.operationalDate.toISOString().split('T')[0],
       };
-      const { error: transError } = await supabase.from('transactions').insert([newTransaction]);
+      const { error: transError } = await supabase
+        .from('transactions')
+        .insert([newTransaction]);
       if (transError) {
-        toast({ variant: 'destructive', title: 'Error', description: transError.message });
+        toast({
+          variant: 'destructive',
+          title: 'Error',
+          description: transError.message,
+        });
         return;
       }
     }
 
-    const { error: roomError } = await supabase.from('rooms').update({
-      persons: (currentPersons + 1).toString(),
-      total_debt: (roomToUpdate.total_debt || 0) + amount,
-    }).eq('id', roomId);
-    
+    const { error: roomError } = await supabase
+      .from('rooms')
+      .update({
+        persons: (currentPersons + 1).toString(),
+        total_debt: (roomToUpdate.total_debt || 0) + amount,
+      })
+      .eq('id', roomId);
+
     if (roomError) {
-      toast({ variant: 'destructive', title: 'Error', description: roomError.message });
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: roomError.message,
+      });
     } else {
-      toast({ title: 'Persona Agregada', description: `Se agregó una persona a la habitación ${roomToUpdate.name}.` });
+      toast({
+        title: 'Persona Agregada',
+        description: `Se agregó una persona a la habitación ${roomToUpdate.name}.`,
+      });
     }
   };
 
   const handleRemovePerson = async (roomId: number) => {
-    const roomToUpdate = rooms.find(r => r.id === roomId);
+    const roomToUpdate = rooms.find((r) => r.id === roomId);
     if (!roomToUpdate) return;
     const currentPersons = parseInt(roomToUpdate.persons || '0', 10);
     if (currentPersons <= 0) {
-      toast({ variant: "destructive", title: 'Acción no válida' });
+      toast({ variant: 'destructive', title: 'Acción no válida' });
       return;
     }
 
-    const { error } = await supabase.from('rooms').update({ persons: (currentPersons - 1).toString() }).eq('id', roomId);
+    const { error } = await supabase
+      .from('rooms')
+      .update({ persons: (currentPersons - 1).toString() })
+      .eq('id', roomId);
     if (error) {
-      toast({ variant: 'destructive', title: 'Error', description: error.message });
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: error.message,
+      });
     } else {
-      toast({ title: 'Persona Removida', description: `Se redujo una persona de la habitación ${roomToUpdate.name}.` });
+      toast({
+        title: 'Persona Removida',
+        description: `Se redujo una persona de la habitación ${roomToUpdate.name}.`,
+      });
     }
   };
 
-  const handleAddExpense = async ({ description, amount }: { description: string, amount: number }) => {
+  const handleAddExpense = async ({
+    description,
+    amount,
+  }: {
+    description: string;
+    amount: number;
+  }) => {
     const shiftInfo = getCurrentShiftInfo();
-    const newExpense: Omit<Expense, 'id'> = { description, amount, date: new Date().toISOString(), shift: shiftInfo.shift };
+    const newExpense: Omit<Expense, 'id'> = {
+      description,
+      amount,
+      date: new Date().toISOString(),
+      shift: shiftInfo.shift,
+    };
     const { error } = await supabase.from('expenses').insert([newExpense]);
     if (error) {
       toast({ variant: 'destructive', title: 'Error', description: error.message });
     } else {
-      toast({ title: 'Gasto Registrado', description: `Gasto de $${amount.toFixed(2)} por "${description}".` });
+      toast({
+        title: 'Gasto Registrado',
+        description: `Gasto de $${amount.toFixed(
+          2
+        )} por "${description}".`,
+      });
     }
   };
 
-  const handleAddConsumption = async (roomId: number, items: (Product & { quantity: number })[], totalPrice: number) => {
-    const roomToUpdate = rooms.find(r => r.id === roomId);
+  const handleAddConsumption = async (
+    roomId: number,
+    items: (Product & { quantity: number })[],
+    totalPrice: number
+  ) => {
+    const roomToUpdate = rooms.find((r) => r.id === roomId);
     if (!roomToUpdate) return;
 
     const shiftInfo = getCurrentShiftInfo();
-    const description = items.map(item => `${item.quantity}x ${item.name}`).join(', ');
+    const description = items
+      .map((item) => `${item.quantity}x ${item.name}`)
+      .join(', ');
 
     const newTransaction = {
-      room_id: roomId, amount: totalPrice, type: 'Consumo', timestamp: new Date().toISOString(),
-      shift: shiftInfo.shift, description, turno_calculado: shiftInfo.shift, fecha_operativa: shiftInfo.operationalDate.toISOString().split('T')[0],
+      room_id: roomId,
+      amount: totalPrice,
+      type: 'Consumo',
+      timestamp: new Date().toISOString(),
+      shift: shiftInfo.shift,
+      description,
+      turno_calculado: shiftInfo.shift,
+      fecha_operativa: shiftInfo.operationalDate.toISOString().split('T')[0],
     };
-    const { error: transError } = await supabase.from('transactions').insert([newTransaction]);
+    const { error: transError } = await supabase
+      .from('transactions')
+      .insert([newTransaction]);
     if (transError) {
-      toast({ variant: 'destructive', title: 'Error', description: transError.message });
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: transError.message,
+      });
       return;
     }
-    
-    const { error: roomError } = await supabase.from('rooms').update({ total_debt: (roomToUpdate.total_debt || 0) + totalPrice }).eq('id', roomId);
+
+    const { error: roomError } = await supabase
+      .from('rooms')
+      .update({ total_debt: (roomToUpdate.total_debt || 0) + totalPrice })
+      .eq('id', roomId);
     if (roomError) {
-      toast({ variant: 'destructive', title: 'Error', description: roomError.message });
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: roomError.message,
+      });
     }
   };
-  
+
   const handleAddProduct = async (newProductData: Omit<Product, 'id'>) => {
     const { error } = await supabase.from('products').insert([newProductData]);
     if (error) {
       toast({ variant: 'destructive', title: 'Error', description: error.message });
     } else {
-      toast({ title: 'Producto Creado', description: `El producto "${newProductData.name}" ha sido creado.` });
+      toast({
+        title: 'Producto Creado',
+        description: `El producto "${newProductData.name}" ha sido creado.`,
+      });
     }
   };
 
   const handleUpdateProduct = async (updatedProduct: Product) => {
-    const { error } = await supabase.from('products').update(updatedProduct).eq('id', updatedProduct.id);
+    const { error } = await supabase
+      .from('products')
+      .update(updatedProduct)
+      .eq('id', updatedProduct.id);
     if (error) {
       toast({ variant: 'destructive', title: 'Error', description: error.message });
     } else {
-      toast({ title: 'Producto Actualizado', description: `El producto "${updatedProduct.name}" ha sido actualizado.` });
+      toast({
+        title: 'Producto Actualizado',
+        description: `El producto "${updatedProduct.name}" ha sido actualizado.`,
+      });
     }
   };
 
@@ -525,22 +796,30 @@ export default function DashboardPage() {
     if (error) {
       toast({ variant: 'destructive', title: 'Error', description: error.message });
     } else {
-      toast({ variant: 'destructive', title: 'Producto Eliminado'});
+      toast({ variant: 'destructive', title: 'Producto Eliminado' });
     }
   };
 
-  const handleAddEmployee = async (newEmployeeData: Omit<Employee, 'id' | 'status'>) => {
+  const handleAddEmployee = async (
+    newEmployeeData: Omit<Employee, 'id' | 'status'>
+  ) => {
     const newEmployee = { status: 'Activo', ...newEmployeeData };
     const { error } = await supabase.from('employees').insert([newEmployee]);
     if (error) {
       toast({ variant: 'destructive', title: 'Error', description: error.message });
     } else {
-      toast({ title: 'Empleado Creado', description: `El empleado "${newEmployeeData.name}" ha sido creado.` });
+      toast({
+        title: 'Empleado Creado',
+        description: `El empleado "${newEmployeeData.name}" ha sido creado.`,
+      });
     }
   };
 
   const handleUpdateEmployee = async (updatedEmployee: Employee) => {
-    const { error } = await supabase.from('employees').update(updatedEmployee).eq('id', updatedEmployee.id);
+    const { error } = await supabase
+      .from('employees')
+      .update(updatedEmployee)
+      .eq('id', updatedEmployee.id);
     if (error) {
       toast({ variant: 'destructive', title: 'Error', description: error.message });
     } else {
@@ -549,30 +828,57 @@ export default function DashboardPage() {
   };
 
   const handleDeleteEmployee = async (employeeId: number) => {
-    const { error } = await supabase.from('employees').delete().eq('id', employeeId);
+    const { error } = await supabase
+      .from('employees')
+      .delete()
+      .eq('id', employeeId);
     if (error) {
       toast({ variant: 'destructive', title: 'Error', description: error.message });
     } else {
       toast({ variant: 'destructive', title: 'Empleado Eliminado' });
     }
   };
-  
-  const handleSellToEmployee = async (employeeId: number, items: (Product & { quantity: number; salePrice: number })[], totalPrice: number) => {
-    const employee = employees.find(e => e.id === employeeId);
+
+  const handleSellToEmployee = async (
+    employeeId: number,
+    items: (Product & { quantity: number; salePrice: number })[],
+    totalPrice: number
+  ) => {
+    const employee = employees.find((e) => e.id === employeeId);
     if (!employee) return;
 
     const shiftInfo = getCurrentShiftInfo();
-    const description = `Venta a ${employee.name}: ` + items.map(item => `${item.quantity}x ${item.name} @ $${item.salePrice.toFixed(2)}`).join(', ');
+    const description =
+      `Venta a ${employee.name}: ` +
+      items
+        .map(
+          (item) =>
+            `${item.quantity}x ${item.name} @ $${item.salePrice.toFixed(2)}`
+        )
+        .join(', ');
 
     const newTransaction = {
-      employee_id: employeeId, amount: totalPrice, type: 'Venta a Empleado', timestamp: new Date().toISOString(),
-      shift: shiftInfo.shift, description, turno_calculado: shiftInfo.shift, fecha_operativa: shiftInfo.operationalDate.toISOString().split('T')[0],
+      employee_id: employeeId,
+      amount: totalPrice,
+      type: 'Venta a Empleado',
+      timestamp: new Date().toISOString(),
+      shift: shiftInfo.shift,
+      description,
+      turno_calculado: shiftInfo.shift,
+      fecha_operativa: shiftInfo.operationalDate.toISOString().split('T')[0],
     };
-    const { error } = await supabase.from('transactions').insert([newTransaction]);
+    const { error } = await supabase
+      .from('transactions')
+      .insert([newTransaction]);
     if (error) {
       toast({ variant: 'destructive', title: 'Error', description: error.message });
     } else {
-      toast({ title: 'Venta a Empleado Registrada', description: `Venta de $${totalPrice.toFixed(2)} a ${employee.name}.` });
+      toast({
+        title: 'Venta a Empleado Registrada',
+        description: `Venta de $${totalPrice.toFixed(2)} a ${
+          employee.name
+        }.`,
+      });
     }
   };
 
@@ -586,7 +892,10 @@ export default function DashboardPage() {
   };
 
   const handleUpdateRate = async (updatedRate: Rate) => {
-    const { error } = await supabase.from('rates').update(updatedRate).eq('id', updatedRate.id);
+    const { error } = await supabase
+      .from('rates')
+      .update(updatedRate)
+      .eq('id', updatedRate.id);
     if (error) {
       toast({ variant: 'destructive', title: 'Error', description: error.message });
     } else {
@@ -604,7 +913,9 @@ export default function DashboardPage() {
   };
 
   const handleAddRoomType = async (newRoomTypeData: Omit<RoomType, 'id'>) => {
-    const { error } = await supabase.from('room_types').insert([newRoomTypeData]);
+    const { error } = await supabase
+      .from('room_types')
+      .insert([newRoomTypeData]);
     if (error) {
       toast({ variant: 'destructive', title: 'Error', description: error.message });
     } else {
@@ -613,7 +924,10 @@ export default function DashboardPage() {
   };
 
   const handleUpdateRoomType = async (updatedRoomType: RoomType) => {
-    const { error } = await supabase.from('room_types').update(updatedRoomType).eq('id', updatedRoomType.id);
+    const { error } = await supabase
+      .from('room_types')
+      .update(updatedRoomType)
+      .eq('id', updatedRoomType.id);
     if (error) {
       toast({ variant: 'destructive', title: 'Error', description: error.message });
     } else {
@@ -622,12 +936,20 @@ export default function DashboardPage() {
   };
 
   const handleDeleteRoomType = async (roomTypeId: number) => {
-    const isUsed = rooms.some(r => r.room_type_id === roomTypeId);
+    const isUsed = rooms.some((r) => r.room_type_id === roomTypeId);
     if (isUsed) {
-      toast({ variant: 'destructive', title: 'Error al Eliminar', description: 'No se puede eliminar un tipo de habitación que está en uso.' });
+      toast({
+        variant: 'destructive',
+        title: 'Error al Eliminar',
+        description:
+          'No se puede eliminar un tipo de habitación que está en uso.',
+      });
       return;
     }
-    const { error } = await supabase.from('room_types').delete().eq('id', roomTypeId);
+    const { error } = await supabase
+      .from('room_types')
+      .delete()
+      .eq('id', roomTypeId);
     if (error) {
       toast({ variant: 'destructive', title: 'Error', description: error.message });
     } else {
@@ -635,8 +957,7 @@ export default function DashboardPage() {
     }
   };
 
-
-  const occupiedRooms = rooms.filter(r => r.status === 'Ocupada');
+  const occupiedRooms = rooms.filter((r) => r.status === 'Ocupada');
 
   if (loading) {
     return <Loading />;
@@ -644,7 +965,11 @@ export default function DashboardPage() {
 
   return (
     <div onClickCapture={handleInteraction}>
-      <AppLayout onAddExpenseClick={() => setIsAddExpenseModalOpen(true)} activeView={activeView} setActiveView={setActiveView}>
+      <AppLayout
+        onAddExpenseClick={() => setIsAddExpenseModalOpen(true)}
+        activeView={activeView}
+        setActiveView={setActiveView}
+      >
         {activeView === 'dashboard' && (
           <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
             <DashboardKPIs
@@ -652,9 +977,9 @@ export default function DashboardPage() {
               transactions={transactions}
               expenses={expenses}
             />
-            <RoomGrid 
-              rooms={rooms} 
-              rates={rates} 
+            <RoomGrid
+              rooms={rooms}
+              rates={rates}
               roomTypes={roomTypes}
               transactions={transactions}
               onConfirmCheckIn={handleConfirmCheckIn}
@@ -682,7 +1007,7 @@ export default function DashboardPage() {
           <VehicleHistoryPage vehicleHistory={vehicleHistory} />
         )}
         {activeView === 'consumption' && (
-          <ConsumptionPage 
+          <ConsumptionPage
             products={products}
             occupiedRooms={occupiedRooms}
             onConfirm={handleAddConsumption}
@@ -702,7 +1027,7 @@ export default function DashboardPage() {
             onConfirmSale={handleSellToEmployee}
           />
         )}
-         {activeView === 'reports' && (
+        {activeView === 'reports' && (
           <ReportsPage
             rooms={rooms}
             transactions={transactions}
