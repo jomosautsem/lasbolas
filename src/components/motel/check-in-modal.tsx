@@ -141,9 +141,9 @@ export default function CheckInModal({ isOpen, onOpenChange, room, rates, roomTy
             {roomType && <span className="text-sm font-light text-muted-foreground ml-2">({roomType.name})</span>}
           </DialogTitle>
         </DialogHeader>
-        <div className="grid md:grid-cols-2 gap-4 py-2">
+        <div className="grid md:grid-cols-2 gap-3 py-2">
           {/* Columna Izquierda */}
-          <div className="grid gap-3">
+          <div className="grid gap-2">
             <div className="space-y-1">
               <Label htmlFor="name">Nombre del Cliente <span className="text-destructive">*</span></Label>
               <div className="relative">
@@ -181,7 +181,7 @@ export default function CheckInModal({ isOpen, onOpenChange, room, rates, roomTy
             </div>
             
             { (entryType === 'Auto' || entryType === 'Moto') && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <div className="grid grid-cols-2 gap-2">
                 <div className="space-y-1">
                   <Label htmlFor="plate">Placa</Label>
                   <div className="relative">
@@ -211,49 +211,44 @@ export default function CheckInModal({ isOpen, onOpenChange, room, rates, roomTy
             )}
           </div>
 
-          {/* Columna Derecha */}
-          <div className="grid gap-3">
-            <Card className="bg-muted/50">
-                <CardHeader className="p-3">
-                    <CardTitle className="flex items-center gap-2 text-base"><Calendar className="h-5 w-5"/> Tiempo de Estancia</CardTitle>
-                </CardHeader>
-                <CardContent className="grid gap-3 p-3">
-                    <div className="flex items-center justify-between rounded-lg border bg-background p-2">
-                        <Label htmlFor="manual-time">Activar Tiempo Manual</Label>
-                        <Switch id="manual-time" checked={isManual} onCheckedChange={setIsManual} />
-                    </div>
-                    <div className="grid grid-cols-2 gap-2">
-                        <div className="rounded-lg border bg-background p-2 text-center">
-                            <Label className="text-xs text-muted-foreground">INICIO</Label>
-                            <div className="font-semibold text-base">{startTime ? formatToMexicanTime(startTime) : '--:--'}</div>
-                        </div>
-                        <div className="rounded-lg border bg-background p-2 text-center">
-                            <Label className="text-xs text-muted-foreground">FIN</Label>
-                            <div className="font-semibold text-base">{endTime ? formatToMexicanTime(endTime) : '--:--'}</div>
-                        </div>
-                    </div>
-                    <div>
-                      <Label className="mb-2 block text-sm">Seleccionar Tarifa <span className="text-destructive">*</span></Label>
-                      <div className="flex flex-wrap gap-2">
-                        {rates
-                          .filter(r => !r.is_extra_hour)
-                          .sort((a, b) => a.hours - b.hours)
-                          .map((rate, index) => (
-                           <Button 
-                              key={rate.id}
-                              variant={selectedRate?.id === rate.id ? 'default' : 'outline'}
-                              className={cn("flex-grow h-12 flex-col text-xs", selectedRate?.id !== rate.id && rateColors[index % rateColors.length])}
-                              onClick={() => setSelectedRate(rate)}
-                              disabled={isManual}
-                           >
-                              <span className="text-base font-bold">{rate.hours}</span>
-                              <span className="text-xs">Hr</span>
-                           </Button>
-                        ))}
-                      </div>
-                    </div>
-                </CardContent>
-            </Card>
+          {/* Columna Derecha - Refactored */}
+          <div className="grid gap-2 rounded-lg border bg-muted/50 p-3">
+              <h3 className="font-semibold flex items-center gap-2 text-base"><Calendar className="h-5 w-5"/> Tiempo de Estancia</h3>
+              
+              <div className="flex items-center justify-between rounded-lg border bg-background p-2">
+                  <Label htmlFor="manual-time">Activar Tiempo Manual</Label>
+                  <Switch id="manual-time" checked={isManual} onCheckedChange={setIsManual} />
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                  <div className="rounded-lg border bg-background p-2 text-center">
+                      <Label className="text-xs text-muted-foreground">INICIO</Label>
+                      <div className="font-semibold text-base">{startTime ? formatToMexicanTime(startTime) : '--:--'}</div>
+                  </div>
+                  <div className="rounded-lg border bg-background p-2 text-center">
+                      <Label className="text-xs text-muted-foreground">FIN</Label>
+                      <div className="font-semibold text-base">{endTime ? formatToMexicanTime(endTime) : '--:--'}</div>
+                  </div>
+              </div>
+              <div>
+                <Label className="mb-2 block text-sm">Seleccionar Tarifa <span className="text-destructive">*</span></Label>
+                <div className="flex flex-wrap gap-2">
+                  {rates
+                    .filter(r => !r.is_extra_hour)
+                    .sort((a, b) => a.hours - b.hours)
+                    .map((rate, index) => (
+                      <Button 
+                        key={rate.id}
+                        variant={selectedRate?.id === rate.id ? 'default' : 'outline'}
+                        className={cn("flex-grow h-10 flex-col text-xs", selectedRate?.id !== rate.id && rateColors[index % rateColors.length])}
+                        onClick={() => setSelectedRate(rate)}
+                        disabled={isManual}
+                      >
+                        <span className="text-sm font-bold">{rate.hours}</span>
+                        <span className="text-xs">Hr</span>
+                      </Button>
+                  ))}
+                </div>
+              </div>
           </div>
         </div>
 
