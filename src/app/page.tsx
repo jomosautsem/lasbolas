@@ -12,8 +12,8 @@ import { Eye, EyeOff } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('motellasbolas@gmail.com');
-  const [password, setPassword] = useState('j5s82QSM.motel');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
