@@ -12,7 +12,7 @@ import {
 import { cn } from '@/lib/utils';
 import type { Room, Rate, RoomType, Transaction } from '@/lib/types';
 import { formatToMexicanTime, formatToMexicanDate } from '@/lib/datetime';
-import { MotorcycleIcon } from '@/components/icons';
+import { MotorcycleIcon, AnimatedBroomIcon } from '@/components/icons';
 import ControlsModal from './controls-modal';
 import ReleaseWarningModal from './release-warning-modal';
 import ChangeRoomModal from './change-room-modal';
@@ -182,7 +182,11 @@ export function RoomCard({ room, allRooms, rates, roomTypes, allTransactions, on
       </CardHeader>
 
       <CardContent className="p-3 flex-grow flex flex-col justify-center items-center gap-2">
-        {isOccupied ? (
+        {room.status === 'Limpieza' ? (
+          <div className="flex flex-col items-center justify-center h-full w-full">
+            <AnimatedBroomIcon className="h-24 w-24" />
+          </div>
+        ) : isOccupied ? (
           isMenuOpen ? (
             <div className="w-full text-sm">
                 <div className={cn("rounded-lg p-2 mb-3", contentBgClass)}>
@@ -250,7 +254,7 @@ export function RoomCard({ room, allRooms, rates, roomTypes, allTransactions, on
                 </span>
                 <div className="flex items-center gap-3">
                     {hasConsumption && (
-                        <span className="flex items-center gap-1 font-semibold text-red-500">
+                        <span className="flex items-center gap-1 font-semibold text-red-400">
                             <ShoppingCart className="h-4 w-4 animate-pulse" />
                         </span>
                     )}
