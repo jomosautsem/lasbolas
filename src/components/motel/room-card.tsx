@@ -254,8 +254,8 @@ export function RoomCard({ room, allRooms, rates, roomTypes, allTransactions, on
                 </span>
                 <div className="flex items-center gap-3">
                     {hasConsumption && (
-                        <span className="flex items-center gap-1 font-semibold text-red-400">
-                            <ShoppingCart className="h-4 w-4 animate-pulse" />
+                        <span className="flex items-center gap-1 font-semibold text-black">
+                            <ShoppingCart className="h-4 w-4" />
                         </span>
                     )}
                     <span className="flex items-center gap-1.5 font-semibold"><Users className="h-4 w-4"/>{room.persons}</span>
