@@ -285,6 +285,16 @@ export default function DashboardPage() {
     }
   };
 
+  const handleSetDeepCleaning = async (roomId: number) => {
+    const { error } = await supabase.from('rooms').update({ status: 'Profunda' }).eq('id', roomId);
+    const room = rooms.find(r => r.id === roomId);
+    if (error) {
+      toast({ variant: 'destructive', title: 'Error', description: error.message });
+    } else if (room) {
+      toast({ title: 'Limpieza Profunda', description: `La habitación ${room.name} ahora está en limpieza profunda.` });
+    }
+  };
+
   const handleChangeRoom = async (fromRoomId: number, toRoomId: number) => {
     const fromRoom = rooms.find(r => r.id === fromRoomId);
     const toRoom = rooms.find(r => r.id === toRoomId);
@@ -640,6 +650,7 @@ export default function DashboardPage() {
               onUpdateControls={handleUpdateControls}
               onReleaseRoom={handleReleaseRoom}
               onFinishCleaning={handleFinishCleaning}
+              onSetDeepCleaning={handleSetDeepCleaning}
               onRoomChange={handleChangeRoom}
               onAdjustPackage={handleAdjustPackage}
               onExtendStay={handleExtendStay}

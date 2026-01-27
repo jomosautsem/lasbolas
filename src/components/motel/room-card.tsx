@@ -34,6 +34,7 @@ interface RoomCardProps {
   onUpdateControls: (roomId: number, tvControls: number, acControls: number) => void;
   onReleaseRoom: (roomId: number) => void;
   onFinishCleaning: (roomId: number) => void;
+  onSetDeepCleaning: (roomId: number) => void;
   onRoomChange: (fromRoomId: number, toRoomId: number) => void;
   onAdjustPackage: (roomId: number, newRate: Rate, difference: number) => void;
   onExtendStay: (roomId: number) => void;
@@ -46,7 +47,7 @@ const statusConfig: { [key: string]: { icon: React.ElementType, color: string, l
     Ocupada: { icon: Bed, color: 'bg-blue-100 border-blue-500 text-blue-700', labelColor: 'bg-blue-500', textColor: 'text-blue-700' },
     Limpieza: { icon: Sparkles, color: 'bg-cyan-100 border-cyan-500 text-cyan-700', labelColor: 'bg-cyan-500', textColor: 'text-cyan-700' },
     Mantenimiento: { icon: Wrench, color: 'bg-gray-200 border-gray-500 text-gray-600', labelColor: 'bg-gray-500', textColor: 'text-gray-600' },
-    Profunda: { icon: Trash2, color: 'bg-purple-100 border-purple-500 text-purple-700', labelColor: 'bg-purple-500', textColor: 'text-purple-700' },
+    Profunda: { icon: Trash2, color: 'bg-gradient-to-br from-gray-900 to-purple-900', labelColor: 'bg-purple-700', textColor: 'text-white' },
     Vencida: { icon: Bed, color: 'bg-red-500 border-red-600 text-white animate-pulse', labelColor: 'bg-red-600', textColor: 'text-white' },
 };
 
@@ -68,7 +69,7 @@ const ActionButton = ({ icon: Icon, label, colorClass = '', className = '', ...p
 );
 
 
-export function RoomCard({ room, allRooms, rates, roomTypes, allTransactions, onOccupy, onUpdateControls, onReleaseRoom, onFinishCleaning, onRoomChange, onAdjustPackage, onExtendStay, onAddPerson, onRemovePerson }: RoomCardProps) {
+export function RoomCard({ room, allRooms, rates, roomTypes, allTransactions, onOccupy, onUpdateControls, onReleaseRoom, onFinishCleaning, onSetDeepCleaning, onRoomChange, onAdjustPackage, onExtendStay, onAddPerson, onRemovePerson }: RoomCardProps) {
   const [isClient, setIsClient] = useState(false);
   const [now, setNow] = useState(new Date());
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -186,6 +187,10 @@ export function RoomCard({ room, allRooms, rates, roomTypes, allTransactions, on
           <div className="flex flex-col items-center justify-center h-full w-full">
             <AnimatedBucketIcon className="h-24 w-24" />
           </div>
+        ) : room.status === 'Profunda' ? (
+          <div className="flex flex-col items-center justify-center h-full w-full">
+            <Trash2 className="h-24 w-24" />
+          </div>
         ) : isOccupied ? (
           isMenuOpen ? (
             <div className="w-full text-sm">
@@ -280,8 +285,17 @@ export function RoomCard({ room, allRooms, rates, roomTypes, allTransactions, on
                 <Button className="w-full bg-white text-black hover:bg-gray-200 font-semibold border border-slate-300" onClick={() => setIsMenuOpen(true)}><Menu className="mr-2 h-4 w-4"/> Gestionar Habitación</Button>
              )
           ) : room.status === 'Limpieza' ? (
-            <Button className="w-full" variant="outline" onClick={() => onFinishCleaning(room.id)}>
-              <Sparkles className="mr-2 h-4 w-4 text-cyan-500" /> Poner Disponible
+            <div className="flex w-full gap-2">
+              <Button className="w-full" variant="outline" onClick={() => onFinishCleaning(room.id)}>
+                <Sparkles className="mr-2 h-4 w-4 text-cyan-500" /> Disponible
+              </Button>
+              <Button className="w-full" variant="outline" onClick={() => onSetDeepCleaning(room.id)}>
+                <Trash2 className="mr-2 h-4 w-4 text-purple-500" /> Profunda
+              </Button>
+            </div>
+          ) : room.status === 'Profunda' ? (
+             <Button className="w-full" onClick={() => onFinishCleaning(room.id)}>
+                <Sparkles className="mr-2 h-4 w-4" /> Finalizar Limpieza
             </Button>
           ) : (
             <div className="h-10"></div>
