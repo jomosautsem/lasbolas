@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils';
 import { differenceInMinutes, formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Car, PersonStanding, Tv, Wind, Clock } from 'lucide-react';
+import { Car, PersonStanding, Tv, Wind, Clock, AlertTriangle } from 'lucide-react';
 import { MotorcycleIcon } from '@/components/icons';
 import { formatToMexicanTime } from '@/lib/datetime';
 import { Progress } from '@/components/ui/progress';
@@ -46,6 +46,8 @@ export function OccupancyMonitorCard({ room, rate }: OccupancyMonitorCardProps) 
     return { status: 'Ocupada', timeLeft: `Faltan ${formatDistanceToNow(checkOut, { locale: es, addSuffix: false })}`, progress: progressValue };
   }, [room.check_in_time, room.check_out_time, now]);
 
+  const isVencida = status === 'Vencida';
+
   const { cardColorClass, textColor, isVibrant } = useMemo(() => {
     const rateColorMap: { [key: number]: string } = {
       1: 'bg-green-500 border-green-600',
@@ -61,8 +63,8 @@ export function OccupancyMonitorCard({ room, rate }: OccupancyMonitorCardProps) 
     };
     const blackTextRates = [3, 9];
 
-    if (status === 'Vencida') {
-        return { cardColorClass: 'bg-red-500 border-red-600', textColor: 'text-white', isVibrant: true };
+    if (isVencida) {
+        return { cardColorClass: 'bg-gradient-to-br from-red-600 to-rose-800 animate-pulse', textColor: 'text-white', isVibrant: true };
     }
     if (status === 'Por Vencer') {
         return { cardColorClass: 'bg-yellow-500 border-yellow-600 animate-pulse', textColor: 'text-black', isVibrant: true };
@@ -79,7 +81,7 @@ export function OccupancyMonitorCard({ room, rate }: OccupancyMonitorCardProps) 
     }
     
     return { cardColorClass: 'border-blue-500 bg-blue-50', textColor: 'text-blue-700', isVibrant: false };
-  }, [status, rate]);
+  }, [status, rate, isVencida]);
 
   const VehicleIcon = room.entry_type === 'Auto' ? Car : room.entry_type === 'Moto' ? MotorcycleIcon : PersonStanding;
   const contentBgClass = isVibrant ? 'bg-black/10' : 'bg-background/70';
@@ -88,7 +90,8 @@ export function OccupancyMonitorCard({ room, rate }: OccupancyMonitorCardProps) 
     <Card className={cn("rounded-2xl shadow-md", cardColorClass, textColor)}>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 p-4">
         <CardTitle className="text-2xl font-bold font-headline">{room.name}</CardTitle>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2">
+          {isVencida && <AlertTriangle className="h-6 w-6" />}
           <VehicleIcon className="h-6 w-6" />
           <div className="text-right">
             <p className="font-semibold text-sm">{rate?.name}</p>
@@ -98,7 +101,7 @@ export function OccupancyMonitorCard({ room, rate }: OccupancyMonitorCardProps) 
       </CardHeader>
       <CardContent className="p-4 pt-0">
         <div className={cn("text-center rounded-lg p-3 mb-3", contentBgClass)}>
-          <p className="text-xs font-semibold opacity-80">HORA DE SALIDA</p>
+          <p className="text-xs font-semibold opacity-80">{isVencida ? 'HABITACIÓN VENCIDA' : 'HORA DE SALIDA'}</p>
           <p className="text-3xl font-bold font-mono tracking-tight">{formatToMexicanTime(room.check_out_time!)}</p>
           <p className="text-sm font-semibold">
             {timeLeft}
