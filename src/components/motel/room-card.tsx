@@ -24,6 +24,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 import SetMaintenanceModal from './set-maintenance-modal';
+import ReleaseRoomModal from './release-room-modal';
 
 interface RoomCardProps {
   room: Room;
@@ -77,6 +78,7 @@ export function RoomCard({ room, allRooms, rates, roomTypes, allTransactions, on
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isControlsModalOpen, setIsControlsModalOpen] = useState(false);
   const [isReleaseWarningOpen, setIsReleaseWarningOpen] = useState(false);
+  const [isReleaseRoomModalOpen, setIsReleaseRoomModalOpen] = useState(false);
   const [isChangeRoomModalOpen, setIsChangeRoomModalOpen] = useState(false);
   const [isAdjustPackageModalOpen, setIsAdjustPackageModalOpen] = useState(false);
   const [isExtendStayModalOpen, setIsExtendStayModalOpen] = useState(false);
@@ -122,9 +124,14 @@ export function RoomCard({ room, allRooms, rates, roomTypes, allTransactions, on
     if (room.tv_controls > 0 || room.ac_controls > 0) {
       setIsReleaseWarningOpen(true);
     } else {
-      onReleaseRoom(room.id);
-      setIsMenuOpen(false);
+      setIsReleaseRoomModalOpen(true);
     }
+  };
+
+  const handleConfirmRelease = () => {
+    onReleaseRoom(room.id);
+    setIsMenuOpen(false);
+    setIsReleaseRoomModalOpen(false);
   };
 
   const roomType = roomTypes.find(rt => rt.id === room.room_type_id);
@@ -349,6 +356,12 @@ export function RoomCard({ room, allRooms, rates, roomTypes, allTransactions, on
     <ReleaseWarningModal 
       isOpen={isReleaseWarningOpen}
       onOpenChange={setIsReleaseWarningOpen}
+    />
+    <ReleaseRoomModal
+      isOpen={isReleaseRoomModalOpen}
+      onOpenChange={setIsReleaseRoomModalOpen}
+      onConfirm={handleConfirmRelease}
+      roomName={room.name}
     />
     {isOccupied && (
         <ChangeRoomModal
