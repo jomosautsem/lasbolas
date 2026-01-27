@@ -41,49 +41,6 @@ const StatCard = ({ title, value, icon: Icon, className }: { title: string; valu
     </div>
 );
 
-interface ExpiredRoomInfo {
-    name: string;
-    time: string;
-}
-
-const ExpiredRoomsCard = ({ rooms }: { rooms: ExpiredRoomInfo[] }) => {
-    if (rooms.length === 0) {
-        return (
-            <div className="bg-teal-50 border-l-4 border-teal-500 text-teal-900 rounded-xl p-4">
-                <div className="flex items-center justify-between">
-                <p className="text-sm font-semibold">HABITACIONES VENCIDAS</p>
-                <Clock className="h-5 w-5 text-teal-500" />
-                </div>
-                <p className="text-3xl font-bold">0</p>
-                <p className="text-xs">Ninguna habitación vencida en el turno</p>
-            </div>
-        );
-    }
-    
-    return (
-        <Card className="rounded-xl shadow-md text-white bg-gradient-to-br from-red-600 to-rose-800">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 p-4 pb-2">
-                <CardTitle className="text-sm font-medium">Habitaciones Vencidas</CardTitle>
-                <AlertTriangle className="h-5 w-5" />
-            </CardHeader>
-            <CardContent className="p-4 pt-0">
-                <div className="text-3xl font-bold font-headline">{rooms.length}</div>
-                <ScrollArea className="h-[3.5rem] mt-1 pr-2">
-                    <div className="text-xs space-y-1">
-                    {rooms.map(room => (
-                        <div key={room.name} className="flex justify-between gap-2">
-                            <span className="font-semibold">{room.name}</span>
-                            <span className="text-right whitespace-nowrap">{room.time}</span>
-                        </div>
-                    ))}
-                    </div>
-                </ScrollArea>
-            </CardContent>
-        </Card>
-    )
-}
-
-
 export default function ReportsPage({ rooms, transactions, expenses, products }: ReportsPageProps) {
     const [selectedDate, setSelectedDate] = useState<Date | undefined>(getMexicoCityTime());
     const [selectedShift, setSelectedShift] = useState<Shift>(getCurrentShiftInfo().shift);
@@ -372,7 +329,45 @@ export default function ReportsPage({ rooms, transactions, expenses, products }:
                     </div>
                 </div>
 
-                <ExpiredRoomsCard rooms={expiredRoomsReport} />
+                {expiredRoomsReport.length === 0 ? (
+                    <div className="bg-teal-50 border-l-4 border-teal-500 text-teal-900 rounded-xl p-4">
+                        <div className="flex items-center justify-between">
+                            <p className="text-sm font-semibold">HABITACIONES VENCIDAS</p>
+                            <Clock className="h-5 w-5 text-teal-500" />
+                        </div>
+                        <p className="text-3xl font-bold">0</p>
+                        <p className="text-xs">Ninguna habitación vencida en el turno</p>
+                    </div>
+                ) : (
+                    <Collapsible>
+                        <CollapsibleTrigger className="rounded-xl p-4 w-full text-left group text-white bg-gradient-to-br from-red-600 to-rose-800">
+                           <div className="flex items-center justify-between">
+                              <p className="text-sm font-semibold">HABITACIONES VENCIDAS</p>
+                              <ChevronDown className="h-5 w-5 transition-transform group-data-[state=open]:rotate-180" />
+                            </div>
+                            <p className="text-3xl font-bold">{expiredRoomsReport.length}</p>
+                            <p className="text-xs">Clic para ver detalle</p>
+                        </CollapsibleTrigger>
+                        <CollapsibleContent className="px-2 pt-2">
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Habitación</TableHead>
+                                        <TableHead className="text-right">Tiempo Vencida</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {expiredRoomsReport.map((room) => (
+                                        <TableRow key={room.name}>
+                                            <TableCell className="font-medium">{room.name}</TableCell>
+                                            <TableCell className="text-right">{room.time}</TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </CollapsibleContent>
+                    </Collapsible>
+                )}
             </div>
             
             <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
