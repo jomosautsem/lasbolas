@@ -23,6 +23,7 @@ import RemovePersonModal from './remove-person-modal';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
+import SetMaintenanceModal from './set-maintenance-modal';
 
 interface RoomCardProps {
   room: Room;
@@ -35,7 +36,7 @@ interface RoomCardProps {
   onReleaseRoom: (roomId: number) => void;
   onFinishCleaning: (roomId: number) => void;
   onSetDeepCleaning: (roomId: number) => void;
-  onSetMaintenance: (roomId: number) => void;
+  onSetMaintenance: (roomId: number, note: string) => void;
   onRoomChange: (fromRoomId: number, toRoomId: number) => void;
   onAdjustPackage: (roomId: number, newRate: Rate, difference: number) => void;
   onExtendStay: (roomId: number) => void;
@@ -47,7 +48,7 @@ const statusConfig: { [key: string]: { icon: React.ElementType, color: string, l
     Disponible: { icon: Bed, color: 'bg-green-100 border-green-500 text-green-700', labelColor: 'bg-green-500', textColor: 'text-green-700' },
     Ocupada: { icon: Bed, color: 'bg-blue-100 border-blue-500 text-blue-700', labelColor: 'bg-blue-500', textColor: 'text-blue-700' },
     Limpieza: { icon: Sparkles, color: 'bg-cyan-100 border-cyan-500 text-cyan-700', labelColor: 'bg-cyan-500', textColor: 'text-cyan-700' },
-    Mantenimiento: { icon: Wrench, color: 'bg-gray-200 border-gray-500 text-gray-600', labelColor: 'bg-gray-500', textColor: 'text-gray-600' },
+    Mantenimiento: { icon: Wrench, color: 'bg-gradient-to-br from-yellow-400 via-yellow-500 to-emerald-500', labelColor: 'bg-yellow-600', textColor: 'text-white' },
     Profunda: { icon: Trash2, color: 'bg-gradient-to-br from-gray-900 to-purple-900', labelColor: 'bg-purple-700', textColor: 'text-white' },
     Vencida: { icon: Bed, color: 'bg-red-500 border-red-600 text-white animate-pulse', labelColor: 'bg-red-600', textColor: 'text-white' },
 };
@@ -81,6 +82,7 @@ export function RoomCard({ room, allRooms, rates, roomTypes, allTransactions, on
   const [isExtendStayModalOpen, setIsExtendStayModalOpen] = useState(false);
   const [isAddPersonModalOpen, setIsAddPersonModalOpen] = useState(false);
   const [isRemovePersonModalOpen, setIsRemovePersonModalOpen] = useState(false);
+  const [isMaintenanceModalOpen, setIsMaintenanceModalOpen] = useState(false);
 
   const isOccupied = room.status === 'Ocupada';
 
@@ -192,6 +194,11 @@ export function RoomCard({ room, allRooms, rates, roomTypes, allTransactions, on
           <div className="flex flex-col items-center justify-center h-full w-full">
             <Trash2 className="h-24 w-24" />
           </div>
+        ) : room.status === 'Mantenimiento' ? (
+          <div className="flex flex-col items-center justify-center h-full w-full p-2 text-center">
+            <Wrench className="h-16 w-16 mb-2" />
+            <p className="font-semibold text-sm leading-tight">{room.maintenance_note}</p>
+          </div>
         ) : isOccupied ? (
           isMenuOpen ? (
             <div className="w-full text-sm">
@@ -273,7 +280,7 @@ export function RoomCard({ room, allRooms, rates, roomTypes, allTransactions, on
            isMenuOpen ? (
             <div className="w-full grid grid-cols-2 gap-2 text-center text-card-foreground">
                 <ActionButton icon={Trash2} label="Profunda" colorClass="text-purple-500" onClick={() => { onSetDeepCleaning(room.id); setIsMenuOpen(false); }} />
-                <ActionButton icon={Wrench} label="Mante." colorClass="text-gray-500" onClick={() => { onSetMaintenance(room.id); setIsMenuOpen(false); }} />
+                <ActionButton icon={Wrench} label="Mante." colorClass="text-gray-500" onClick={() => { setIsMaintenanceModalOpen(true); setIsMenuOpen(false); }} />
             </div>
           ) : (
             <div className={cn("text-center text-sm py-8", baseConfig.textColor, "opacity-70")}>
@@ -314,19 +321,19 @@ export function RoomCard({ room, allRooms, rates, roomTypes, allTransactions, on
                 <Trash2 className="mr-2 h-4 w-4 text-purple-500" /> Profunda
               </Button>
             </div>
-          ) : room.status === 'Profunda' ? (
-             <Button className="w-full" onClick={() => onFinishCleaning(room.id)}>
-                <Sparkles className="mr-2 h-4 w-4" /> Finalizar Limpieza
-            </Button>
-          ) : room.status === 'Mantenimiento' ? (
-            <Button className="w-full" onClick={() => onFinishCleaning(room.id)}>
-              <Sparkles className="mr-2 h-4 w-4" /> Marcar como Disponible
-            </Button>
           ) : (
-            <div className="h-10"></div>
+             <Button className="w-full" onClick={() => onFinishCleaning(room.id)}>
+                <Sparkles className="mr-2 h-4 w-4" /> Finalizar
+            </Button>
           )}
         </CardFooter>
     </Card>
+    <SetMaintenanceModal
+        isOpen={isMaintenanceModalOpen}
+        onOpenChange={setIsMaintenanceModalOpen}
+        room={room}
+        onConfirm={onSetMaintenance}
+    />
     {isOccupied && (
       <ControlsModal 
         isOpen={isControlsModalOpen}

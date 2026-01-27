@@ -14,7 +14,7 @@ interface RoomGridProps {
   onReleaseRoom: (roomId: number) => void;
   onFinishCleaning: (roomId: number) => void;
   onSetDeepCleaning: (roomId: number) => void;
-  onSetMaintenance: (roomId: number) => void;
+  onSetMaintenance: (roomId: number, note: string) => void;
   onRoomChange: (fromRoomId: number, toRoomId: number) => void;
   onAdjustPackage: (roomId: number, newRate: Rate, difference: number) => void;
   onExtendStay: (roomId: number) => void;

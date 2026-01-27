@@ -24,6 +24,7 @@ export interface Room {
   total_debt?: number;
   rate_id?: number | null;
   persons?: string;
+  maintenance_note?: string;
 }
 
 export interface RoomType {
