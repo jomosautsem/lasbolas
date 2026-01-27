@@ -585,14 +585,14 @@ export function RoomCard({
           ) : room.status === 'Limpieza' ? (
             <div className="flex w-full gap-2">
               <Button
-                className="w-full"
+                className="flex-1"
                 variant="outline"
                 onClick={() => onFinishCleaning(room.id)}
               >
                 <Sparkles className="mr-2 h-4 w-4 text-cyan-500" /> Disponible
               </Button>
               <Button
-                className="w-full"
+                className="flex-1"
                 variant="outline"
                 onClick={() => onSetDeepCleaning(room.id)}
               >
