@@ -36,7 +36,7 @@ interface RoomCardProps {
   onReleaseRoom: (roomId: number) => void;
   onFinishCleaning: (roomId: number) => void;
   onSetDeepCleaning: (roomId: number) => void;
-  onSetMaintenance: (roomId: number) => void;
+  onSetMaintenance: (roomId: number, note: string) => void;
   onRoomChange: (fromRoomId: number, toRoomId: number) => void;
   onAdjustPackage: (roomId: number, newRate: Rate, difference: number) => void;
   onExtendStay: (roomId: number) => void;
@@ -197,6 +197,11 @@ export function RoomCard({ room, allRooms, rates, roomTypes, allTransactions, on
         ) : room.status === 'Mantenimiento' ? (
           <div className="flex flex-col items-center justify-center h-full w-full p-2 text-center">
             <Wrench className="h-16 w-16 mb-2" />
+            {room.maintenance_note && (
+                <p className="text-xs italic px-2 py-1 bg-black/20 rounded-md">
+                    {room.maintenance_note}
+                </p>
+            )}
           </div>
         ) : isOccupied ? (
           isMenuOpen ? (
