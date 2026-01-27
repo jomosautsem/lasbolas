@@ -12,7 +12,7 @@ import {
 import { cn } from '@/lib/utils';
 import type { Room, Rate, RoomType, Transaction } from '@/lib/types';
 import { formatToMexicanTime, formatToMexicanDate } from '@/lib/datetime';
-import { MotorcycleIcon, AnimatedBroomIcon } from '@/components/icons';
+import { MotorcycleIcon, AnimatedBucketIcon } from '@/components/icons';
 import ControlsModal from './controls-modal';
 import ReleaseWarningModal from './release-warning-modal';
 import ChangeRoomModal from './change-room-modal';
@@ -184,7 +184,7 @@ export function RoomCard({ room, allRooms, rates, roomTypes, allTransactions, on
       <CardContent className="p-3 flex-grow flex flex-col justify-center items-center gap-2">
         {room.status === 'Limpieza' ? (
           <div className="flex flex-col items-center justify-center h-full w-full">
-            <AnimatedBroomIcon className="h-24 w-24" />
+            <AnimatedBucketIcon className="h-24 w-24" />
           </div>
         ) : isOccupied ? (
           isMenuOpen ? (

@@ -87,3 +87,53 @@ export const AnimatedBroomIcon = (props: SVGProps<SVGSVGElement>) => (
     <path className="sparkle sparkle-3" transform="translate(50 50)" d="M0 0 L1.5 4 L5 5 L1.5 6 L0 10 L-1.5 6 L-5 5 L-1.5 4 Z" />
   </svg>
 );
+
+export const AnimatedBucketIcon = (props: SVGProps<SVGSVGElement>) => (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 64 64"
+      {...props}
+    >
+      <style>
+        {`
+          .bucket-fill { fill: #A5B4FC; }
+          .water-fill { fill: #60A5FA; }
+          .handle-stroke { fill: none; stroke: #94A3B8; stroke-width: 3; stroke-linecap: round; }
+          .bubble {
+            fill: #E0F2FE;
+            animation: bubble-rise 3s infinite ease-in;
+            opacity: 0;
+            transform-origin: center;
+          }
+          @keyframes bubble-rise {
+            0% {
+              transform: translateY(0) scale(0.8);
+              opacity: 0;
+            }
+            20% {
+              opacity: 1;
+            }
+            80% {
+              transform: translateY(-25px) scale(1.2);
+              opacity: 1;
+            }
+            100% {
+              transform: translateY(-35px) scale(1.4);
+              opacity: 0;
+            }
+          }
+          .bubble-1 { animation-delay: 0s; }
+          .bubble-2 { animation-delay: 0.7s; }
+          .bubble-3 { animation-delay: 1.5s; }
+          .bubble-4 { animation-delay: 2.2s; }
+        `}
+      </style>
+      <path className="handle-stroke" d="M12,20 A20,20 0 0,1 52,20" />
+      <path className="bucket-fill" d="M10 25 L 14 55 L 50 55 L 54 25 Z" />
+      <path className="water-fill" d="M12 30 C 22 25, 42 25, 52 30 L 51 53 L 13 53 Z" />
+      <circle className="bubble bubble-1" cx="24" cy="45" r="3" />
+      <circle className="bubble bubble-2" cx="40" cy="48" r="2.5" />
+      <circle className="bubble bubble-3" cx="32" cy="42" r="3.5" />
+      <circle className="bubble bubble-4" cx="18" cy="50" r="2" />
+    </svg>
+  );
