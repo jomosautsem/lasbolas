@@ -7,7 +7,7 @@ import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import {
   Bed, Car, Sparkles, Wrench, Trash2, Menu, PersonStanding, Users, ArrowRight,
-  LogOut, SlidersHorizontal, ArrowRightLeft, TrendingUp, PlusCircle, MinusCircle, UserPlus, UserMinus, Edit, X, DollarSign, Tv, Wind
+  LogOut, SlidersHorizontal, ArrowRightLeft, TrendingUp, PlusCircle, MinusCircle, UserPlus, UserMinus, Edit, X, DollarSign, Tv, Wind, ShoppingCart
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { Room, Rate, RoomType, Transaction } from '@/lib/types';
@@ -94,6 +94,10 @@ export function RoomCard({ room, allRooms, rates, roomTypes, allTransactions, on
       })
       .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
   }, [allTransactions, room.id, room.check_in_time, isOccupied]);
+
+  const hasConsumption = useMemo(() => {
+    return stayTransactions.some(t => t.type === 'Consumo');
+  }, [stayTransactions]);
 
   useEffect(() => {
     setIsClient(true);
@@ -244,7 +248,14 @@ export function RoomCard({ room, allRooms, rates, roomTypes, allTransactions, on
                         : <PersonStanding className="h-4 w-4" />}
                     {room.vehicle_plate || room.customer_name}
                 </span>
-                <span className="flex items-center gap-1.5 font-semibold"><Users className="h-4 w-4"/>{room.persons}</span>
+                <div className="flex items-center gap-3">
+                    {hasConsumption && (
+                        <span className="flex items-center gap-1 font-semibold text-red-500">
+                            <ShoppingCart className="h-4 w-4 animate-pulse" />
+                        </span>
+                    )}
+                    <span className="flex items-center gap-1.5 font-semibold"><Users className="h-4 w-4"/>{room.persons}</span>
+                </div>
             </div>
            </div>
           )
