@@ -48,6 +48,7 @@ import {
   History,
   ArrowRight,
   AlertTriangle,
+  X,
 } from 'lucide-react';
 import {
   getCurrentShiftInfo,
@@ -90,73 +91,33 @@ const TransactionTable = ({ transactions, rooms, employees }: { transactions: Tr
   }
   
   return (
-    <div className="border-t">
-        <div className="max-h-60 overflow-y-auto text-sm">
-            {/* Header */}
-            <div className="flex items-center px-4 py-2 font-semibold text-xs text-muted-foreground bg-muted/20 sticky top-0 z-10 border-b">
-                <div className="w-[60px] shrink-0">Hora</div>
-                <div className="w-[90px] shrink-0 px-2">Hab./Emp.</div>
-                <div className="flex-1 min-w-0 px-2">Descripción</div>
-                <div className="w-[80px] shrink-0 text-right">Monto</div>
-            </div>
-            {/* Body */}
-            <div className="divide-y divide-border">
+    <div className="w-full overflow-x-auto">
+        <Table>
+            <TableHeader>
+                <TableRow>
+                    <TableHead>Hora</TableHead>
+                    <TableHead>Hab./Emp.</TableHead>
+                    <TableHead>Descripción</TableHead>
+                    <TableHead className="text-right">Monto</TableHead>
+                </TableRow>
+            </TableHeader>
+            <TableBody>
                 {transactions.map((t) => {
                     const room = t.room_id ? rooms.find(r => r.id === t.room_id) : null;
                     const employee = t.employee_id ? employees.find(e => e.id === t.employee_id) : null;
                     
                     return (
-                        <div key={t.id} className="flex items-center px-4 py-2 hover:bg-accent/50">
-                            <div className="w-[60px] shrink-0 whitespace-nowrap">{formatToMexicanTime(t.timestamp)}</div>
-                            <div className="w-[90px] shrink-0 truncate font-medium px-2" title={room?.name || employee?.name || 'N/A'}>
-                                {room?.name || employee?.name || 'N/A'}
-                            </div>
-                            <div className="flex-1 min-w-0 truncate text-muted-foreground px-2" title={t.description}>{t.description}</div>
-                            <div className="w-[80px] shrink-0 text-right font-medium">${t.amount.toFixed(2)}</div>
-                        </div>
+                        <TableRow key={t.id}>
+                            <TableCell>{formatToMexicanTime(t.timestamp)}</TableCell>
+                            <TableCell>{room?.name || employee?.name || 'N/A'}</TableCell>
+                            <TableCell>{t.description}</TableCell>
+                            <TableCell className="text-right">${t.amount.toFixed(2)}</TableCell>
+                        </TableRow>
                     )
                 })}
-            </div>
-        </div>
+            </TableBody>
+        </Table>
     </div>
-  );
-};
-
-
-const DetailStatCard = ({
-  title,
-  value,
-  icon: Icon,
-  transactions,
-  rooms,
-  employees
-}: {
-  title: string;
-  value: string;
-  icon: React.ElementType;
-  transactions: Transaction[];
-  rooms: Room[];
-  employees: Employee[];
-}) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const hasTransactions = transactions.length > 0;
-
-  return (
-    <Collapsible open={hasTransactions ? isOpen : false} onOpenChange={setIsOpen} className="bg-muted/50 rounded-xl transition-shadow hover:shadow-md">
-        <CollapsibleTrigger className="w-full text-left p-4 disabled:cursor-not-allowed" disabled={!hasTransactions}>
-            <div className="flex items-center justify-between mb-1">
-                <p className="text-sm font-medium">{title}</p>
-                <div className="flex items-center gap-2">
-                    <Icon className="h-5 w-5 opacity-70" />
-                    {hasTransactions && <ChevronDown className={`h-5 w-5 opacity-70 transition-transform ${isOpen ? 'rotate-180' : ''}`} />}
-                </div>
-            </div>
-            <p className="text-2xl font-bold">{value}</p>
-        </CollapsibleTrigger>
-        <CollapsibleContent>
-            <TransactionTable transactions={transactions} rooms={rooms} employees={employees} />
-        </CollapsibleContent>
-    </Collapsible>
   );
 };
 
@@ -174,6 +135,7 @@ export default function ReportsPage({
   const [selectedShift, setSelectedShift] = useState<Shift>(
     getCurrentShiftInfo().shift
   );
+  const [activeDetail, setActiveDetail] = useState<{ title: string; transactions: Transaction[] } | null>(null);
 
   const filteredData = useMemo(() => {
     if (!selectedDate) {
@@ -254,22 +216,34 @@ export default function ReportsPage({
       employeeConsumptionIncomeTransactions
     };
   }, [filteredData]);
+  
+  const handleDetailClick = (
+    title: string,
+    transactions: Transaction[]
+  ) => {
+    if (transactions.length === 0) {
+      setActiveDetail(null);
+      return;
+    }
+    if (activeDetail?.title === title) {
+      setActiveDetail(null); 
+    } else {
+      setActiveDetail({ title, transactions });
+    }
+  };
 
   const roomLogData = useMemo(() => {
     if (!selectedDate) return [];
     const operationalDateStr = format(selectedDate, 'yyyy-MM-dd');
 
-    // 1. Get all transactions for the selected shift and day
     const shiftTransactions = transactions.filter(
       (t) =>
         t.fecha_operativa === operationalDateStr &&
         t.turno_calculado === selectedShift
     );
     
-    // 2. Get unique room IDs from these transactions
     const uniqueRoomIdsInShift = Array.from(new Set(shiftTransactions.map((t) => t.room_id).filter((id): id is number => id !== null)));
 
-    // 3. For each room, reconstruct its stay information if it was active during the shift
     const log = uniqueRoomIdsInShift
       .map((roomId) => {
         const room = rooms.find((r) => r.id === roomId);
@@ -406,6 +380,28 @@ export default function ReportsPage({
       }));
   }, [roomLogData, selectedDate, selectedShift]);
 
+  const DetailCard = ({ title, value, icon: Icon, category }: { title: string, value: string, icon: React.ElementType, category: string }) => {
+    const transactions = summary[`${category}Transactions` as keyof typeof summary] as Transaction[] || [];
+    const isSelected = activeDetail?.title === title;
+    
+    return (
+      <div
+        onClick={() => handleDetailClick(title, transactions)}
+        className={cn(
+          'p-4 rounded-xl transition-all',
+          transactions.length > 0 ? 'cursor-pointer hover:shadow-md' : 'cursor-not-allowed opacity-60',
+          isSelected ? 'bg-blue-100 ring-2 ring-blue-500' : 'bg-muted/50'
+        )}
+      >
+        <div className="flex items-center justify-between mb-1">
+          <p className="text-sm font-medium">{title}</p>
+          <Icon className="h-5 w-5 opacity-70" />
+        </div>
+        <p className="text-2xl font-bold">{value}</p>
+      </div>
+    );
+  };
+  
   return (
     <div className="flex-1 space-y-6 p-4 md:p-8 pt-6">
       <Card>
@@ -597,51 +593,60 @@ export default function ReportsPage({
               </Collapsible>
             )}
           </div>
+          
+          <Separator />
 
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-             <DetailStatCard
+             <DetailCard
                 title="RENTAS (HOSPEDAJE)"
                 value={`$${summary.rentIncome.toFixed(2)}`}
                 icon={Bed}
-                transactions={summary.rentIncomeTransactions}
-                rooms={rooms}
-                employees={employees}
+                category="rentIncome"
               />
-              <DetailStatCard
+              <DetailCard
                 title="PRODUCTOS (HAB.)"
                 value={`$${summary.roomProductsIncome.toFixed(2)}`}
                 icon={ShoppingCart}
-                transactions={summary.roomProductsIncomeTransactions}
-                rooms={rooms}
-                employees={employees}
+                category="roomProductsIncome"
               />
-              <DetailStatCard
+              <DetailCard
                 title="CONSUMO EMPLEADOS"
                 value={`$${summary.employeeConsumptionIncome.toFixed(2)}`}
                 icon={Users}
-                transactions={summary.employeeConsumptionIncomeTransactions}
-                rooms={rooms}
-                employees={employees}
+                category="employeeConsumptionIncome"
               />
-              <DetailStatCard
+              <DetailCard
                 title="PERSONAS EXTRA"
                 value={`$${summary.extraPersonIncome.toFixed(2)}`}
                 icon={UserPlus}
-                transactions={summary.extraPersonIncomeTransactions}
-                rooms={rooms}
-                employees={employees}
+                category="extraPersonIncome"
               />
-              <DetailStatCard
+              <DetailCard
                 title="TIEMPOS EXTRA"
                 value={`$${summary.extraTimeIncome.toFixed(2)}`}
                 icon={Clock}
-                transactions={summary.extraTimeIncomeTransactions}
-                rooms={rooms}
-                employees={employees}
+                category="extraTimeIncome"
               />
           </div>
         </CardContent>
       </Card>
+      
+      {activeDetail && (
+        <Card>
+            <CardHeader>
+                <div className="flex justify-between items-center">
+                    <CardTitle className="flex items-center gap-2 text-lg">Detalle: {activeDetail.title}</CardTitle>
+                    <Button variant="ghost" size="icon" onClick={() => setActiveDetail(null)}>
+                        <X className="h-5 w-5" />
+                        <span className="sr-only">Cerrar detalle</span>
+                    </Button>
+                </div>
+            </CardHeader>
+            <CardContent>
+                <TransactionTable transactions={activeDetail.transactions} rooms={rooms} employees={employees} />
+            </CardContent>
+        </Card>
+      )}
 
       <Card>
         <CardHeader>
