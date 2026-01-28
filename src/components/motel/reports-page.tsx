@@ -90,32 +90,34 @@ const TransactionTable = ({ transactions, rooms, employees }: { transactions: Tr
   }
   
   return (
-    <div className="px-2 py-1 border-t max-h-60 overflow-y-auto text-sm">
-      {/* Header */}
-      <div className="flex items-center px-2 py-1 font-semibold text-xs text-muted-foreground border-b">
-        <div className="w-1/5">Hora</div>
-        <div className="w-1/5">Hab./Emp.</div>
-        <div className="w-2/5">Descripción</div>
-        <div className="w-1/5 text-right">Monto</div>
-      </div>
-      {/* Body */}
-      <div className="space-y-0.5 pt-1">
-        {transactions.map((t) => {
-          const room = t.room_id ? rooms.find(r => r.id === t.room_id) : null;
-          const employee = t.employee_id ? employees.find(e => e.id === t.employee_id) : null;
-          
-          return (
-            <div key={t.id} className="flex items-center px-2 py-1 rounded-md hover:bg-accent/50">
-              <div className="w-1/5 whitespace-nowrap">{formatToMexicanTime(t.timestamp)}</div>
-              <div className="w-1/5 truncate font-medium" title={room?.name || employee?.name || 'N/A'}>
-                {room?.name || employee?.name || 'N/A'}
-              </div>
-              <div className="w-2/5 truncate text-muted-foreground" title={t.description}>{t.description}</div>
-              <div className="w-1/5 text-right font-medium">${t.amount.toFixed(2)}</div>
+    <div className="border-t">
+        <div className="max-h-60 overflow-y-auto text-sm">
+            {/* Header */}
+            <div className="flex items-center px-4 py-2 font-semibold text-xs text-muted-foreground bg-muted/20 sticky top-0 z-10 border-b">
+                <div className="w-[60px] shrink-0">Hora</div>
+                <div className="w-[90px] shrink-0 px-2">Hab./Emp.</div>
+                <div className="flex-1 min-w-0 px-2">Descripción</div>
+                <div className="w-[80px] shrink-0 text-right">Monto</div>
             </div>
-          )
-        })}
-      </div>
+            {/* Body */}
+            <div className="divide-y divide-border">
+                {transactions.map((t) => {
+                    const room = t.room_id ? rooms.find(r => r.id === t.room_id) : null;
+                    const employee = t.employee_id ? employees.find(e => e.id === t.employee_id) : null;
+                    
+                    return (
+                        <div key={t.id} className="flex items-center px-4 py-2 hover:bg-accent/50">
+                            <div className="w-[60px] shrink-0 whitespace-nowrap">{formatToMexicanTime(t.timestamp)}</div>
+                            <div className="w-[90px] shrink-0 truncate font-medium px-2" title={room?.name || employee?.name || 'N/A'}>
+                                {room?.name || employee?.name || 'N/A'}
+                            </div>
+                            <div className="flex-1 min-w-0 truncate text-muted-foreground px-2" title={t.description}>{t.description}</div>
+                            <div className="w-[80px] shrink-0 text-right font-medium">${t.amount.toFixed(2)}</div>
+                        </div>
+                    )
+                })}
+            </div>
+        </div>
     </div>
   );
 };
@@ -257,32 +259,41 @@ export default function ReportsPage({
     if (!selectedDate) return [];
     const operationalDateStr = format(selectedDate, 'yyyy-MM-dd');
 
+    // 1. Get all transactions for the selected shift and day
     const shiftTransactions = transactions.filter(
       (t) =>
         t.fecha_operativa === operationalDateStr &&
         t.turno_calculado === selectedShift
     );
     
-    const uniqueRoomIds = Array.from(new Set(shiftTransactions.map((t) => t.room_id).filter((id): id is number => id !== null)));
+    // 2. Get unique room IDs from these transactions
+    const uniqueRoomIdsInShift = Array.from(new Set(shiftTransactions.map((t) => t.room_id).filter((id): id is number => id !== null)));
 
-    const log = uniqueRoomIds
+    // 3. For each room, reconstruct its stay information if it was active during the shift
+    const log = uniqueRoomIdsInShift
       .map((roomId) => {
-        const room = rooms.find((r) => r.id === roomId)!;
+        const room = rooms.find((r) => r.id === roomId);
         if (!room) return null; 
+
+        const allTransactionsForRoom = transactions
+          .filter((t) => t.room_id === roomId)
+          .sort((a,b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+
+        const initialTransactionForThisStay = allTransactionsForRoom
+          .filter(t => t.type === 'Hospedaje Inicial')
+          .sort((a,b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())[0];
+
+        if(!initialTransactionForThisStay) return null;
         
-        const allStayTransactionsForRoom = transactions.filter((t) => t.room_id === roomId);
-
-        const thisStayInitialTransaction = allStayTransactionsForRoom.filter(t => t.type === 'Hospedaje Inicial').sort((a,b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())[0];
-        if (!thisStayInitialTransaction) return null;
-
-        const checkInTime = new Date(thisStayInitialTransaction.timestamp);
+        const checkInTime = new Date(initialTransactionForThisStay.timestamp);
         
-        const allStayTransactions = allStayTransactionsForRoom.filter((t) => {
-          const transactionTime = new Date(t.timestamp).getTime();
-          return transactionTime >= checkInTime.getTime();
-        });
+        const allTransactionsThisStay = allTransactionsForRoom.filter(t => new Date(t.timestamp) >= checkInTime);
+        const transactionIdsThisStay = new Set(allTransactionsThisStay.map(t => t.id));
 
-        const latestRoomState = allStayTransactions
+        const wasActiveInShift = shiftTransactions.some(t => transactionIdsThisStay.has(t.id));
+        if (!wasActiveInShift) return null;
+        
+        const latestRoomState = allTransactionsThisStay
           .map(t => rooms.find(r => r.id === t.room_id))
           .filter(r => r && r.check_in_time)
           .sort((a,b) => new Date(b!.check_in_time!).getTime() - new Date(a!.check_in_time!).getTime())[0];
@@ -296,10 +307,9 @@ export default function ReportsPage({
           checkinShiftInfo.shift !== selectedShift ||
           checkinOpDateStr !== operationalDateStr;
         
-        const initialOccupancyAmount =
-          thisStayInitialTransaction?.amount || 0;
+        const initialOccupancyAmount = initialTransactionForThisStay?.amount || 0;
 
-        const productTransactions = allStayTransactions.filter(
+        const productTransactions = allTransactionsThisStay.filter(
           (t) => t.type === 'Consumo'
         );
         const productsAmount = productTransactions.reduce(
@@ -330,25 +340,25 @@ export default function ReportsPage({
             .filter((p): p is NonNullable<typeof p> => p !== null);
         });
 
-        const otherChargeTransactions = allStayTransactions.filter(
+        const otherChargeTransactions = allTransactionsThisStay.filter(
           (t) =>
             t.type !== 'Hospedaje Inicial' && t.type !== 'Consumo'
         );
 
-        let totalStayAmount = allStayTransactions.reduce(
+        let totalStayAmount = allTransactionsThisStay.reduce(
             (sum, t) => sum + t.amount,
             0
           );
         
-        const isCurrentlyOccupied = latestRoomState?.status === 'Ocupada' && latestRoomState.check_in_time === thisStayInitialTransaction.timestamp;
+        const isCurrentlyOccupied = room.status === 'Ocupada' && room.check_in_time === initialTransactionForThisStay.timestamp;
 
         return {
           id: room.id,
           name: room.name,
           status: isCurrentlyOccupied ? 'Ocupada' : 'Salida',
-          check_in_time: thisStayInitialTransaction.timestamp,
-          check_out_time: isCurrentlyOccupied ? latestRoomState?.check_out_time : (allStayTransactions.sort((a,b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())[0]?.timestamp || null),
-          is_manual_time: latestRoomState?.is_manual_time || false,
+          check_in_time: initialTransactionForThisStay.timestamp,
+          check_out_time: isCurrentlyOccupied ? room?.check_out_time : (allTransactionsThisStay.sort((a,b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())[0]?.timestamp || null),
+          is_manual_time: room?.is_manual_time || false,
           isFromPreviousShift: isCurrentlyOccupied && isFromPreviousShift,
           initialOccupancyAmount,
           productsAmount,
