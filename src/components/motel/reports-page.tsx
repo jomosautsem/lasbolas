@@ -91,13 +91,13 @@ const TransactionTable = ({ transactions, rooms, employees }: { transactions: Tr
   
   return (
     <div className="p-2 border-t max-h-60 overflow-y-auto">
-      <Table>
+      <Table className="table-fixed">
         <TableHeader>
           <TableRow>
-            <TableHead>Hora</TableHead>
-            <TableHead>Hab./Emp.</TableHead>
-            <TableHead>Descripción</TableHead>
-            <TableHead className="text-right">Monto</TableHead>
+            <TableHead className="w-[20%]">Hora</TableHead>
+            <TableHead className="w-[20%]">Hab./Emp.</TableHead>
+            <TableHead className="w-[40%]">Descripción</TableHead>
+            <TableHead className="w-[20%] text-right">Monto</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -108,10 +108,10 @@ const TransactionTable = ({ transactions, rooms, employees }: { transactions: Tr
             return (
               <TableRow key={t.id}>
                 <TableCell>{formatToMexicanTime(t.timestamp)}</TableCell>
-                <TableCell className="font-medium">
+                <TableCell className="font-medium truncate">
                   {room?.name || employee?.name || 'N/A'}
                 </TableCell>
-                <TableCell>{t.description}</TableCell>
+                <TableCell className="truncate" title={t.description}>{t.description}</TableCell>
                 <TableCell className="text-right">${t.amount.toFixed(2)}</TableCell>
               </TableRow>
             )
