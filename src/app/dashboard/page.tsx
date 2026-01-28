@@ -17,7 +17,7 @@ import type {
   RoomType,
 } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-import { addHours, differenceInMinutes } from 'date-fns';
+import { addHours, differenceInMinutes, subDays } from 'date-fns';
 import AddExpenseModal from '@/components/motel/add-expense-modal';
 import VehicleHistoryPage from '@/components/motel/vehicle-history-page';
 import ConsumptionPage from '@/components/motel/consumption-page';
@@ -93,29 +93,45 @@ export default function DashboardPage() {
   useEffect(() => {
     if (loading) return;
 
-    const tableSetterMap = {
-      rooms: setRooms,
-      products: setProducts,
-      transactions: setTransactions,
-      expenses: setExpenses,
-      vehicle_history: setVehicleHistory,
-      employees: setEmployees,
-      rates: setRates,
-      room_types: setRoomTypes,
-    };
+    const twoDaysAgo = subDays(new Date(), 2).toISOString();
+
+    const tablesToFetch: {
+      name: string;
+      setter: React.Dispatch<React.SetStateAction<any[]>>;
+      isLarge: boolean;
+    }[] = [
+      { name: 'rooms', setter: setRooms, isLarge: false },
+      { name: 'products', setter: setProducts, isLarge: false },
+      { name: 'transactions', setter: setTransactions, isLarge: true },
+      { name: 'expenses', setter: setExpenses, isLarge: true },
+      { name: 'vehicle_history', setter: setVehicleHistory, isLarge: true },
+      { name: 'employees', setter: setEmployees, isLarge: false },
+      { name: 'rates', setter: setRates, isLarge: false },
+      { name: 'room_types', setter: setRoomTypes, isLarge: false },
+    ];
 
     const channels: RealtimeChannel[] = [];
 
-    Object.entries(tableSetterMap).forEach(([table, setter]) => {
+    tablesToFetch.forEach(({ name, setter, isLarge }) => {
       const fetchAndSet = async () => {
-        const { data, error } = await supabase
-          .from(table)
-          .select('*')
-          .order('id');
+        let query = supabase.from(name).select('*');
+
+        if (isLarge) {
+          const dateColumn =
+            name === 'expenses'
+              ? 'date'
+              : name === 'transactions'
+              ? 'timestamp'
+              : 'check_in_time';
+          query = query.gte(dateColumn, twoDaysAgo);
+        }
+
+        const { data, error } = await query.order('id');
+
         if (error) {
           showToast({
             variant: 'destructive',
-            title: `Error cargando ${table}`,
+            title: `Error cargando ${name}`,
             description: error.message,
           });
         } else {
@@ -126,12 +142,12 @@ export default function DashboardPage() {
       fetchAndSet();
 
       const channel = supabase
-        .channel(`public:${table}`)
+        .channel(`public:${name}`)
         .on(
           'postgres_changes',
-          { event: '*', schema: 'public', table: table },
+          { event: '*', schema: 'public', table: name },
           (payload) => {
-            fetchAndSet();
+            fetchAndSet(); // Refetch filtered data on change
           }
         )
         .subscribe();
@@ -143,6 +159,7 @@ export default function DashboardPage() {
       channels.forEach((channel) => supabase.removeChannel(channel));
     };
   }, [showToast, loading]);
+
 
   useEffect(() => {
     const checkRooms = () => {
@@ -705,6 +722,8 @@ export default function DashboardPage() {
       amount,
       date: new Date().toISOString(),
       shift: shiftInfo.shift,
+      turno_calculado: shiftInfo.shift,
+      fecha_operativa: shiftInfo.operationalDate.toISOString().split('T')[0],
     };
     const { error } = await supabase.from('expenses').insert([newExpense]);
     if (error) {
