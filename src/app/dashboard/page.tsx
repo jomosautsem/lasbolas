@@ -52,14 +52,16 @@ export default function DashboardPage() {
 
   useEffect(() => {
     const checkUser = async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (!session) {
+      try {
+        const { data, error } = await supabase.auth.getSession();
+        if (error || !data.session) {
+          router.push('/');
+        } else {
+          setUser(data.session.user);
+          setLoading(false);
+        }
+      } catch {
         router.push('/');
-      } else {
-        setUser(session.user);
-        setLoading(false);
       }
     };
 
