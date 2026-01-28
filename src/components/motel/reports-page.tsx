@@ -90,34 +90,32 @@ const TransactionTable = ({ transactions, rooms, employees }: { transactions: Tr
   }
   
   return (
-    <div className="p-2 border-t max-h-60 overflow-y-auto">
-      <Table className="table-fixed">
-        <TableHeader>
-          <TableRow>
-            <TableHead className="w-[20%]">Hora</TableHead>
-            <TableHead className="w-[20%]">Hab./Emp.</TableHead>
-            <TableHead className="w-[40%]">Descripción</TableHead>
-            <TableHead className="w-[20%] text-right">Monto</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {transactions.map((t) => {
-            const room = t.room_id ? rooms.find(r => r.id === t.room_id) : null;
-            const employee = t.employee_id ? employees.find(e => e.id === t.employee_id) : null;
-            
-            return (
-              <TableRow key={t.id}>
-                <TableCell>{formatToMexicanTime(t.timestamp)}</TableCell>
-                <TableCell className="font-medium truncate">
-                  {room?.name || employee?.name || 'N/A'}
-                </TableCell>
-                <TableCell className="truncate" title={t.description}>{t.description}</TableCell>
-                <TableCell className="text-right">${t.amount.toFixed(2)}</TableCell>
-              </TableRow>
-            )
-          })}
-        </TableBody>
-      </Table>
+    <div className="px-2 py-1 border-t max-h-60 overflow-y-auto text-sm">
+      {/* Header */}
+      <div className="flex items-center px-2 py-1 font-semibold text-xs text-muted-foreground border-b">
+        <div className="w-1/5">Hora</div>
+        <div className="w-1/5">Hab./Emp.</div>
+        <div className="w-2/5">Descripción</div>
+        <div className="w-1/5 text-right">Monto</div>
+      </div>
+      {/* Body */}
+      <div className="space-y-0.5 pt-1">
+        {transactions.map((t) => {
+          const room = t.room_id ? rooms.find(r => r.id === t.room_id) : null;
+          const employee = t.employee_id ? employees.find(e => e.id === t.employee_id) : null;
+          
+          return (
+            <div key={t.id} className="flex items-center px-2 py-1 rounded-md hover:bg-accent/50">
+              <div className="w-1/5 whitespace-nowrap">{formatToMexicanTime(t.timestamp)}</div>
+              <div className="w-1/5 truncate font-medium" title={room?.name || employee?.name || 'N/A'}>
+                {room?.name || employee?.name || 'N/A'}
+              </div>
+              <div className="w-2/5 truncate text-muted-foreground" title={t.description}>{t.description}</div>
+              <div className="w-1/5 text-right font-medium">${t.amount.toFixed(2)}</div>
+            </div>
+          )
+        })}
+      </div>
     </div>
   );
 };
@@ -142,7 +140,7 @@ const DetailStatCard = ({
   const hasTransactions = transactions.length > 0;
 
   return (
-    <Collapsible open={hasTransactions ? isOpen : false} onOpenChange={setIsOpen} className="bg-gray-100 rounded-xl transition-shadow hover:shadow-md">
+    <Collapsible open={hasTransactions ? isOpen : false} onOpenChange={setIsOpen} className="bg-muted/50 rounded-xl transition-shadow hover:shadow-md">
         <CollapsibleTrigger className="w-full text-left p-4 disabled:cursor-not-allowed" disabled={!hasTransactions}>
             <div className="flex items-center justify-between mb-1">
                 <p className="text-sm font-medium">{title}</p>
