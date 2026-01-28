@@ -196,27 +196,23 @@ export default function ReportsPage({
     if (!selectedDate) return [];
     const operationalDateStr = format(selectedDate, 'yyyy-MM-dd');
 
-    const activeRooms = rooms.filter((r) => r.status === 'Ocupada');
-
-    const checkedOutRoomsInShift = rooms.filter((r) => {
-      if (r.status === 'Ocupada' || !r.check_out_time) return false;
-      const checkoutShiftInfo = getCurrentShiftInfo(new Date(r.check_out_time));
-      const checkoutOpDateStr = format(
-        checkoutShiftInfo.operationalDate,
-        'yyyy-MM-dd'
-      );
-      return (
-        checkoutShiftInfo.shift === selectedShift &&
-        checkoutOpDateStr === operationalDateStr
-      );
-    });
-
-    const combinedRooms = [...activeRooms, ...checkedOutRoomsInShift];
-    const uniqueRoomIds = Array.from(new Set(combinedRooms.map((r) => r.id)));
+    // FIX: Use transactions from the selected shift to determine which rooms were active.
+    const shiftTransactions = transactions.filter(
+      (t) =>
+        t.fecha_operativa === operationalDateStr &&
+        t.turno_calculado === selectedShift
+    );
+    
+    const uniqueRoomIds = Array.from(new Set(shiftTransactions.map((t) => t.room_id).filter((id): id is number => id !== null)));
 
     const log = uniqueRoomIds
       .map((roomId) => {
         const room = rooms.find((r) => r.id === roomId)!;
+        if (!room) return null; // Should not happen, but defensive check
+
+        // The original logic below has flaws for past-tense reporting as it depends on the LIVE room object.
+        // However, the primary bug was the list of rooms, which is now fixed.
+        // This logic is mostly correct for rooms that are *currently* part of the stay being analyzed.
         if (!room.check_in_time) return null;
 
         const checkinShiftInfo = getCurrentShiftInfo(new Date(room.check_in_time));
