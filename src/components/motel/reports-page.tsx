@@ -7,7 +7,7 @@ import type {
   Shift,
   Room,
   Product,
-  TransactionType,
+  Employee,
 } from '@/lib/types';
 import {
   Card,
@@ -69,13 +69,13 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Separator } from '@/components/ui/separator';
-import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface ReportsPageProps {
   rooms: Room[];
   transactions: Transaction[];
   expenses: Expense[];
   products: Product[];
+  employees: Employee[];
 }
 
 const shifts: { value: Shift; label: string }[] = [
@@ -84,31 +84,89 @@ const shifts: { value: Shift; label: string }[] = [
   { value: 'Nocturno', label: 'Nocturno (21:00 - 07:00)' },
 ];
 
-const StatCard = ({
+const TransactionTable = ({ transactions, rooms, employees }: { transactions: Transaction[], rooms: Room[], employees: Employee[] }) => {
+  if (transactions.length === 0) {
+    return <div className="p-4 text-center text-sm text-muted-foreground">No hay transacciones en esta categoría.</div>;
+  }
+  
+  return (
+    <div className="p-2 border-t max-h-60 overflow-y-auto">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Hora</TableHead>
+            <TableHead>Hab./Emp.</TableHead>
+            <TableHead>Descripción</TableHead>
+            <TableHead className="text-right">Monto</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {transactions.map((t) => {
+            const room = t.room_id ? rooms.find(r => r.id === t.room_id) : null;
+            const employee = t.employee_id ? employees.find(e => e.id === t.employee_id) : null;
+            
+            return (
+              <TableRow key={t.id}>
+                <TableCell>{formatToMexicanTime(t.timestamp)}</TableCell>
+                <TableCell className="font-medium">
+                  {room?.name || employee?.name || 'N/A'}
+                </TableCell>
+                <TableCell>{t.description}</TableCell>
+                <TableCell className="text-right">${t.amount.toFixed(2)}</TableCell>
+              </TableRow>
+            )
+          })}
+        </TableBody>
+      </Table>
+    </div>
+  );
+};
+
+
+const DetailStatCard = ({
   title,
   value,
   icon: Icon,
-  className,
+  transactions,
+  rooms,
+  employees
 }: {
   title: string;
   value: string;
   icon: React.ElementType;
-  className?: string;
-}) => (
-  <div className={cn('rounded-xl p-4 flex-1', className)}>
-    <div className="flex items-center justify-between mb-1">
-      <p className="text-sm font-medium">{title}</p>
-      <Icon className="h-5 w-5 opacity-70" />
-    </div>
-    <p className="text-2xl font-bold">{value}</p>
-  </div>
-);
+  transactions: Transaction[];
+  rooms: Room[];
+  employees: Employee[];
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const hasTransactions = transactions.length > 0;
+
+  return (
+    <Collapsible open={hasTransactions ? isOpen : false} onOpenChange={setIsOpen} className="bg-gray-100 rounded-xl transition-shadow hover:shadow-md">
+        <CollapsibleTrigger className="w-full text-left p-4 disabled:cursor-not-allowed" disabled={!hasTransactions}>
+            <div className="flex items-center justify-between mb-1">
+                <p className="text-sm font-medium">{title}</p>
+                <div className="flex items-center gap-2">
+                    <Icon className="h-5 w-5 opacity-70" />
+                    {hasTransactions && <ChevronDown className={`h-5 w-5 opacity-70 transition-transform ${isOpen ? 'rotate-180' : ''}`} />}
+                </div>
+            </div>
+            <p className="text-2xl font-bold">{value}</p>
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+            <TransactionTable transactions={transactions} rooms={rooms} employees={employees} />
+        </CollapsibleContent>
+    </Collapsible>
+  );
+};
+
 
 export default function ReportsPage({
   rooms,
   transactions,
   expenses,
   products,
+  employees,
 }: ReportsPageProps) {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(
     getMexicoCityTime()
@@ -143,27 +201,27 @@ export default function ReportsPage({
   const summary = useMemo(() => {
     const { filteredTransactions, filteredExpenses } = filteredData;
 
-    const rentIncome = filteredTransactions
+    const rentIncomeTransactions = filteredTransactions
       .filter(
         (t) => t.type === 'Hospedaje Inicial' || t.type === 'Ajuste de Paquete'
       )
-      .reduce((sum, t) => sum + t.amount, 0);
+    const rentIncome = rentIncomeTransactions.reduce((sum, t) => sum + t.amount, 0);
 
-    const extraTimeIncome = filteredTransactions
-      .filter((t) => t.type === 'Tiempo Extra')
-      .reduce((sum, t) => sum + t.amount, 0);
+    const extraTimeIncomeTransactions = filteredTransactions
+      .filter((t) => t.type === 'Tiempo Extra');
+    const extraTimeIncome = extraTimeIncomeTransactions.reduce((sum, t) => sum + t.amount, 0);
+    
+    const extraPersonIncomeTransactions = filteredTransactions
+      .filter((t) => t.type === 'Persona Extra');
+    const extraPersonIncome = extraPersonIncomeTransactions.reduce((sum, t) => sum + t.amount, 0);
 
-    const extraPersonIncome = filteredTransactions
-      .filter((t) => t.type === 'Persona Extra')
-      .reduce((sum, t) => sum + t.amount, 0);
-
-    const roomProductsIncome = filteredTransactions
-      .filter((t) => t.type === 'Consumo')
-      .reduce((sum, t) => sum + t.amount, 0);
-
-    const employeeConsumptionIncome = filteredTransactions
-      .filter((t) => t.type === 'Venta a Empleado')
-      .reduce((sum, t) => sum + t.amount, 0);
+    const roomProductsIncomeTransactions = filteredTransactions
+      .filter((t) => t.type === 'Consumo');
+    const roomProductsIncome = roomProductsIncomeTransactions.reduce((sum, t) => sum + t.amount, 0);
+    
+    const employeeConsumptionIncomeTransactions = filteredTransactions
+      .filter((t) => t.type === 'Venta a Empleado');
+    const employeeConsumptionIncome = employeeConsumptionIncomeTransactions.reduce((sum, t) => sum + t.amount, 0);
 
     const totalIncome =
       rentIncome +
@@ -189,6 +247,11 @@ export default function ReportsPage({
       totalExpenses,
       netProfit,
       expensesList: filteredExpenses,
+      rentIncomeTransactions,
+      extraTimeIncomeTransactions,
+      extraPersonIncomeTransactions,
+      roomProductsIncomeTransactions,
+      employeeConsumptionIncomeTransactions
     };
   }, [filteredData]);
 
@@ -196,7 +259,6 @@ export default function ReportsPage({
     if (!selectedDate) return [];
     const operationalDateStr = format(selectedDate, 'yyyy-MM-dd');
 
-    // FIX: Use transactions from the selected shift to determine which rooms were active.
     const shiftTransactions = transactions.filter(
       (t) =>
         t.fecha_operativa === operationalDateStr &&
@@ -208,14 +270,26 @@ export default function ReportsPage({
     const log = uniqueRoomIds
       .map((roomId) => {
         const room = rooms.find((r) => r.id === roomId)!;
-        if (!room) return null; // Should not happen, but defensive check
+        if (!room) return null; 
+        
+        const allStayTransactionsForRoom = transactions.filter((t) => t.room_id === roomId);
 
-        // The original logic below has flaws for past-tense reporting as it depends on the LIVE room object.
-        // However, the primary bug was the list of rooms, which is now fixed.
-        // This logic is mostly correct for rooms that are *currently* part of the stay being analyzed.
-        if (!room.check_in_time) return null;
+        const thisStayInitialTransaction = allStayTransactionsForRoom.filter(t => t.type === 'Hospedaje Inicial').sort((a,b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())[0];
+        if (!thisStayInitialTransaction) return null;
 
-        const checkinShiftInfo = getCurrentShiftInfo(new Date(room.check_in_time));
+        const checkInTime = new Date(thisStayInitialTransaction.timestamp);
+        
+        const allStayTransactions = allStayTransactionsForRoom.filter((t) => {
+          const transactionTime = new Date(t.timestamp).getTime();
+          return transactionTime >= checkInTime.getTime();
+        });
+
+        const latestRoomState = allStayTransactions
+          .map(t => rooms.find(r => r.id === t.room_id))
+          .filter(r => r && r.check_in_time)
+          .sort((a,b) => new Date(b!.check_in_time!).getTime() - new Date(a!.check_in_time!).getTime())[0];
+
+        const checkinShiftInfo = getCurrentShiftInfo(checkInTime);
         const checkinOpDateStr = format(
           checkinShiftInfo.operationalDate,
           'yyyy-MM-dd'
@@ -223,23 +297,9 @@ export default function ReportsPage({
         const isFromPreviousShift =
           checkinShiftInfo.shift !== selectedShift ||
           checkinOpDateStr !== operationalDateStr;
-
-        const allStayTransactions = transactions.filter((t) => {
-          if (t.room_id !== roomId) return false;
-          const transactionTime = new Date(t.timestamp).getTime();
-          const checkInTime = new Date(room.check_in_time!).getTime();
-          const endTime =
-            room.status !== 'Ocupada' && room.check_out_time
-              ? new Date(room.check_out_time).getTime()
-              : Date.now();
-          return transactionTime >= checkInTime && transactionTime <= endTime;
-        });
-
-        const initialOccupancyTransaction = allStayTransactions.find(
-          (t) => t.type === 'Hospedaje Inicial'
-        );
+        
         const initialOccupancyAmount =
-          initialOccupancyTransaction?.amount || 0;
+          thisStayInitialTransaction?.amount || 0;
 
         const productTransactions = allStayTransactions.filter(
           (t) => t.type === 'Consumo'
@@ -277,19 +337,21 @@ export default function ReportsPage({
             t.type !== 'Hospedaje Inicial' && t.type !== 'Consumo'
         );
 
-        let totalStayAmount: number;
-        if (room.status !== 'Ocupada') {
-          totalStayAmount = allStayTransactions.reduce(
+        let totalStayAmount = allStayTransactions.reduce(
             (sum, t) => sum + t.amount,
             0
           );
-        } else {
-          totalStayAmount = room.total_debt || 0;
-        }
+        
+        const isCurrentlyOccupied = latestRoomState?.status === 'Ocupada' && latestRoomState.check_in_time === thisStayInitialTransaction.timestamp;
 
         return {
-          ...room,
-          isFromPreviousShift: room.status === 'Ocupada' && isFromPreviousShift,
+          id: room.id,
+          name: room.name,
+          status: isCurrentlyOccupied ? 'Ocupada' : 'Salida',
+          check_in_time: thisStayInitialTransaction.timestamp,
+          check_out_time: isCurrentlyOccupied ? latestRoomState?.check_out_time : (allStayTransactions.sort((a,b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())[0]?.timestamp || null),
+          is_manual_time: latestRoomState?.is_manual_time || false,
+          isFromPreviousShift: isCurrentlyOccupied && isFromPreviousShift,
           initialOccupancyAmount,
           productsAmount,
           productTransactions,
@@ -529,36 +591,46 @@ export default function ReportsPage({
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-            <StatCard
-              title="RENTAS (HOSPEDAJE)"
-              value={`$${summary.rentIncome.toFixed(2)}`}
-              icon={Bed}
-              className="bg-gray-100"
-            />
-            <StatCard
-              title="PRODUCTOS (HAB.)"
-              value={`$${summary.roomProductsIncome.toFixed(2)}`}
-              icon={ShoppingCart}
-              className="bg-gray-100"
-            />
-            <StatCard
-              title="CONSUMO EMPLEADOS"
-              value={`$${summary.employeeConsumptionIncome.toFixed(2)}`}
-              icon={Users}
-              className="bg-gray-100"
-            />
-            <StatCard
-              title="PERSONAS EXTRA"
-              value={`$${summary.extraPersonIncome.toFixed(2)}`}
-              icon={UserPlus}
-              className="bg-gray-100"
-            />
-            <StatCard
-              title="TIEMPOS EXTRA"
-              value={`$${summary.extraTimeIncome.toFixed(2)}`}
-              icon={Clock}
-              className="bg-gray-100"
-            />
+             <DetailStatCard
+                title="RENTAS (HOSPEDAJE)"
+                value={`$${summary.rentIncome.toFixed(2)}`}
+                icon={Bed}
+                transactions={summary.rentIncomeTransactions}
+                rooms={rooms}
+                employees={employees}
+              />
+              <DetailStatCard
+                title="PRODUCTOS (HAB.)"
+                value={`$${summary.roomProductsIncome.toFixed(2)}`}
+                icon={ShoppingCart}
+                transactions={summary.roomProductsIncomeTransactions}
+                rooms={rooms}
+                employees={employees}
+              />
+              <DetailStatCard
+                title="CONSUMO EMPLEADOS"
+                value={`$${summary.employeeConsumptionIncome.toFixed(2)}`}
+                icon={Users}
+                transactions={summary.employeeConsumptionIncomeTransactions}
+                rooms={rooms}
+                employees={employees}
+              />
+              <DetailStatCard
+                title="PERSONAS EXTRA"
+                value={`$${summary.extraPersonIncome.toFixed(2)}`}
+                icon={UserPlus}
+                transactions={summary.extraPersonIncomeTransactions}
+                rooms={rooms}
+                employees={employees}
+              />
+              <DetailStatCard
+                title="TIEMPOS EXTRA"
+                value={`$${summary.extraTimeIncome.toFixed(2)}`}
+                icon={Clock}
+                transactions={summary.extraTimeIncomeTransactions}
+                rooms={rooms}
+                employees={employees}
+              />
           </div>
         </CardContent>
       </Card>

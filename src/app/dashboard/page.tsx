@@ -60,7 +60,8 @@ export default function DashboardPage() {
           setUser(data.session.user);
           setLoading(false);
         }
-      } catch {
+      } catch (error) {
+        console.error("Auth error:", error);
         router.push('/');
       }
     };
@@ -1035,6 +1036,7 @@ export default function DashboardPage() {
             transactions={transactions}
             expenses={expenses}
             products={products}
+            employees={employees}
           />
         )}
         {activeView === 'settings' && (
