@@ -60,7 +60,11 @@ interface RoomCardProps {
   roomTypes: RoomType[];
   allTransactions: Transaction[];
   onOccupy: (room: Room) => void;
-  onUpdateControls: (roomId: number, tvControls: number, acControls: number) => void;
+  onUpdateControls: (
+    roomId: number,
+    tvControls: number,
+    acControls: number
+  ) => void;
   onReleaseRoom: (roomId: number) => void;
   onFinishCleaning: (roomId: number) => void;
   onSetDeepCleaning: (roomId: number) => void;
@@ -173,7 +177,8 @@ export function RoomCard({
   const [isReleaseWarningOpen, setIsReleaseWarningOpen] = useState(false);
   const [isReleaseRoomModalOpen, setIsReleaseRoomModalOpen] = useState(false);
   const [isChangeRoomModalOpen, setIsChangeRoomModalOpen] = useState(false);
-  const [isAdjustPackageModalOpen, setIsAdjustPackageModalOpen] = useState(false);
+  const [isAdjustPackageModalOpen, setIsAdjustPackageModalOpen] =
+    useState(false);
   const [isExtendStayModalOpen, setIsExtendStayModalOpen] = useState(false);
   const [isAddPersonModalOpen, setIsAddPersonModalOpen] = useState(false);
   const [isRemovePersonModalOpen, setIsRemovePersonModalOpen] = useState(false);
@@ -290,8 +295,7 @@ export function RoomCard({
   const contentBgClass =
     textColor === 'text-black' ? 'bg-white/70 text-black' : 'bg-black/20 text-white';
 
-  const VehicleIcon =
-    room.entry_type === 'Auto' ? Car : MotorcycleIcon;
+  const VehicleIcon = room.entry_type === 'Auto' ? Car : MotorcycleIcon;
 
   return (
     <>
@@ -437,33 +441,47 @@ export function RoomCard({
 
                 <div
                   className={cn(
-                    'text-center rounded-md p-2',
+                    'rounded-md p-2',
                     isExpired ? 'bg-black/20' : 'bg-black/10'
                   )}
                 >
-                  <div
-                    className={cn(
-                      'text-xs font-semibold opacity-80',
-                      isExpired && 'text-yellow-300'
-                    )}
-                  >
-                    {isExpired ? 'TIEMPO VENCIDO' : 'HORA DE SALIDA'}
+                  <div className="grid grid-cols-2 gap-2 text-center">
+                    <div>
+                      <p className="text-xs font-semibold opacity-80">
+                        ENTRADA
+                      </p>
+                      <p className="font-mono font-bold text-lg">
+                        {isClient && room.check_in_time
+                          ? formatToMexicanTime(room.check_in_time)
+                          : '--:--'}
+                      </p>
+                    </div>
+                    <div>
+                      <p
+                        className={cn(
+                          'text-xs font-semibold opacity-80',
+                          isExpired && 'text-yellow-300'
+                        )}
+                      >
+                        {isExpired ? 'VENCIDA' : 'SALIDA'}
+                      </p>
+                      <p
+                        className={cn(
+                          'font-mono font-bold text-lg',
+                          isExpired && 'text-yellow-300'
+                        )}
+                      >
+                        {isClient && room.check_out_time
+                          ? formatToMexicanTime(room.check_out_time)
+                          : '--:--'}
+                      </p>
+                    </div>
                   </div>
-                  <div
-                    className={cn(
-                      'flex items-center justify-center gap-2',
-                      isExpired
-                        ? 'font-sans text-sm text-yellow-300'
-                        : 'font-mono text-xl'
-                    )}
-                  >
-                    {room.is_manual_time && <Edit className="h-3 w-3" />}
-                    {isExpired
-                      ? timeDifferenceText
-                      : isClient && room.check_out_time
-                      ? formatToMexicanTime(room.check_out_time)
-                      : '--:--'}
-                  </div>
+                  {isExpired && timeDifferenceText && (
+                    <p className="text-center text-xs font-semibold text-yellow-300 mt-1">
+                      {timeDifferenceText}
+                    </p>
+                  )}
                 </div>
 
                 <Separator className={cn('my-1', separatorClass)} />
