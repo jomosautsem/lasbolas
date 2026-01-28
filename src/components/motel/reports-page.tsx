@@ -54,6 +54,7 @@ import {
   getCurrentShiftInfo,
   getMexicoCityTime,
   formatToMexicanTime,
+  formatToMexicanDate,
 } from '@/lib/datetime';
 import { cn } from '@/lib/utils';
 import {
@@ -70,6 +71,8 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Separator } from '@/components/ui/separator';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 interface ReportsPageProps {
   rooms: Room[];
@@ -85,42 +88,55 @@ const shifts: { value: Shift; label: string }[] = [
   { value: 'Nocturno', label: 'Nocturno (21:00 - 07:00)' },
 ];
 
-const TransactionTable = ({ transactions, rooms, employees }: { transactions: Transaction[], rooms: Room[], employees: Employee[] }) => {
+const TransactionTable = ({
+  transactions,
+  rooms,
+  employees,
+}: {
+  transactions: Transaction[];
+  rooms: Room[];
+  employees: Employee[];
+}) => {
   if (transactions.length === 0) {
-    return <div className="p-4 text-center text-sm text-muted-foreground">No hay transacciones en esta categoría.</div>;
+    return (
+      <div className="p-4 text-center text-sm text-muted-foreground">
+        No hay transacciones en esta categoría.
+      </div>
+    );
   }
-  
+
   return (
     <div className="w-full overflow-x-auto">
-        <Table>
-            <TableHeader>
-                <TableRow>
-                    <TableHead>Hora</TableHead>
-                    <TableHead>Hab./Emp.</TableHead>
-                    <TableHead>Descripción</TableHead>
-                    <TableHead className="text-right">Monto</TableHead>
-                </TableRow>
-            </TableHeader>
-            <TableBody>
-                {transactions.map((t) => {
-                    const room = t.room_id ? rooms.find(r => r.id === t.room_id) : null;
-                    const employee = t.employee_id ? employees.find(e => e.id === t.employee_id) : null;
-                    
-                    return (
-                        <TableRow key={t.id}>
-                            <TableCell>{formatToMexicanTime(t.timestamp)}</TableCell>
-                            <TableCell>{room?.name || employee?.name || 'N/A'}</TableCell>
-                            <TableCell>{t.description}</TableCell>
-                            <TableCell className="text-right">${t.amount.toFixed(2)}</TableCell>
-                        </TableRow>
-                    )
-                })}
-            </TableBody>
-        </Table>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Hora</TableHead>
+            <TableHead>Hab./Emp.</TableHead>
+            <TableHead>Descripción</TableHead>
+            <TableHead className="text-right">Monto</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {transactions.map((t) => {
+            const room = t.room_id ? rooms.find((r) => r.id === t.room_id) : null;
+            const employee = t.employee_id
+              ? employees.find((e) => e.id === t.employee_id)
+              : null;
+
+            return (
+              <TableRow key={t.id}>
+                <TableCell>{formatToMexicanTime(t.timestamp)}</TableCell>
+                <TableCell>{room?.name || employee?.name || 'N/A'}</TableCell>
+                <TableCell>{t.description}</TableCell>
+                <TableCell className="text-right">${t.amount.toFixed(2)}</TableCell>
+              </TableRow>
+            );
+          })}
+        </TableBody>
+      </Table>
     </div>
   );
 };
-
 
 export default function ReportsPage({
   rooms,
@@ -135,7 +151,10 @@ export default function ReportsPage({
   const [selectedShift, setSelectedShift] = useState<Shift>(
     getCurrentShiftInfo().shift
   );
-  const [activeDetail, setActiveDetail] = useState<{ title: string; transactions: Transaction[] } | null>(null);
+  const [activeDetail, setActiveDetail] = useState<{
+    title: string;
+    transactions: Transaction[];
+  } | null>(null);
 
   const filteredData = useMemo(() => {
     if (!selectedDate) {
@@ -163,27 +182,46 @@ export default function ReportsPage({
   const summary = useMemo(() => {
     const { filteredTransactions, filteredExpenses } = filteredData;
 
-    const rentIncomeTransactions = filteredTransactions
-      .filter(
-        (t) => t.type === 'Hospedaje Inicial' || t.type === 'Ajuste de Paquete'
-      )
-    const rentIncome = rentIncomeTransactions.reduce((sum, t) => sum + t.amount, 0);
+    const rentIncomeTransactions = filteredTransactions.filter(
+      (t) => t.type === 'Hospedaje Inicial' || t.type === 'Ajuste de Paquete'
+    );
+    const rentIncome = rentIncomeTransactions.reduce(
+      (sum, t) => sum + t.amount,
+      0
+    );
 
-    const extraTimeIncomeTransactions = filteredTransactions
-      .filter((t) => t.type === 'Tiempo Extra');
-    const extraTimeIncome = extraTimeIncomeTransactions.reduce((sum, t) => sum + t.amount, 0);
-    
-    const extraPersonIncomeTransactions = filteredTransactions
-      .filter((t) => t.type === 'Persona Extra');
-    const extraPersonIncome = extraPersonIncomeTransactions.reduce((sum, t) => sum + t.amount, 0);
+    const extraTimeIncomeTransactions = filteredTransactions.filter(
+      (t) => t.type === 'Tiempo Extra'
+    );
+    const extraTimeIncome = extraTimeIncomeTransactions.reduce(
+      (sum, t) => sum + t.amount,
+      0
+    );
 
-    const roomProductsIncomeTransactions = filteredTransactions
-      .filter((t) => t.type === 'Consumo');
-    const roomProductsIncome = roomProductsIncomeTransactions.reduce((sum, t) => sum + t.amount, 0);
-    
-    const employeeConsumptionIncomeTransactions = filteredTransactions
-      .filter((t) => t.type === 'Venta a Empleado');
-    const employeeConsumptionIncome = employeeConsumptionIncomeTransactions.reduce((sum, t) => sum + t.amount, 0);
+    const extraPersonIncomeTransactions = filteredTransactions.filter(
+      (t) => t.type === 'Persona Extra'
+    );
+    const extraPersonIncome = extraPersonIncomeTransactions.reduce(
+      (sum, t) => sum + t.amount,
+      0
+    );
+
+    const roomProductsIncomeTransactions = filteredTransactions.filter(
+      (t) => t.type === 'Consumo'
+    );
+    const roomProductsIncome = roomProductsIncomeTransactions.reduce(
+      (sum, t) => sum + t.amount,
+      0
+    );
+
+    const employeeConsumptionIncomeTransactions = filteredTransactions.filter(
+      (t) => t.type === 'Venta a Empleado'
+    );
+    const employeeConsumptionIncome =
+      employeeConsumptionIncomeTransactions.reduce(
+        (sum, t) => sum + t.amount,
+        0
+      );
 
     const totalIncome =
       rentIncome +
@@ -213,20 +251,17 @@ export default function ReportsPage({
       extraTimeIncomeTransactions,
       extraPersonIncomeTransactions,
       roomProductsIncomeTransactions,
-      employeeConsumptionIncomeTransactions
+      employeeConsumptionIncomeTransactions,
     };
   }, [filteredData]);
-  
-  const handleDetailClick = (
-    title: string,
-    transactions: Transaction[]
-  ) => {
+
+  const handleDetailClick = (title: string, transactions: Transaction[]) => {
     if (transactions.length === 0) {
       setActiveDetail(null);
       return;
     }
     if (activeDetail?.title === title) {
-      setActiveDetail(null); 
+      setActiveDetail(null);
     } else {
       setActiveDetail({ title, transactions });
     }
@@ -241,36 +276,56 @@ export default function ReportsPage({
         t.fecha_operativa === operationalDateStr &&
         t.turno_calculado === selectedShift
     );
-    
-    const uniqueRoomIdsInShift = Array.from(new Set(shiftTransactions.map((t) => t.room_id).filter((id): id is number => id !== null)));
+
+    const uniqueRoomIdsInShift = Array.from(
+      new Set(
+        shiftTransactions.map((t) => t.room_id).filter((id): id is number => id !== null)
+      )
+    );
 
     const log = uniqueRoomIdsInShift
       .map((roomId) => {
         const room = rooms.find((r) => r.id === roomId);
-        if (!room) return null; 
+        if (!room) return null;
 
         const allTransactionsForRoom = transactions
           .filter((t) => t.room_id === roomId)
-          .sort((a,b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+          .sort(
+            (a, b) =>
+              new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+          );
 
         const initialTransactionForThisStay = allTransactionsForRoom
-          .filter(t => t.type === 'Hospedaje Inicial')
-          .sort((a,b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())[0];
+          .filter((t) => t.type === 'Hospedaje Inicial')
+          .sort(
+            (a, b) =>
+              new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+          )[0];
 
-        if(!initialTransactionForThisStay) return null;
-        
+        if (!initialTransactionForThisStay) return null;
+
         const checkInTime = new Date(initialTransactionForThisStay.timestamp);
-        
-        const allTransactionsThisStay = allTransactionsForRoom.filter(t => new Date(t.timestamp) >= checkInTime);
-        const transactionIdsThisStay = new Set(allTransactionsThisStay.map(t => t.id));
 
-        const wasActiveInShift = shiftTransactions.some(t => transactionIdsThisStay.has(t.id));
+        const allTransactionsThisStay = allTransactionsForRoom.filter(
+          (t) => new Date(t.timestamp) >= checkInTime
+        );
+        const transactionIdsThisStay = new Set(
+          allTransactionsThisStay.map((t) => t.id)
+        );
+
+        const wasActiveInShift = shiftTransactions.some((t) =>
+          transactionIdsThisStay.has(t.id)
+        );
         if (!wasActiveInShift) return null;
-        
+
         const latestRoomState = allTransactionsThisStay
-          .map(t => rooms.find(r => r.id === t.room_id))
-          .filter(r => r && r.check_in_time)
-          .sort((a,b) => new Date(b!.check_in_time!).getTime() - new Date(a!.check_in_time!).getTime())[0];
+          .map((t) => rooms.find((r) => r.id === t.room_id))
+          .filter((r) => r && r.check_in_time)
+          .sort(
+            (a, b) =>
+              new Date(b!.check_in_time!).getTime() -
+              new Date(a!.check_in_time!).getTime()
+          )[0];
 
         const checkinShiftInfo = getCurrentShiftInfo(checkInTime);
         const checkinOpDateStr = format(
@@ -280,8 +335,9 @@ export default function ReportsPage({
         const isFromPreviousShift =
           checkinShiftInfo.shift !== selectedShift ||
           checkinOpDateStr !== operationalDateStr;
-        
-        const initialOccupancyAmount = initialTransactionForThisStay?.amount || 0;
+
+        const initialOccupancyAmount =
+          initialTransactionForThisStay?.amount || 0;
 
         const productTransactions = allTransactionsThisStay.filter(
           (t) => t.type === 'Consumo'
@@ -320,18 +376,26 @@ export default function ReportsPage({
         );
 
         let totalStayAmount = allTransactionsThisStay.reduce(
-            (sum, t) => sum + t.amount,
-            0
-          );
-        
-        const isCurrentlyOccupied = room.status === 'Ocupada' && room.check_in_time === initialTransactionForThisStay.timestamp;
+          (sum, t) => sum + t.amount,
+          0
+        );
+
+        const isCurrentlyOccupied =
+          room.status === 'Ocupada' &&
+          room.check_in_time === initialTransactionForThisStay.timestamp;
 
         return {
           id: room.id,
           name: room.name,
           status: isCurrentlyOccupied ? 'Ocupada' : 'Salida',
           check_in_time: initialTransactionForThisStay.timestamp,
-          check_out_time: isCurrentlyOccupied ? room?.check_out_time : (allTransactionsThisStay.sort((a,b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())[0]?.timestamp || null),
+          check_out_time: isCurrentlyOccupied
+            ? room?.check_out_time
+            : allTransactionsThisStay.sort(
+                (a, b) =>
+                  new Date(b.timestamp).getTime() -
+                  new Date(a.timestamp).getTime()
+              )[0]?.timestamp || null,
           is_manual_time: room?.is_manual_time || false,
           isFromPreviousShift: isCurrentlyOccupied && isFromPreviousShift,
           initialOccupancyAmount,
@@ -379,17 +443,181 @@ export default function ReportsPage({
         )}`,
       }));
   }, [roomLogData, selectedDate, selectedShift]);
+  
+  const handleDownloadPDF = () => {
+    if (!selectedDate) return;
 
-  const DetailCard = ({ title, value, icon: Icon, category }: { title: string, value: string, icon: React.ElementType, category: string }) => {
-    const transactions = summary[`${category}Transactions` as keyof typeof summary] as Transaction[] || [];
-    const isSelected = activeDetail?.title === title;
+    const doc = new jsPDF();
+    const title = "Reporte de Turno - Motel Las Bolas";
+    const dateStr = format(selectedDate, 'dd/MM/yyyy', { locale: es });
+    const subtitle = `Fecha: ${dateStr} - Turno: ${selectedShift}`;
+
+    // Header
+    doc.setFontSize(18);
+    doc.text(title, 14, 22);
+    doc.setFontSize(11);
+    doc.text(subtitle, 14, 29);
+    doc.setFontSize(10);
+    const generatedTime = `Generado: ${format(new Date(), 'dd/MM/yyyy HH:mm:ss')}`;
+    doc.text(generatedTime, 14, 34);
+
+    let finalY = 40;
+
+    // Resumen Financiero
+    doc.setFontSize(14);
+    doc.text("Resumen Financiero", 14, finalY);
+    finalY += 5;
+    autoTable(doc, {
+        startY: finalY,
+        head: [['Concepto', 'Monto']],
+        body: [
+            ['Total Ingresos', `$${summary.totalIncome.toFixed(2)}`],
+            ['Gastos Totales', `-$${summary.totalExpenses.toFixed(2)}`],
+        ],
+        theme: 'grid',
+        headStyles: { fillColor: [22, 163, 74] },
+    });
+     finalY = (doc as any).lastAutoTable.finalY;
+     autoTable(doc, {
+        startY: finalY,
+        body: [['Utilidad Neta', `$${summary.netProfit.toFixed(2)}`]],
+        theme: 'grid',
+        bodyStyles: { fontStyle: 'bold', fillColor: [243, 244, 246] },
+    });
+    finalY = (doc as any).lastAutoTable.finalY + 10;
     
+    // Desglose de Ingresos
+    doc.setFontSize(14);
+    doc.text("Desglose de Ingresos", 14, finalY);
+    finalY += 5;
+    const incomeBody = [
+      ['Rentas (Hospedaje)', `$${summary.rentIncome.toFixed(2)}`],
+      ['Productos (Hab.)', `$${summary.roomProductsIncome.toFixed(2)}`],
+      ['Consumo Empleados', `$${summary.employeeConsumptionIncome.toFixed(2)}`],
+      ['Personas Extra', `$${summary.extraPersonIncome.toFixed(2)}`],
+      ['Tiempos Extra', `$${summary.extraTimeIncome.toFixed(2)}`],
+    ];
+    autoTable(doc, {
+        startY: finalY,
+        head: [['Categoría', 'Monto']],
+        body: incomeBody,
+        theme: 'striped',
+        headStyles: { fillColor: [37, 99, 235] }, 
+    });
+    finalY = (doc as any).lastAutoTable.finalY + 10;
+
+    // Desglose de Gastos
+    if(summary.expensesList.length > 0) {
+      doc.setFontSize(14);
+      doc.text("Desglose de Gastos", 14, finalY);
+      finalY += 5;
+      autoTable(doc, {
+          startY: finalY,
+          head: [['Descripción', 'Monto']],
+          body: summary.expensesList.map(e => [e.description, `-$${e.amount.toFixed(2)}`]),
+          theme: 'striped',
+          headStyles: { fillColor: [220, 38, 38] },
+      });
+      finalY = (doc as any).lastAutoTable.finalY + 10;
+    }
+
+    // Bitácora de Habitaciones
+    if (roomLogData.length > 0) {
+        doc.addPage();
+        finalY = 20;
+        doc.setFontSize(14);
+        doc.text("Bitácora de Habitaciones del Turno", 14, finalY);
+        finalY += 7;
+
+        roomLogData.forEach((logItem) => {
+            const pageHeight = doc.internal.pageSize.height;
+            if (finalY > pageHeight - 60) {
+                doc.addPage();
+                finalY = 20;
+            }
+
+            doc.setFontSize(12);
+            doc.setFillColor(243, 244, 246);
+            doc.rect(14, finalY, doc.internal.pageSize.width - 28, 10, 'F');
+            doc.setTextColor(0);
+            doc.setFont('helvetica', 'bold');
+            doc.text(`Habitación: ${logItem.name}`, 20, finalY + 7);
+            doc.setFont('helvetica', 'normal');
+            doc.text(`Total Cobrado: $${logItem.totalStayAmount.toFixed(2)}`, doc.internal.pageSize.width - 20, finalY + 7, { align: 'right' });
+            finalY += 12;
+
+            const roomDetails = [
+                ['Check-in', logItem.check_in_time ? `${formatToMexicanDate(logItem.check_in_time)} ${formatToMexicanTime(logItem.check_in_time)}` : 'N/A'],
+                ['Check-out', logItem.check_out_time ? `${formatToMexicanDate(logItem.check_out_time)} ${formatToMexicanTime(logItem.check_out_time)}` : (logItem.status === 'Ocupada' ? 'En estancia' : 'N/A')],
+                ['Estado', logItem.status + (logItem.isFromPreviousShift ? ' (Turno Anterior)' : '') + (logItem.is_manual_time ? ' - MANUAL' : '')],
+            ];
+
+            autoTable(doc, {
+                startY: finalY,
+                body: roomDetails,
+                theme: 'plain',
+                styles: { fontSize: 9, cellPadding: 1 },
+                columnStyles: { 0: { fontStyle: 'bold' } },
+            });
+            finalY = (doc as any).lastAutoTable.finalY + 2;
+
+            const accountBreakdownBody: (string | number)[][] = [];
+            accountBreakdownBody.push(['Hospedaje Inicial', `$${logItem.initialOccupancyAmount.toFixed(2)}`]);
+            
+            logItem.otherChargeTransactions.forEach(c => {
+                accountBreakdownBody.push([c.description, `$${c.amount.toFixed(2)}`]);
+            });
+            
+            if (logItem.parsedProducts.length > 0) {
+                accountBreakdownBody.push([{ content: '--- Consumo de Productos ---', colSpan: 2, styles: { fontStyle: 'italic', textColor: 80 } }]);
+                logItem.parsedProducts.forEach(p => {
+                    accountBreakdownBody.push([`  ${p.quantity}x ${p.name}`, `$${p.total.toFixed(2)}`]);
+                });
+            }
+            
+            autoTable(doc, {
+                startY: finalY,
+                head: [['Desglose de Cuenta', 'Monto']],
+                body: accountBreakdownBody,
+                theme: 'striped',
+                headStyles: { fillColor: [107, 114, 128] }, // gray-500
+                styles: { fontSize: 9, cellPadding: 2 },
+                didDrawPage: (data) => {
+                    finalY = data.cursor?.y || 0;
+                }
+            });
+            finalY = (doc as any).lastAutoTable.finalY + 8;
+        });
+    }
+
+    doc.save(`Reporte_Turno_${dateStr}_${selectedShift}.pdf`);
+  };
+
+  const DetailCard = ({
+    title,
+    value,
+    icon: Icon,
+    category,
+  }: {
+    title: string;
+    value: string;
+    icon: React.ElementType;
+    category: string;
+  }) => {
+    const transactions =
+      (summary[`${category}Transactions` as keyof typeof summary] as
+        | Transaction[]
+        | undefined) || [];
+    const isSelected = activeDetail?.title === title;
+
     return (
       <div
         onClick={() => handleDetailClick(title, transactions)}
         className={cn(
           'p-4 rounded-xl transition-all',
-          transactions.length > 0 ? 'cursor-pointer hover:shadow-md' : 'cursor-not-allowed opacity-60',
+          transactions.length > 0
+            ? 'cursor-pointer hover:shadow-md'
+            : 'cursor-not-allowed opacity-60',
           isSelected ? 'bg-blue-100 ring-2 ring-blue-500' : 'bg-muted/50'
         )}
       >
@@ -401,7 +629,7 @@ export default function ReportsPage({
       </div>
     );
   };
-  
+
   return (
     <div className="flex-1 space-y-6 p-4 md:p-8 pt-6">
       <Card>
@@ -463,7 +691,10 @@ export default function ReportsPage({
               <RefreshCw className="mr-2 h-4 w-4" />
               Ver Balance General
             </Button>
-            <Button className="bg-red-600 hover:bg-red-700 w-full sm:w-auto">
+            <Button
+              onClick={handleDownloadPDF}
+              className="bg-red-600 hover:bg-red-700 w-full sm:w-auto"
+            >
               <Download className="mr-2 h-4 w-4" />
               Descargar PDF
             </Button>
@@ -593,58 +824,68 @@ export default function ReportsPage({
               </Collapsible>
             )}
           </div>
-          
+
           <Separator />
 
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-             <DetailCard
-                title="RENTAS (HOSPEDAJE)"
-                value={`$${summary.rentIncome.toFixed(2)}`}
-                icon={Bed}
-                category="rentIncome"
-              />
-              <DetailCard
-                title="PRODUCTOS (HAB.)"
-                value={`$${summary.roomProductsIncome.toFixed(2)}`}
-                icon={ShoppingCart}
-                category="roomProductsIncome"
-              />
-              <DetailCard
-                title="CONSUMO EMPLEADOS"
-                value={`$${summary.employeeConsumptionIncome.toFixed(2)}`}
-                icon={Users}
-                category="employeeConsumptionIncome"
-              />
-              <DetailCard
-                title="PERSONAS EXTRA"
-                value={`$${summary.extraPersonIncome.toFixed(2)}`}
-                icon={UserPlus}
-                category="extraPersonIncome"
-              />
-              <DetailCard
-                title="TIEMPOS EXTRA"
-                value={`$${summary.extraTimeIncome.toFixed(2)}`}
-                icon={Clock}
-                category="extraTimeIncome"
-              />
+            <DetailCard
+              title="RENTAS (HOSPEDAJE)"
+              value={`$${summary.rentIncome.toFixed(2)}`}
+              icon={Bed}
+              category="rentIncome"
+            />
+            <DetailCard
+              title="PRODUCTOS (HAB.)"
+              value={`$${summary.roomProductsIncome.toFixed(2)}`}
+              icon={ShoppingCart}
+              category="roomProductsIncome"
+            />
+            <DetailCard
+              title="CONSUMO EMPLEADOS"
+              value={`$${summary.employeeConsumptionIncome.toFixed(2)}`}
+              icon={Users}
+              category="employeeConsumptionIncome"
+            />
+            <DetailCard
+              title="PERSONAS EXTRA"
+              value={`$${summary.extraPersonIncome.toFixed(2)}`}
+              icon={UserPlus}
+              category="extraPersonIncome"
+            />
+            <DetailCard
+              title="TIEMPOS EXTRA"
+              value={`$${summary.extraTimeIncome.toFixed(2)}`}
+              icon={Clock}
+              category="extraTimeIncome"
+            />
           </div>
         </CardContent>
       </Card>
-      
+
       {activeDetail && (
         <Card>
-            <CardHeader>
-                <div className="flex justify-between items-center">
-                    <CardTitle className="flex items-center gap-2 text-lg">Detalle: {activeDetail.title}</CardTitle>
-                    <Button variant="ghost" size="icon" onClick={() => setActiveDetail(null)}>
-                        <X className="h-5 w-5" />
-                        <span className="sr-only">Cerrar detalle</span>
-                    </Button>
-                </div>
-            </CardHeader>
-            <CardContent>
-                <TransactionTable transactions={activeDetail.transactions} rooms={rooms} employees={employees} />
-            </CardContent>
+          <CardHeader>
+            <div className="flex justify-between items-center">
+              <CardTitle className="flex items-center gap-2 text-lg">
+                Detalle: {activeDetail.title}
+              </CardTitle>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setActiveDetail(null)}
+              >
+                <X className="h-5 w-5" />
+                <span className="sr-only">Cerrar detalle</span>
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <TransactionTable
+              transactions={activeDetail.transactions}
+              rooms={rooms}
+              employees={employees}
+            />
+          </CardContent>
         </Card>
       )}
 
@@ -724,7 +965,9 @@ export default function ReportsPage({
                 </CollapsibleTrigger>
                 <CollapsibleContent className="px-4 pb-4">
                   <div className="pt-4 border-t space-y-2">
-                    <h4 className="font-semibold mb-2">Desglose de la Cuenta:</h4>
+                    <h4 className="font-semibold mb-2">
+                      Desglose de la Cuenta:
+                    </h4>
                     <div className="flex justify-between text-sm">
                       <span>Hospedaje Inicial:</span>
                       <span className="font-medium">
@@ -741,10 +984,10 @@ export default function ReportsPage({
                               key={p.id}
                               className="flex justify-between text-muted-foreground"
                             >
-                              <span>
+                              <span className="truncate pr-4">
                                 {p.quantity}x {p.name}
                               </span>
-                              <span className="font-medium">
+                              <span className="font-medium whitespace-nowrap">
                                 ${p.total.toFixed(2)}
                               </span>
                             </div>
@@ -766,8 +1009,8 @@ export default function ReportsPage({
                               key={c.id}
                               className="flex justify-between text-muted-foreground"
                             >
-                              <span>{c.description}</span>
-                              <span className="font-medium">
+                              <span className="truncate pr-4">{c.description}</span>
+                              <span className="font-medium whitespace-nowrap">
                                 ${c.amount.toFixed(2)}
                               </span>
                             </div>
