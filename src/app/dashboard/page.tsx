@@ -28,6 +28,7 @@ import SettingsPage from '@/components/motel/settings-page';
 import { supabase } from '@/lib/supabaseClient';
 import type { RealtimeChannel, User } from '@supabase/supabase-js';
 import Loading from '../loading';
+import PasswordPromptModal from '@/components/motel/password-prompt-modal';
 
 export default function DashboardPage() {
   const [user, setUser] = useState<User | null>(null);
@@ -44,6 +45,13 @@ export default function DashboardPage() {
   const [roomTypes, setRoomTypes] = useState<RoomType[]>([]);
   const [isAddExpenseModalOpen, setIsAddExpenseModalOpen] = useState(false);
   const [activeView, setActiveView] = useState('dashboard');
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+  const [passwordModalConfig, setPasswordModalConfig] = useState({
+    title: '',
+    description: '',
+    requiredPassword: '',
+    onSuccess: () => {},
+  });
   const { toast } = useToast();
 
   const [expiringRoomIds, setExpiringRoomIds] = useState<number[]>([]);
@@ -90,10 +98,25 @@ export default function DashboardPage() {
     },
     [toast]
   );
-
-  const handleSetActiveView = (view: string) => {
-    setActiveView(view);
+  
+  const handleNavigate = (view: string) => {
+    if (view === 'settings') {
+        setIsPasswordModalOpen(true);
+        setPasswordModalConfig({
+            title: 'Acceso a Configuración',
+            description: 'Por favor, ingrese la contraseña de administrador para continuar.',
+            requiredPassword: 'j5s82QSM.configuracion',
+            onSuccess: () => {
+                setIsPasswordModalOpen(false);
+                // Use a timeout to allow the dialog to close before changing the view
+                setTimeout(() => setActiveView('settings'), 150);
+            },
+        });
+    } else {
+        setActiveView(view);
+    }
   };
+
 
   useEffect(() => {
     if (loading) return;
@@ -226,7 +249,7 @@ export default function DashboardPage() {
         room_id: roomToUpdate.id,
         amount: checkInData.selectedRate.price,
         type: 'Hospedaje Inicial',
-        timestamp: new Date().toISOString(),
+        timestamp: checkInData.startTime.toISOString(),
         shift: shiftInfo.shift,
         description: `Renta ${checkInData.selectedRate.name} - Hab ${roomToUpdate.name}`,
         turno_calculado: shiftInfo.shift,
@@ -245,19 +268,19 @@ export default function DashboardPage() {
       }
     }
 
-    if (
-      checkInData.plate &&
-      (checkInData.entryType === 'Auto' || checkInData.entryType === 'Moto')
-    ) {
+    if (checkInData.entryType) {
       const newVehicleHistoryEntry: Omit<VehicleHistory, 'id'> = {
-        plate: checkInData.plate,
+        plate: checkInData.plate || '',
         check_in_time: checkInData.startTime.toISOString(),
         check_out_time: null,
         room_id: roomToUpdate.id,
         room_name: roomToUpdate.name,
         entry_type: checkInData.entryType,
-        vehicle_brand: checkInData.marca,
-        vehicle_details: `${checkInData.modelo} ${checkInData.color}`,
+        vehicle_brand: checkInData.marca || '',
+        vehicle_details:
+          checkInData.entryType !== 'Pie'
+            ? `${checkInData.modelo || ''} ${checkInData.color || ''}`.trim()
+            : 'Entrada a Pie',
       };
       const { error } = await supabase
         .from('vehicle_history')
@@ -265,7 +288,7 @@ export default function DashboardPage() {
       if (error) {
         toast({
           variant: 'destructive',
-          title: 'Error al guardar vehículo',
+          title: 'Error al guardar historial de vehículo',
           description: error.message,
         });
         return;
@@ -722,7 +745,7 @@ export default function DashboardPage() {
     amount: number;
   }) => {
     const shiftInfo = getCurrentShiftInfo();
-    const newExpense: Omit<Expense, 'id'> = {
+    const newExpense = {
       description,
       amount,
       date: new Date().toISOString(),
@@ -1011,7 +1034,7 @@ export default function DashboardPage() {
       <AppLayout
         onAddExpenseClick={() => setIsAddExpenseModalOpen(true)}
         activeView={activeView}
-        setActiveView={handleSetActiveView}
+        setActiveView={handleNavigate}
       >
         {activeView === 'dashboard' && (
           <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
@@ -1077,6 +1100,7 @@ export default function DashboardPage() {
             expenses={expenses}
             products={products}
             employees={employees}
+            vehicleHistory={vehicleHistory}
           />
         )}
         {activeView === 'settings' && (
@@ -1085,8 +1109,8 @@ export default function DashboardPage() {
             rates={rates}
             roomTypes={roomTypes}
             onAddRate={handleAddRate}
-            onUpdateRate={handleUpdateRate}
-            onDeleteRate={handleDeleteRate}
+            onUpdateRate={onUpdateRate}
+            onDeleteRate={onDeleteRate}
             onAddRoomType={handleAddRoomType}
             onUpdateRoomType={handleUpdateRoomType}
             onDeleteRoomType={handleDeleteRoomType}
@@ -1102,6 +1126,23 @@ export default function DashboardPage() {
         onConfirm={handleAddExpense}
       />
       <audio ref={audioRef} src="/alarm.mp3" preload="auto" />
+      <PasswordPromptModal
+        isOpen={isPasswordModalOpen}
+        onOpenChange={setIsPasswordModalOpen}
+        title={passwordModalConfig.title}
+        description={passwordModalConfig.description}
+        onConfirm={(password) => {
+          if (password === passwordModalConfig.requiredPassword) {
+            passwordModalConfig.onSuccess();
+          } else {
+            toast({
+              variant: 'destructive',
+              title: 'Contraseña Incorrecta',
+              description: 'No tiene permiso para realizar esta acción.',
+            });
+          }
+        }}
+      />
     </div>
   );
 }

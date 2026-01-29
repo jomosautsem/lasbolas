@@ -8,6 +8,7 @@ import type {
   Room,
   Product,
   Employee,
+  VehicleHistory,
 } from '@/lib/types';
 import {
   Card,
@@ -80,6 +81,7 @@ interface ReportsPageProps {
   expenses: Expense[];
   products: Product[];
   employees: Employee[];
+  vehicleHistory: VehicleHistory[];
 }
 
 const shifts: { value: Shift; label: string }[] = [
@@ -144,6 +146,7 @@ export default function ReportsPage({
   expenses,
   products,
   employees,
+  vehicleHistory,
 }: ReportsPageProps) {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(
     getMexicoCityTime()
@@ -318,15 +321,6 @@ export default function ReportsPage({
         );
         if (!wasActiveInShift) return null;
 
-        const latestRoomState = allTransactionsThisStay
-          .map((t) => rooms.find((r) => r.id === t.room_id))
-          .filter((r) => r && r.check_in_time)
-          .sort(
-            (a, b) =>
-              new Date(b!.check_in_time!).getTime() -
-              new Date(a!.check_in_time!).getTime()
-          )[0];
-
         const checkinShiftInfo = getCurrentShiftInfo(checkInTime);
         const checkinOpDateStr = format(
           checkinShiftInfo.operationalDate,
@@ -383,19 +377,36 @@ export default function ReportsPage({
         const isCurrentlyOccupied =
           room.status === 'Ocupada' &&
           room.check_in_time === initialTransactionForThisStay.timestamp;
+        
+        let realCheckOutTime: string | null = null;
+        if (isCurrentlyOccupied) {
+          realCheckOutTime = room.check_out_time;
+        } else {
+          // For past stays, find the checkout time from vehicle history
+          const vehicleEntry = vehicleHistory.find(
+            (vh) =>
+              vh.room_id === roomId &&
+              vh.check_in_time === initialTransactionForThisStay.timestamp
+          );
+
+          if (vehicleEntry && vehicleEntry.check_out_time) {
+            realCheckOutTime = vehicleEntry.check_out_time;
+          } else {
+            // Fallback for data before this fix. This might still be incorrect.
+            const lastTransaction = allTransactionsThisStay.sort(
+              (a, b) =>
+                new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+            )[0];
+            realCheckOutTime = lastTransaction ? lastTransaction.timestamp : null;
+          }
+        }
 
         return {
           id: room.id,
           name: room.name,
           status: isCurrentlyOccupied ? 'Ocupada' : 'Salida',
           check_in_time: initialTransactionForThisStay.timestamp,
-          check_out_time: isCurrentlyOccupied
-            ? room?.check_out_time
-            : allTransactionsThisStay.sort(
-                (a, b) =>
-                  new Date(b.timestamp).getTime() -
-                  new Date(a.timestamp).getTime()
-              )[0]?.timestamp || null,
+          check_out_time: realCheckOutTime,
           is_manual_time: room?.is_manual_time || false,
           isFromPreviousShift: isCurrentlyOccupied && isFromPreviousShift,
           initialOccupancyAmount,
@@ -413,7 +424,7 @@ export default function ReportsPage({
         new Date(b.check_in_time!).getTime() -
         new Date(a.check_in_time!).getTime()
     );
-  }, [selectedDate, selectedShift, rooms, transactions, products]);
+  }, [selectedDate, selectedShift, rooms, transactions, products, vehicleHistory]);
 
   const expiredRoomsReport = useMemo(() => {
     if (!selectedDate) return [];
