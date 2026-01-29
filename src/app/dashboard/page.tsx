@@ -28,7 +28,6 @@ import SettingsPage from '@/components/motel/settings-page';
 import { supabase } from '@/lib/supabaseClient';
 import type { RealtimeChannel, User } from '@supabase/supabase-js';
 import Loading from '../loading';
-import PasswordPromptModal from '@/components/motel/password-prompt-modal';
 
 export default function DashboardPage() {
   const [user, setUser] = useState<User | null>(null);
@@ -45,13 +44,6 @@ export default function DashboardPage() {
   const [roomTypes, setRoomTypes] = useState<RoomType[]>([]);
   const [isAddExpenseModalOpen, setIsAddExpenseModalOpen] = useState(false);
   const [activeView, setActiveView] = useState('dashboard');
-  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
-  const [passwordModalConfig, setPasswordModalConfig] = useState({
-    title: '',
-    description: '',
-    requiredPassword: '',
-    onSuccess: () => {},
-  });
   const { toast } = useToast();
 
   const [expiringRoomIds, setExpiringRoomIds] = useState<number[]>([]);
@@ -100,21 +92,7 @@ export default function DashboardPage() {
   );
   
   const handleNavigate = (view: string) => {
-    if (view === 'settings') {
-        setIsPasswordModalOpen(true);
-        setPasswordModalConfig({
-            title: 'Acceso a Configuración',
-            description: 'Por favor, ingrese la contraseña de administrador para continuar.',
-            requiredPassword: 'j5s82QSM.configuracion',
-            onSuccess: () => {
-                setIsPasswordModalOpen(false);
-                // Use a timeout to allow the dialog to close before changing the view
-                setTimeout(() => setActiveView('settings'), 150);
-            },
-        });
-    } else {
-        setActiveView(view);
-    }
+    setActiveView(view);
   };
 
 
@@ -243,13 +221,14 @@ export default function DashboardPage() {
 
   const handleConfirmCheckIn = async (roomToUpdate: Room, checkInData: any) => {
     const shiftInfo = getCurrentShiftInfo();
+    const startTime = checkInData.startTime.toISOString();
 
     if (checkInData.selectedRate?.price > 0) {
       const newTransaction: Omit<Transaction, 'id'> = {
         room_id: roomToUpdate.id,
         amount: checkInData.selectedRate.price,
         type: 'Hospedaje Inicial',
-        timestamp: checkInData.startTime.toISOString(),
+        timestamp: startTime,
         shift: shiftInfo.shift,
         description: `Renta ${checkInData.selectedRate.name} - Hab ${roomToUpdate.name}`,
         turno_calculado: shiftInfo.shift,
@@ -271,7 +250,7 @@ export default function DashboardPage() {
     if (checkInData.entryType) {
       const newVehicleHistoryEntry: Omit<VehicleHistory, 'id'> = {
         plate: checkInData.plate || '',
-        check_in_time: checkInData.startTime.toISOString(),
+        check_in_time: startTime,
         check_out_time: null,
         room_id: roomToUpdate.id,
         room_name: roomToUpdate.name,
@@ -299,7 +278,7 @@ export default function DashboardPage() {
       .from('rooms')
       .update({
         status: 'Ocupada',
-        check_in_time: checkInData.startTime?.toISOString(),
+        check_in_time: startTime,
         check_out_time: checkInData.endTime?.toISOString(),
         customer_name: checkInData.customerName,
         persons: checkInData.persons,
@@ -1109,8 +1088,8 @@ export default function DashboardPage() {
             rates={rates}
             roomTypes={roomTypes}
             onAddRate={handleAddRate}
-            onUpdateRate={onUpdateRate}
-            onDeleteRate={onDeleteRate}
+            onUpdateRate={handleUpdateRate}
+            onDeleteRate={handleDeleteRate}
             onAddRoomType={handleAddRoomType}
             onUpdateRoomType={handleUpdateRoomType}
             onDeleteRoomType={handleDeleteRoomType}
@@ -1126,23 +1105,6 @@ export default function DashboardPage() {
         onConfirm={handleAddExpense}
       />
       <audio ref={audioRef} src="/alarm.mp3" preload="auto" />
-      <PasswordPromptModal
-        isOpen={isPasswordModalOpen}
-        onOpenChange={setIsPasswordModalOpen}
-        title={passwordModalConfig.title}
-        description={passwordModalConfig.description}
-        onConfirm={(password) => {
-          if (password === passwordModalConfig.requiredPassword) {
-            passwordModalConfig.onSuccess();
-          } else {
-            toast({
-              variant: 'destructive',
-              title: 'Contraseña Incorrecta',
-              description: 'No tiene permiso para realizar esta acción.',
-            });
-          }
-        }}
-      />
     </div>
   );
 }
