@@ -727,8 +727,6 @@ export default function DashboardPage() {
       amount,
       date: new Date().toISOString(),
       shift: shiftInfo.shift,
-      turno_calculado: shiftInfo.shift,
-      fecha_operativa: shiftInfo.operationalDate.toISOString().split('T')[0],
     };
     const { error } = await supabase.from('expenses').insert([newExpense]);
     if (error) {

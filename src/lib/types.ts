@@ -63,8 +63,6 @@ export type Expense = {
   amount: number;
   date: string; // ISO string
   shift: Shift;
-  turno_calculado: Shift;
-  fecha_operativa: string;
 };
 
 export type Product = {
