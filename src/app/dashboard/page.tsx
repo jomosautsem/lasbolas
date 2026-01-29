@@ -28,6 +28,7 @@ import SettingsPage from '@/components/motel/settings-page';
 import { supabase } from '@/lib/supabaseClient';
 import type { RealtimeChannel, User } from '@supabase/supabase-js';
 import Loading from '../loading';
+import PasswordPromptModal from '@/components/motel/password-prompt-modal';
 
 export default function DashboardPage() {
   const [user, setUser] = useState<User | null>(null);
@@ -49,6 +50,11 @@ export default function DashboardPage() {
   const [expiringRoomIds, setExpiringRoomIds] = useState<number[]>([]);
   const audioRef = useRef<HTMLAudioElement>(null);
   const [hasInteracted, setHasInteracted] = useState(false);
+  
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+  const [nextView, setNextView] = useState<string | null>(null);
+  const passwordModalTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
 
   useEffect(() => {
     const checkUser = async () => {
@@ -80,6 +86,9 @@ export default function DashboardPage() {
 
     return () => {
       authListener.subscription.unsubscribe();
+      if (passwordModalTimeoutRef.current) {
+        clearTimeout(passwordModalTimeoutRef.current);
+      }
     };
   }, [router]);
 
@@ -89,6 +98,34 @@ export default function DashboardPage() {
     },
     [toast]
   );
+
+  const handleSetActiveView = (view: string) => {
+    if (view === 'settings') {
+      setNextView('settings');
+      setIsPasswordModalOpen(true);
+    } else {
+      setActiveView(view);
+    }
+  };
+  
+  const handlePasswordConfirm = (password: string) => {
+    if (password === 'j5s82QSM.configuracion') {
+      setIsPasswordModalOpen(false);
+      // Use a timeout to allow the modal to close before changing the view
+      passwordModalTimeoutRef.current = setTimeout(() => {
+        if (nextView) {
+          setActiveView(nextView);
+          setNextView(null);
+        }
+      }, 150);
+    } else {
+      toast({
+        variant: 'destructive',
+        title: 'Contraseña Incorrecta',
+        description: 'No tiene permiso para acceder a esta sección.',
+      });
+    }
+  };
 
   useEffect(() => {
     if (loading) return;
@@ -997,22 +1034,6 @@ export default function DashboardPage() {
     }
   };
 
-  const handleUpdateLogo = async (file: File) => {
-    const { error } = await supabase.storage
-      .from('motel-assets')
-      .upload('logo.png', file, {
-        cacheControl: '3600',
-        upsert: true,
-      });
-    
-    if (error) {
-      toast({ variant: 'destructive', title: 'Error al subir logo', description: error.message });
-    } else {
-      toast({ title: 'Logo actualizado', description: 'El logo del sistema ha sido cambiado. La página se recargará.' });
-      setTimeout(() => window.location.reload(), 2000);
-    }
-  };
-
   const occupiedRooms = rooms.filter((r) => r.status === 'Ocupada');
 
   if (loading) {
@@ -1024,7 +1045,7 @@ export default function DashboardPage() {
       <AppLayout
         onAddExpenseClick={() => setIsAddExpenseModalOpen(true)}
         activeView={activeView}
-        setActiveView={setActiveView}
+        setActiveView={handleSetActiveView}
       >
         {activeView === 'dashboard' && (
           <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
@@ -1106,7 +1127,6 @@ export default function DashboardPage() {
             user={user}
             onUpdateEmail={handleUpdateEmail}
             onUpdatePassword={handleUpdatePassword}
-            onUpdateLogo={handleUpdateLogo}
           />
         )}
       </AppLayout>
@@ -1114,6 +1134,13 @@ export default function DashboardPage() {
         isOpen={isAddExpenseModalOpen}
         onOpenChange={setIsAddExpenseModalOpen}
         onConfirm={handleAddExpense}
+      />
+       <PasswordPromptModal
+        isOpen={isPasswordModalOpen}
+        onOpenChange={setIsPasswordModalOpen}
+        onConfirm={handlePasswordConfirm}
+        title="Acceso Restringido"
+        description="Por favor, ingrese la contraseña de administrador para acceder a la configuración."
       />
       <audio ref={audioRef} src="/alarm.mp3" preload="auto" />
     </div>

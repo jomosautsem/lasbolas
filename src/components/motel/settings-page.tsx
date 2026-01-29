@@ -11,6 +11,8 @@ import DeleteRateDialog from './delete-rate-dialog';
 import RoomTypeFormModal from './room-type-form-modal';
 import DeleteRoomTypeDialog from './delete-room-type-dialog';
 import UserSettings from './user-settings';
+import PasswordPromptModal from './password-prompt-modal';
+import { useToast } from '@/hooks/use-toast';
 
 interface SettingsPageProps {
   rooms: Room[];
@@ -25,7 +27,6 @@ interface SettingsPageProps {
   user: User | null;
   onUpdateEmail: (newEmail: string) => Promise<void>;
   onUpdatePassword: (newPassword: string) => Promise<void>;
-  onUpdateLogo: (file: File) => Promise<void>;
 }
 
 export default function SettingsPage({
@@ -41,7 +42,6 @@ export default function SettingsPage({
   user,
   onUpdateEmail,
   onUpdatePassword,
-  onUpdateLogo,
 }: SettingsPageProps) {
   const [isRateFormOpen, setIsRateFormOpen] = useState(false);
   const [isDeleteRateOpen, setIsDeleteRateOpen] = useState(false);
@@ -51,17 +51,43 @@ export default function SettingsPage({
   const [isDeleteRoomTypeOpen, setIsDeleteRoomTypeOpen] = useState(false);
   const [selectedRoomType, setSelectedRoomType] = useState<RoomType | null>(null);
 
-  // Rate Handlers
+  const { toast } = useToast();
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+  const [nextAction, setNextAction] = useState<(() => void) | null>(null);
+
+  // Rate Handlers with Password Protection
   const handleOpenRateForm = (rate: Rate | null = null) => {
-    setSelectedRate(rate);
-    setIsRateFormOpen(true);
+    setNextAction(() => () => {
+      setSelectedRate(rate);
+      setIsRateFormOpen(true);
+    });
+    setIsPasswordModalOpen(true);
   };
 
   const handleOpenDeleteRateDialog = (rate: Rate) => {
-    setSelectedRate(rate);
-    setIsDeleteRateOpen(true);
+    setNextAction(() => () => {
+      setSelectedRate(rate);
+      setIsDeleteRateOpen(true);
+    });
+    setIsPasswordModalOpen(true);
   };
-  
+
+  const handlePasswordConfirm = (password: string) => {
+    if (password === 'j5s82QSM.tarifas') {
+      setIsPasswordModalOpen(false);
+      if (nextAction) {
+        nextAction();
+      }
+    } else {
+      toast({
+        variant: 'destructive',
+        title: 'Contraseña Incorrecta',
+        description: 'No tiene permiso para realizar esta acción.',
+      });
+    }
+    setNextAction(null);
+  };
+
   const handleConfirmDeleteRate = () => {
     if (selectedRate) {
       onDeleteRate(selectedRate.id);
@@ -69,7 +95,7 @@ export default function SettingsPage({
       setSelectedRate(null);
     }
   };
-  
+
   const handleRateFormSubmit = (rateData: Omit<Rate, 'id'> | Rate) => {
     if ('id' in rateData) {
       onUpdateRate(rateData);
@@ -78,8 +104,8 @@ export default function SettingsPage({
     }
     setIsRateFormOpen(false);
   };
-  
-  // Room Type Handlers
+
+  // Room Type Handlers (no password)
   const handleOpenRoomTypeForm = (roomType: RoomType | null = null) => {
     setSelectedRoomType(roomType);
     setIsRoomTypeFormOpen(true);
@@ -89,7 +115,7 @@ export default function SettingsPage({
     setSelectedRoomType(roomType);
     setIsDeleteRoomTypeOpen(true);
   };
-  
+
   const handleConfirmDeleteRoomType = () => {
     if (selectedRoomType) {
       onDeleteRoomType(selectedRoomType.id);
@@ -107,15 +133,14 @@ export default function SettingsPage({
     setIsRoomTypeFormOpen(false);
   };
 
-
   return (
     <>
       <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-         <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2"><Settings/> Configuración</CardTitle>
-              <CardDescription>Administre las tarifas, habitaciones y otros parámetros del sistema.</CardDescription>
-            </CardHeader>
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2"><Settings /> Configuración</CardTitle>
+            <CardDescription>Administre las tarifas, habitaciones y otros parámetros del sistema.</CardDescription>
+          </CardHeader>
         </Card>
         <Tabs defaultValue="rates" className="space-y-4">
           <TabsList>
@@ -123,7 +148,7 @@ export default function SettingsPage({
             <TabsTrigger value="rooms">Administración de Habitaciones</TabsTrigger>
             <TabsTrigger value="account">Mi Cuenta</TabsTrigger>
           </TabsList>
-          
+
           <TabsContent value="rates">
             <Card>
               <CardHeader>
@@ -176,69 +201,69 @@ export default function SettingsPage({
 
           <TabsContent value="rooms">
             <div className="grid gap-6 md:grid-cols-2">
-                <Card>
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <CardTitle>Tipos de Habitación</CardTitle>
-                        <CardDescription>Gestione las categorías de sus habitaciones.</CardDescription>
-                      </div>
-                      <Button onClick={() => handleOpenRoomTypeForm()}>
-                        <PlusCircle className="mr-2 h-4 w-4" />
-                        Agregar Tipo
-                      </Button>
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle>Tipos de Habitación</CardTitle>
+                      <CardDescription>Gestione las categorías de sus habitaciones.</CardDescription>
                     </div>
-                  </CardHeader>
-                  <CardContent>
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Nombre del Tipo</TableHead>
-                          <TableHead className="text-right">Acciones</TableHead>
+                    <Button onClick={() => handleOpenRoomTypeForm()}>
+                      <PlusCircle className="mr-2 h-4 w-4" />
+                      Agregar Tipo
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Nombre del Tipo</TableHead>
+                        <TableHead className="text-right">Acciones</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {roomTypes.map(rt => (
+                        <TableRow key={rt.id}>
+                          <TableCell className="font-medium">{rt.name}</TableCell>
+                          <TableCell className="text-right">
+                            <Button variant="ghost" size="icon" onClick={() => handleOpenRoomTypeForm(rt)}>
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button variant="ghost" size="icon" onClick={() => handleOpenDeleteRoomTypeDialog(rt)}>
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          </TableCell>
                         </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {roomTypes.map(rt => (
-                          <TableRow key={rt.id}>
-                            <TableCell className="font-medium">{rt.name}</TableCell>
-                            <TableCell className="text-right">
-                              <Button variant="ghost" size="icon" onClick={() => handleOpenRoomTypeForm(rt)}>
-                                <Edit className="h-4 w-4" />
-                              </Button>
-                              <Button variant="ghost" size="icon" onClick={() => handleOpenDeleteRoomTypeDialog(rt)}>
-                                <Trash2 className="h-4 w-4 text-destructive" />
-                              </Button>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </CardContent>
-                </Card>
-                 <Card>
-                  <CardHeader>
-                    <CardTitle>Lista de Habitaciones</CardTitle>
-                    <CardDescription>Ver listado de todas las habitaciones. La edición es limitada.</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <Table>
-                       <TableHeader>
-                        <TableRow>
-                          <TableHead>Nombre</TableHead>
-                          <TableHead>Tipo</TableHead>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Lista de Habitaciones</CardTitle>
+                  <CardDescription>Ver listado de todas las habitaciones. La edición es limitada.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Nombre</TableHead>
+                        <TableHead>Tipo</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {rooms.map(room => (
+                        <TableRow key={room.id}>
+                          <TableCell className="font-medium">{room.name}</TableCell>
+                          <TableCell>{roomTypes.find(rt => rt.id === room.room_type_id)?.name || 'N/A'}</TableCell>
                         </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {rooms.map(room => (
-                          <TableRow key={room.id}>
-                            <TableCell className="font-medium">{room.name}</TableCell>
-                            <TableCell>{roomTypes.find(rt => rt.id === room.room_type_id)?.name || 'N/A'}</TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </CardContent>
-                </Card>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
             </div>
           </TabsContent>
           <TabsContent value="account">
@@ -246,12 +271,18 @@ export default function SettingsPage({
               userEmail={user?.email}
               onUpdateEmail={onUpdateEmail}
               onUpdatePassword={onUpdatePassword}
-              onUpdateLogo={onUpdateLogo}
             />
           </TabsContent>
         </Tabs>
       </div>
-      <RateFormModal 
+      <PasswordPromptModal
+        isOpen={isPasswordModalOpen}
+        onOpenChange={setIsPasswordModalOpen}
+        onConfirm={handlePasswordConfirm}
+        title="Acción Protegida"
+        description="Por favor, ingrese la contraseña para continuar."
+      />
+      <RateFormModal
         isOpen={isRateFormOpen}
         onOpenChange={setIsRateFormOpen}
         onConfirm={handleRateFormSubmit}
@@ -264,13 +295,13 @@ export default function SettingsPage({
         onConfirm={handleConfirmDeleteRate}
         rateName={selectedRate?.name || ''}
       />
-       <RoomTypeFormModal 
+      <RoomTypeFormModal
         isOpen={isRoomTypeFormOpen}
         onOpenChange={setIsRoomTypeFormOpen}
         onConfirm={handleRoomTypeFormSubmit}
         roomTypeToEdit={selectedRoomType}
       />
-       <DeleteRoomTypeDialog
+      <DeleteRoomTypeDialog
         isOpen={isDeleteRoomTypeOpen}
         onOpenChange={setIsDeleteRoomTypeOpen}
         onConfirm={handleConfirmDeleteRoomType}
