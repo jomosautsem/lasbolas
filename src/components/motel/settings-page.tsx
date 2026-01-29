@@ -11,7 +11,6 @@ import DeleteRateDialog from './delete-rate-dialog';
 import RoomTypeFormModal from './room-type-form-modal';
 import DeleteRoomTypeDialog from './delete-room-type-dialog';
 import UserSettings from './user-settings';
-import PasswordPromptModal from './password-prompt-modal';
 import { useToast } from '@/hooks/use-toast';
 
 interface SettingsPageProps {
@@ -51,41 +50,14 @@ export default function SettingsPage({
   const [isDeleteRoomTypeOpen, setIsDeleteRoomTypeOpen] = useState(false);
   const [selectedRoomType, setSelectedRoomType] = useState<RoomType | null>(null);
 
-  const { toast } = useToast();
-  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
-  const [nextAction, setNextAction] = useState<(() => void) | null>(null);
-
-  // Rate Handlers with Password Protection
   const handleOpenRateForm = (rate: Rate | null = null) => {
-    setNextAction(() => () => {
-      setSelectedRate(rate);
-      setIsRateFormOpen(true);
-    });
-    setIsPasswordModalOpen(true);
+    setSelectedRate(rate);
+    setIsRateFormOpen(true);
   };
 
   const handleOpenDeleteRateDialog = (rate: Rate) => {
-    setNextAction(() => () => {
-      setSelectedRate(rate);
-      setIsDeleteRateOpen(true);
-    });
-    setIsPasswordModalOpen(true);
-  };
-
-  const handlePasswordConfirm = (password: string) => {
-    if (password === 'j5s82QSM.tarifas') {
-      setIsPasswordModalOpen(false);
-      if (nextAction) {
-        nextAction();
-      }
-    } else {
-      toast({
-        variant: 'destructive',
-        title: 'Contraseña Incorrecta',
-        description: 'No tiene permiso para realizar esta acción.',
-      });
-    }
-    setNextAction(null);
+    setSelectedRate(rate);
+    setIsDeleteRateOpen(true);
   };
 
   const handleConfirmDeleteRate = () => {
@@ -275,13 +247,6 @@ export default function SettingsPage({
           </TabsContent>
         </Tabs>
       </div>
-      <PasswordPromptModal
-        isOpen={isPasswordModalOpen}
-        onOpenChange={setIsPasswordModalOpen}
-        onConfirm={handlePasswordConfirm}
-        title="Acción Protegida"
-        description="Por favor, ingrese la contraseña para continuar."
-      />
       <RateFormModal
         isOpen={isRateFormOpen}
         onOpenChange={setIsRateFormOpen}

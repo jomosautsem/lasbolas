@@ -28,7 +28,6 @@ import SettingsPage from '@/components/motel/settings-page';
 import { supabase } from '@/lib/supabaseClient';
 import type { RealtimeChannel, User } from '@supabase/supabase-js';
 import Loading from '../loading';
-import PasswordPromptModal from '@/components/motel/password-prompt-modal';
 
 export default function DashboardPage() {
   const [user, setUser] = useState<User | null>(null);
@@ -50,10 +49,6 @@ export default function DashboardPage() {
   const [expiringRoomIds, setExpiringRoomIds] = useState<number[]>([]);
   const audioRef = useRef<HTMLAudioElement>(null);
   const [hasInteracted, setHasInteracted] = useState(false);
-  
-  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
-  const [nextView, setNextView] = useState<string | null>(null);
-  const passwordModalTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
 
   useEffect(() => {
@@ -86,9 +81,6 @@ export default function DashboardPage() {
 
     return () => {
       authListener.subscription.unsubscribe();
-      if (passwordModalTimeoutRef.current) {
-        clearTimeout(passwordModalTimeoutRef.current);
-      }
     };
   }, [router]);
 
@@ -100,31 +92,7 @@ export default function DashboardPage() {
   );
 
   const handleSetActiveView = (view: string) => {
-    if (view === 'settings') {
-      setNextView('settings');
-      setIsPasswordModalOpen(true);
-    } else {
-      setActiveView(view);
-    }
-  };
-  
-  const handlePasswordConfirm = (password: string) => {
-    if (password === 'j5s82QSM.configuracion') {
-      setIsPasswordModalOpen(false);
-      // Use a timeout to allow the modal to close before changing the view
-      passwordModalTimeoutRef.current = setTimeout(() => {
-        if (nextView) {
-          setActiveView(nextView);
-          setNextView(null);
-        }
-      }, 150);
-    } else {
-      toast({
-        variant: 'destructive',
-        title: 'Contraseña Incorrecta',
-        description: 'No tiene permiso para acceder a esta sección.',
-      });
-    }
+    setActiveView(view);
   };
 
   useEffect(() => {
@@ -1134,13 +1102,6 @@ export default function DashboardPage() {
         isOpen={isAddExpenseModalOpen}
         onOpenChange={setIsAddExpenseModalOpen}
         onConfirm={handleAddExpense}
-      />
-       <PasswordPromptModal
-        isOpen={isPasswordModalOpen}
-        onOpenChange={setIsPasswordModalOpen}
-        onConfirm={handlePasswordConfirm}
-        title="Acceso Restringido"
-        description="Por favor, ingrese la contraseña de administrador para acceder a la configuración."
       />
       <audio ref={audioRef} src="/alarm.mp3" preload="auto" />
     </div>
