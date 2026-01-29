@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { PlusCircle, Edit, Trash2, Settings } from 'lucide-react';
+import { PlusCircle, Edit, Trash2, Settings, Bell } from 'lucide-react';
 import RateFormModal from './rate-form-modal';
 import DeleteRateDialog from './delete-rate-dialog';
 import RoomTypeFormModal from './room-type-form-modal';
@@ -26,6 +26,7 @@ interface SettingsPageProps {
   user: User | null;
   onUpdateEmail: (newEmail: string) => Promise<void>;
   onUpdatePassword: (newPassword: string) => Promise<void>;
+  onTestAlarm: () => void;
 }
 
 export default function SettingsPage({
@@ -41,6 +42,7 @@ export default function SettingsPage({
   user,
   onUpdateEmail,
   onUpdatePassword,
+  onTestAlarm,
 }: SettingsPageProps) {
   const [isRateFormOpen, setIsRateFormOpen] = useState(false);
   const [isDeleteRateOpen, setIsDeleteRateOpen] = useState(false);
@@ -119,6 +121,7 @@ export default function SettingsPage({
             <TabsTrigger value="rates">Gestión de Tarifas</TabsTrigger>
             <TabsTrigger value="rooms">Administración de Habitaciones</TabsTrigger>
             <TabsTrigger value="account">Mi Cuenta</TabsTrigger>
+            <TabsTrigger value="notifications">Sonido</TabsTrigger>
           </TabsList>
 
           <TabsContent value="rates">
@@ -244,6 +247,22 @@ export default function SettingsPage({
               onUpdateEmail={onUpdateEmail}
               onUpdatePassword={onUpdatePassword}
             />
+          </TabsContent>
+          <TabsContent value="notifications">
+            <Card>
+              <CardHeader>
+                <CardTitle>Sonido de Alarma</CardTitle>
+                <CardDescription>
+                  Haga clic en el botón para probar el sonido de la alarma que se reproduce cuando una habitación está a punto de vencer.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button onClick={onTestAlarm}>
+                  <Bell className="mr-2 h-4 w-4" />
+                  Probar Alarma
+                </Button>
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
       </div>

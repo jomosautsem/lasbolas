@@ -219,6 +219,14 @@ export default function DashboardPage() {
     }
   };
 
+  const handleTestAlarm = () => {
+    audioRef.current?.play().catch(console.error);
+    toast({
+        title: "Probando Alarma",
+        description: "Este es el sonido de la alerta.",
+    });
+  };
+
   const handleConfirmCheckIn = async (roomToUpdate: Room, checkInData: any) => {
     const shiftInfo = getCurrentShiftInfo();
     const startTime = checkInData.startTime.toISOString();
@@ -247,32 +255,32 @@ export default function DashboardPage() {
       }
     }
 
-    if (checkInData.entryType) {
-      const newVehicleHistoryEntry: Omit<VehicleHistory, 'id'> = {
-        plate: checkInData.plate || '',
-        check_in_time: startTime,
-        check_out_time: null,
-        room_id: roomToUpdate.id,
-        room_name: roomToUpdate.name,
-        entry_type: checkInData.entryType,
-        vehicle_brand: checkInData.marca || '',
-        vehicle_details:
-          checkInData.entryType !== 'Pie'
-            ? `${checkInData.modelo || ''} ${checkInData.color || ''}`.trim()
-            : 'Entrada a Pie',
-      };
-      const { error } = await supabase
-        .from('vehicle_history')
-        .insert([newVehicleHistoryEntry]);
-      if (error) {
-        toast({
-          variant: 'destructive',
-          title: 'Error al guardar historial de vehículo',
-          description: error.message,
-        });
-        return;
-      }
+    const newVehicleHistoryEntry: Omit<VehicleHistory, 'id'> = {
+      plate: checkInData.plate || '',
+      check_in_time: startTime,
+      check_out_time: null,
+      room_id: roomToUpdate.id,
+      room_name: roomToUpdate.name,
+      entry_type: checkInData.entryType,
+      vehicle_brand: checkInData.marca || '',
+      vehicle_details:
+        checkInData.entryType !== 'Pie'
+          ? `${checkInData.modelo || ''} ${checkInData.color || ''}`.trim()
+          : 'Entrada a Pie',
+    };
+    const { error: vehicleError } = await supabase
+      .from('vehicle_history')
+      .insert([newVehicleHistoryEntry]);
+
+    if (vehicleError) {
+      toast({
+        variant: 'destructive',
+        title: 'Error al guardar historial de vehículo',
+        description: vehicleError.message,
+      });
+      return;
     }
+
 
     const { error } = await supabase
       .from('rooms')
@@ -1096,6 +1104,7 @@ export default function DashboardPage() {
             user={user}
             onUpdateEmail={handleUpdateEmail}
             onUpdatePassword={handleUpdatePassword}
+            onTestAlarm={handleTestAlarm}
           />
         )}
       </AppLayout>
