@@ -1,3 +1,7 @@
+import type { User as SupabaseUser } from '@supabase/supabase-js';
+
+export type User = SupabaseUser;
+
 export type RoomStatus = 'Disponible' | 'Ocupada' | 'Limpieza' | 'Mantenimiento' | 'Profunda';
 export type EntryType = 'Auto' | 'Moto' | 'Pie';
 export type Shift = 'Matutino' | 'Vespertino' | 'Nocturno';
@@ -59,9 +63,8 @@ export type Expense = {
   amount: number;
   date: string; // ISO string
   shift: Shift;
-  // New fields for better filtering
-  turno_calculado?: Shift;
-  fecha_operativa?: string;
+  turno_calculado: Shift;
+  fecha_operativa: string;
 };
 
 export type Product = {

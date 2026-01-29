@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import type { Rate, RoomType, Room } from '@/lib/types';
+import type { Rate, RoomType, Room, User } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -10,6 +10,7 @@ import RateFormModal from './rate-form-modal';
 import DeleteRateDialog from './delete-rate-dialog';
 import RoomTypeFormModal from './room-type-form-modal';
 import DeleteRoomTypeDialog from './delete-room-type-dialog';
+import UserSettings from './user-settings';
 
 interface SettingsPageProps {
   rooms: Room[];
@@ -21,6 +22,10 @@ interface SettingsPageProps {
   onAddRoomType: (roomTypeData: Omit<RoomType, 'id'>) => void;
   onUpdateRoomType: (roomType: RoomType) => void;
   onDeleteRoomType: (roomTypeId: number) => void;
+  user: User | null;
+  onUpdateEmail: (newEmail: string) => Promise<void>;
+  onUpdatePassword: (newPassword: string) => Promise<void>;
+  onUpdateLogo: (file: File) => Promise<void>;
 }
 
 export default function SettingsPage({
@@ -33,6 +38,10 @@ export default function SettingsPage({
   onAddRoomType,
   onUpdateRoomType,
   onDeleteRoomType,
+  user,
+  onUpdateEmail,
+  onUpdatePassword,
+  onUpdateLogo,
 }: SettingsPageProps) {
   const [isRateFormOpen, setIsRateFormOpen] = useState(false);
   const [isDeleteRateOpen, setIsDeleteRateOpen] = useState(false);
@@ -112,6 +121,7 @@ export default function SettingsPage({
           <TabsList>
             <TabsTrigger value="rates">Gestión de Tarifas</TabsTrigger>
             <TabsTrigger value="rooms">Administración de Habitaciones</TabsTrigger>
+            <TabsTrigger value="account">Mi Cuenta</TabsTrigger>
           </TabsList>
           
           <TabsContent value="rates">
@@ -230,6 +240,14 @@ export default function SettingsPage({
                   </CardContent>
                 </Card>
             </div>
+          </TabsContent>
+          <TabsContent value="account">
+            <UserSettings
+              userEmail={user?.email}
+              onUpdateEmail={onUpdateEmail}
+              onUpdatePassword={onUpdatePassword}
+              onUpdateLogo={onUpdateLogo}
+            />
           </TabsContent>
         </Tabs>
       </div>

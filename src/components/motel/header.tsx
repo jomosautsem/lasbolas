@@ -37,7 +37,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
 import { getCurrentShiftInfo, formatToMexicanDate, type ShiftInfo } from '@/lib/datetime';
-import { Logo } from '../icons';
+import { AppLogo } from './app-logo';
 import { useEffect, useState } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
@@ -122,7 +122,7 @@ export function AppHeader({ onAddExpenseClick, activeView, setActiveView }: { on
               href="#"
               className="group flex h-10 w-10 shrink-0 items-center justify-center gap-2 rounded-full bg-primary text-lg font-semibold text-primary-foreground md:h-8 md:w-8"
             >
-              <Logo className="h-5 w-5 transition-all group-hover:scale-110" />
+              <AppLogo className="h-5 w-5 transition-all group-hover:scale-110" />
               <span className="sr-only">Motel las Bolas</span>
             </Link>
             <button onClick={() => handleMenuClick('dashboard')} className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground">

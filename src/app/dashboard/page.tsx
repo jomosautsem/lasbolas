@@ -979,6 +979,40 @@ export default function DashboardPage() {
     }
   };
 
+  const handleUpdateEmail = async (newEmail: string) => {
+    const { error } = await supabase.auth.updateUser({ email: newEmail });
+    if (error) {
+      toast({ variant: 'destructive', title: 'Error al actualizar correo', description: error.message });
+    } else {
+      toast({ title: 'Correo actualizado', description: 'Por favor, revise su bandeja de entrada para confirmar el cambio.' });
+    }
+  };
+
+  const handleUpdatePassword = async (newPassword: string) => {
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    if (error) {
+      toast({ variant: 'destructive', title: 'Error al actualizar contraseña', description: error.message });
+    } else {
+      toast({ title: 'Contraseña actualizada', description: 'Su contraseña ha sido cambiada exitosamente.' });
+    }
+  };
+
+  const handleUpdateLogo = async (file: File) => {
+    const { error } = await supabase.storage
+      .from('motel-assets')
+      .upload('logo.png', file, {
+        cacheControl: '3600',
+        upsert: true,
+      });
+    
+    if (error) {
+      toast({ variant: 'destructive', title: 'Error al subir logo', description: error.message });
+    } else {
+      toast({ title: 'Logo actualizado', description: 'El logo del sistema ha sido cambiado. La página se recargará.' });
+      setTimeout(() => window.location.reload(), 2000);
+    }
+  };
+
   const occupiedRooms = rooms.filter((r) => r.status === 'Ocupada');
 
   if (loading) {
@@ -1069,6 +1103,10 @@ export default function DashboardPage() {
             onAddRoomType={handleAddRoomType}
             onUpdateRoomType={handleUpdateRoomType}
             onDeleteRoomType={handleDeleteRoomType}
+            user={user}
+            onUpdateEmail={handleUpdateEmail}
+            onUpdatePassword={handleUpdatePassword}
+            onUpdateLogo={handleUpdateLogo}
           />
         )}
       </AppLayout>

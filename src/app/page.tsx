@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { Logo } from '@/components/icons';
+import { AppLogo } from '@/components/motel/app-logo';
 import { Eye, EyeOff } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
 
@@ -51,7 +51,7 @@ export default function LoginPage() {
         <Card className="w-full max-w-sm">
           <CardHeader className="text-center">
             <div className="flex justify-center mb-4">
-              <Logo className="h-16 w-16 text-primary" />
+              <AppLogo className="h-16 w-16 text-primary" />
             </div>
             <CardTitle className="text-2xl font-headline">Iniciar Sesión</CardTitle>
             <CardDescription>Ingrese sus credenciales para acceder al sistema.</CardDescription>
