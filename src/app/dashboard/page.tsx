@@ -99,8 +99,6 @@ export default function DashboardPage() {
   useEffect(() => {
     if (loading) return;
 
-    const twoDaysAgo = subDays(new Date(), 2).toISOString();
-
     const tablesToFetch: {
       name: string;
       setter: React.Dispatch<React.SetStateAction<any[]>>;
@@ -119,7 +117,9 @@ export default function DashboardPage() {
     const channels: RealtimeChannel[] = [];
 
     tablesToFetch.forEach(({ name, setter, isLarge }) => {
+      // 1. Initial Fetch
       const fetchAndSet = async () => {
+        const twoDaysAgoISO = subDays(new Date(), 2).toISOString();
         let query = supabase.from(name).select('*');
 
         if (isLarge) {
@@ -129,7 +129,7 @@ export default function DashboardPage() {
               : name === 'transactions'
               ? 'timestamp'
               : 'check_in_time';
-          query = query.gte(dateColumn, twoDaysAgo);
+          query = query.gte(dateColumn, twoDaysAgoISO);
         }
 
         const { data, error } = await query.order('id');
@@ -147,14 +147,56 @@ export default function DashboardPage() {
 
       fetchAndSet();
 
+      // 2. Realtime Subscription
+      const handlePayload = (payload: any) => {
+        const upsertItem = (newItem: any) => {
+             setter((current: any[]) => {
+                const exists = current.some(item => item.id === newItem.id);
+                if (exists) {
+                    return current.map(item => item.id === newItem.id ? newItem : item);
+                }
+                return [...current, newItem].sort((a, b) => a.id - b.id);
+            });
+        };
+
+        const deleteItem = (oldItem: any) => {
+            // Supabase does not return the full old item on DELETE, just the primary keys
+            if (!oldItem.id) return;
+            setter((current: any[]) => current.filter(item => item.id !== oldItem.id));
+        };
+
+        if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
+          if (isLarge) {
+            const twoDaysAgo = subDays(new Date(), 2);
+            const dateColumn =
+              name === 'expenses'
+                ? 'date'
+                : name === 'transactions'
+                ? 'timestamp'
+                : 'check_in_time';
+            const itemDate = new Date(payload.new[dateColumn]);
+
+            if (itemDate >= twoDaysAgo) {
+              upsertItem(payload.new);
+            } else {
+              if (payload.eventType === 'UPDATE') {
+                  deleteItem(payload.old);
+              }
+            }
+          } else {
+            upsertItem(payload.new);
+          }
+        } else if (payload.eventType === 'DELETE') {
+          deleteItem(payload.old);
+        }
+      };
+
       const channel = supabase
         .channel(`public:${name}`)
         .on(
           'postgres_changes',
           { event: '*', schema: 'public', table: name },
-          (payload) => {
-            fetchAndSet(); // Refetch filtered data on change
-          }
+          handlePayload
         )
         .subscribe();
 
