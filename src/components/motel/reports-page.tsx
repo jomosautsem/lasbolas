@@ -381,8 +381,9 @@ export default function ReportsPage({
         const isCurrentlyOccupied =
           room.status === 'Ocupada' &&
           room.check_in_time &&
-          new Date(room.check_in_time).getTime() === checkInTimeForStayMs;
-        
+          Math.floor(new Date(room.check_in_time).getTime() / 1000) ===
+            Math.floor(checkInTimeForStayMs / 1000);
+
         let realCheckOutTime: string | null = null;
         if (isCurrentlyOccupied) {
           realCheckOutTime = room.check_out_time;
@@ -391,12 +392,22 @@ export default function ReportsPage({
           const vehicleEntry = vehicleHistory.find(
             (vh) =>
               vh.room_id === roomId &&
-              new Date(vh.check_in_time).getTime() === checkInTimeForStayMs
+              Math.floor(new Date(vh.check_in_time).getTime() / 1000) ===
+                Math.floor(checkInTimeForStayMs / 1000)
           );
 
           if (vehicleEntry && vehicleEntry.check_out_time) {
             realCheckOutTime = vehicleEntry.check_out_time;
           }
+        }
+
+        let duration: string | null = null;
+        if (realCheckOutTime) {
+          duration = formatDistance(
+            new Date(realCheckOutTime),
+            new Date(initialTransactionForThisStay.timestamp),
+            { locale: es }
+          );
         }
 
         return {
@@ -413,6 +424,7 @@ export default function ReportsPage({
           parsedProducts,
           otherChargeTransactions,
           totalStayAmount,
+          duration,
         };
       })
       .filter((r): r is NonNullable<typeof r> => r !== null);
@@ -965,6 +977,11 @@ export default function ReportsPage({
                           ? formatToMexicanTime(logItem.check_out_time)
                           : '...'}
                       </span>
+                      {logItem.status === 'Salida' && logItem.duration && (
+                        <Badge variant="outline" className="font-normal text-xs">
+                          {logItem.duration}
+                        </Badge>
+                      )}
                     </div>
                     <div className="flex items-center gap-2 font-bold">
                       <DollarSign className="h-4 w-4 text-muted-foreground" />
