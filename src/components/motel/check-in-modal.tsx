@@ -12,7 +12,7 @@ import { MotorcycleIcon } from '@/components/icons';
 import { Switch } from '@/components/ui/switch';
 import { Card, CardContent } from '@/components/ui/card';
 import { addHours, format } from 'date-fns';
-import { formatToMexicanTime } from '@/lib/datetime';
+import { formatToMexicanTime, getMexicoCityTime } from '@/lib/datetime';
 import { cn } from '@/lib/utils';
 
 interface CheckInModalProps {
@@ -54,7 +54,7 @@ export default function CheckInModal({ isOpen, onOpenChange, room, rates, roomTy
 
   useEffect(() => {
     if (isOpen) {
-      setStartTime(new Date());
+      setStartTime(getMexicoCityTime());
       setCustomerName(room.name);
       setPersons('2');
       setEntryType(null);

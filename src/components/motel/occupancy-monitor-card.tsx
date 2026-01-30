@@ -15,7 +15,7 @@ import {
   AlertTriangle,
 } from 'lucide-react';
 import { MotorcycleIcon } from '@/components/icons';
-import { formatToMexicanTime } from '@/lib/datetime';
+import { formatToMexicanTime, getMexicoCityTime } from '@/lib/datetime';
 import { Progress } from '@/components/ui/progress';
 
 interface OccupancyMonitorCardProps {
@@ -24,10 +24,10 @@ interface OccupancyMonitorCardProps {
 }
 
 export function OccupancyMonitorCard({ room, rate }: OccupancyMonitorCardProps) {
-  const [now, setNow] = useState(new Date());
+  const [now, setNow] = useState(getMexicoCityTime());
 
   useEffect(() => {
-    const timer = setInterval(() => setNow(new Date()), 1000 * 30); // update every 30 seconds
+    const timer = setInterval(() => setNow(getMexicoCityTime()), 1000 * 30); // update every 30 seconds
     return () => clearInterval(timer);
   }, []);
 

@@ -2,7 +2,7 @@
 import type { Room, Transaction, Expense } from '@/lib/types';
 import KPICard from './kpi-card';
 import { DollarSign, Bed, ArrowDownCircle, Wallet, Clock, AlertTriangle } from 'lucide-react';
-import { getCurrentShiftInfo } from '@/lib/datetime';
+import { getCurrentShiftInfo, getMexicoCityTime } from '@/lib/datetime';
 import { useEffect, useState } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -72,10 +72,10 @@ const ExpiredRoomsCard = ({ rooms }: { rooms: ExpiredRoomInfo[] }) => {
 
 export default function DashboardKPIs({ rooms, transactions, expenses }: DashboardKPIsProps) {
   const [kpiData, setKpiData] = useState<KpiData | null>(null);
-  const [now, setNow] = useState(new Date());
+  const [now, setNow] = useState(getMexicoCityTime());
 
   useEffect(() => {
-      const timer = setInterval(() => setNow(new Date()), 30000); // update every 30 seconds
+      const timer = setInterval(() => setNow(getMexicoCityTime()), 30000); // update every 30 seconds
       return () => clearInterval(timer);
   }, []);
 

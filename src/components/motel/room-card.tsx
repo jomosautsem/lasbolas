@@ -38,7 +38,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { Room, Rate, RoomType, Transaction } from '@/lib/types';
-import { formatToMexicanTime, formatToMexicanDate } from '@/lib/datetime';
+import { formatToMexicanTime, formatToMexicanDate, getMexicoCityTime } from '@/lib/datetime';
 import { MotorcycleIcon, AnimatedBucketIcon } from '@/components/icons';
 import ControlsModal from './controls-modal';
 import ReleaseWarningModal from './release-warning-modal';
@@ -171,7 +171,7 @@ export function RoomCard({
   onRemovePerson,
 }: RoomCardProps) {
   const [isClient, setIsClient] = useState(false);
-  const [now, setNow] = useState(new Date());
+  const [now, setNow] = useState(getMexicoCityTime());
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isControlsModalOpen, setIsControlsModalOpen] = useState(false);
   const [isReleaseWarningOpen, setIsReleaseWarningOpen] = useState(false);
@@ -209,7 +209,7 @@ export function RoomCard({
   useEffect(() => {
     setIsClient(true);
     const timerId = setInterval(() => {
-      setNow(new Date());
+      setNow(getMexicoCityTime());
     }, 30000); // update every 30 seconds
     return () => clearInterval(timerId);
   }, []);
