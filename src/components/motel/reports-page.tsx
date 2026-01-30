@@ -374,9 +374,14 @@ export default function ReportsPage({
           0
         );
 
+        const checkInTimeForStayMs = new Date(
+          initialTransactionForThisStay.timestamp
+        ).getTime();
+
         const isCurrentlyOccupied =
           room.status === 'Ocupada' &&
-          room.check_in_time === initialTransactionForThisStay.timestamp;
+          room.check_in_time &&
+          new Date(room.check_in_time).getTime() === checkInTimeForStayMs;
         
         let realCheckOutTime: string | null = null;
         if (isCurrentlyOccupied) {
@@ -386,18 +391,11 @@ export default function ReportsPage({
           const vehicleEntry = vehicleHistory.find(
             (vh) =>
               vh.room_id === roomId &&
-              vh.check_in_time === initialTransactionForThisStay.timestamp
+              new Date(vh.check_in_time).getTime() === checkInTimeForStayMs
           );
 
           if (vehicleEntry && vehicleEntry.check_out_time) {
             realCheckOutTime = vehicleEntry.check_out_time;
-          } else {
-            // Fallback for data before this fix. This might still be incorrect.
-            const lastTransaction = allTransactionsThisStay.sort(
-              (a, b) =>
-                new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-            )[0];
-            realCheckOutTime = lastTransaction ? lastTransaction.timestamp : null;
           }
         }
 
