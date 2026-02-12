@@ -21,25 +21,33 @@ export default function LoginPage() {
     e.preventDefault();
     setIsLoading(true);
 
-    const { error } = await supabase.auth.signInWithPassword({
-      email: email,
-      password: password,
-    });
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email: email,
+        password: password,
+      });
 
-    setIsLoading(false);
-
-    if (error) {
+      if (error) {
+        toast({
+          variant: 'destructive',
+          title: 'Error de Autenticación',
+          description: error.message || 'El correo o la contraseña son incorrectos.',
+        });
+      } else {
+        toast({
+          title: 'Inicio de Sesión Exitoso',
+          description: 'Bienvenido al sistema.',
+        });
+        router.push('/dashboard');
+      }
+    } catch (err) {
       toast({
         variant: 'destructive',
-        title: 'Error de Autenticación',
-        description: error.message || 'El correo o la contraseña son incorrectos.',
+        title: 'Error de Conexión',
+        description: 'No se pudo conectar con el servidor. Verifique su conexión o la configuración del sistema.',
       });
-    } else {
-      toast({
-        title: 'Inicio de Sesión Exitoso',
-        description: 'Bienvenido al sistema.',
-      });
-      router.push('/dashboard');
+    } finally {
+      setIsLoading(false);
     }
   };
 
