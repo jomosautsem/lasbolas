@@ -71,12 +71,12 @@ export default function CheckInModal({ isOpen, onOpenChange, room, rates, roomTy
   }, [isOpen, room.name]);
 
   useEffect(() => {
-    if (startTime && selectedRate && !isManual) {
+    if (startTime && selectedRate) {
       setEndTime(addHours(startTime, selectedRate.hours));
-    } else if (!isManual) {
+    } else {
       setEndTime(null);
     }
-  }, [startTime, selectedRate, isManual]);
+  }, [startTime, selectedRate]);
 
 
   const handlePlateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -97,31 +97,22 @@ export default function CheckInModal({ isOpen, onOpenChange, room, rates, roomTy
   
   const handleManualSwitch = (manual: boolean) => {
     setIsManual(manual);
-    if (manual) {
-        setSelectedRate(null);
-        setEndTime(null);
+    // When entering manual mode, we keep selectedRate so user can choose one
+    if (!manual) {
+      // When exiting manual mode, reset to now
+      setStartTime(getMexicoCityTime());
     }
   }
 
-  const handleTimeChange = (e: React.ChangeEvent<HTMLInputElement>, type: 'start' | 'end') => {
+  const handleStartTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const timeValue = e.target.value; // "HH:mm"
     if (!timeValue) return;
 
     const [hours, minutes] = timeValue.split(':').map(Number);
     
-    if (type === 'start') {
-        const newStartTime = new Date(startTime || Date.now());
-        newStartTime.setHours(hours, minutes, 0, 0);
-        setStartTime(newStartTime);
-    } else { // 'end'
-        const newEndTime = new Date(endTime || startTime || Date.now()); 
-        newEndTime.setHours(hours, minutes, 0, 0);
-        
-        if (startTime && newEndTime < startTime) {
-            newEndTime.setDate(newEndTime.getDate() + 1);
-        }
-        setEndTime(newEndTime);
-    }
+    const newStartTime = new Date(startTime || Date.now());
+    newStartTime.setHours(hours, minutes, 0, 0);
+    setStartTime(newStartTime);
   };
 
   const handleReview = () => {
@@ -133,24 +124,21 @@ export default function CheckInModal({ isOpen, onOpenChange, room, rates, roomTy
         });
         return;
     }
-    if (isManual) {
-        if (!startTime || !endTime) {
-            toast({
-                variant: "destructive",
-                title: "Error de validación",
-                description: "Por favor, ingrese hora de inicio y fin en modo manual.",
-            });
-            return;
-        }
-    } else {
-        if (!selectedRate) {
-            toast({
-                variant: "destructive",
-                title: "Error de validación",
-                description: "Por favor, seleccione una tarifa.",
-            });
-            return;
-        }
+    if (!selectedRate) {
+        toast({
+            variant: "destructive",
+            title: "Error de validación",
+            description: "Por favor, seleccione una tarifa.",
+        });
+        return;
+    }
+    if (isManual && !startTime) {
+        toast({
+            variant: "destructive",
+            title: "Error de validación",
+            description: "Por favor, ingrese la hora de inicio.",
+        });
+        return;
     }
     
     setStep('confirm');
@@ -167,7 +155,8 @@ export default function CheckInModal({ isOpen, onOpenChange, room, rates, roomTy
         color,
         selectedRate,
         startTime,
-        endTime
+        endTime,
+        isManualTime: isManual
     });
     
     onOpenChange(false);
@@ -268,24 +257,19 @@ export default function CheckInModal({ isOpen, onOpenChange, room, rates, roomTy
                     <div className="grid grid-cols-2 gap-2">
                       {isManual ? (
                           <>
-                              <div className="space-y-1">
-                                  <Label htmlFor="start-time" className="text-xs text-muted-foreground">INICIO</Label>
-                                  <Input
-                                      id="start-time"
-                                      type="time"
-                                      value={startTime ? format(startTime, 'HH:mm') : ''}
-                                      onChange={(e) => handleTimeChange(e, 'start')}
-                                  />
-                              </div>
-                              <div className="space-y-1">
-                                  <Label htmlFor="end-time" className="text-xs text-muted-foreground">FIN</Label>
-                                  <Input
-                                      id="end-time"
-                                      type="time"
-                                      value={endTime ? format(endTime, 'HH:mm') : ''}
-                                      onChange={(e) => handleTimeChange(e, 'end')}
-                                  />
-                              </div>
+                            <div className="space-y-1">
+                                <Label htmlFor="start-time" className="text-xs text-muted-foreground">INICIO MANUAL</Label>
+                                <Input
+                                    id="start-time"
+                                    type="time"
+                                    value={startTime ? format(startTime, 'HH:mm') : ''}
+                                    onChange={handleStartTimeChange}
+                                />
+                            </div>
+                            <div className="rounded-lg border bg-background p-2 text-center">
+                                <Label className="text-xs text-muted-foreground">FIN</Label>
+                                <div className="font-semibold text-base">{endTime ? formatToMexicanTime(endTime) : '--:--'}</div>
+                            </div>
                           </>
                       ) : (
                           <>
@@ -312,7 +296,6 @@ export default function CheckInModal({ isOpen, onOpenChange, room, rates, roomTy
                               variant={selectedRate?.id === rate.id ? 'default' : 'outline'}
                               className={cn("h-auto flex-col p-1 text-xs", selectedRate?.id !== rate.id && rateColors[index % rateColors.length])}
                               onClick={() => setSelectedRate(rate)}
-                              disabled={isManual}
                             >
                               <span className="text-sm font-bold">{rate.hours}</span>
                               <span className="text-xs">Hr</span>
@@ -326,7 +309,7 @@ export default function CheckInModal({ isOpen, onOpenChange, room, rates, roomTy
               <div className="p-4 border-t">
                   <h3 className="font-semibold mb-1">Resumen</h3>
                   <div className="text-sm text-muted-foreground space-y-1">
-                      <div className="flex justify-between"><span>Tarifa:</span> <span>{selectedRate ? `${selectedRate.name} - $${selectedRate.price}` : 'Manual'}</span></div>
+                      <div className="flex justify-between"><span>Tarifa:</span> <span>{selectedRate ? `${selectedRate.name} - $${selectedRate.price}` : 'N/A'}</span></div>
                       <div className="flex justify-between font-bold text-foreground"><span>Total:</span> <span>${selectedRate ? selectedRate.price.toFixed(2) : '0.00'}</span></div>
                   </div>
               </div>
@@ -359,7 +342,7 @@ export default function CheckInModal({ isOpen, onOpenChange, room, rates, roomTy
           {step === 'form' ? (
              <>
               <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>Cancelar</Button>
-              <Button type="button" onClick={handleReview} disabled={!entryType || (isManual ? (!startTime || !endTime) : !selectedRate)}>Revisar y Confirmar</Button>
+              <Button type="button" onClick={handleReview} disabled={!entryType || !selectedRate}>Revisar y Confirmar</Button>
             </>
           ) : (
             <>
