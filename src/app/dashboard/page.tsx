@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { AppLayout } from '@/components/motel/app-layout';
 import DashboardKPIs from '@/components/motel/dashboard-kpis';
 import RoomGrid from '@/components/motel/room-grid';
-import { getCurrentShiftInfo } from '@/lib/datetime';
+import { getCurrentShiftInfo, getMexicoCityTime } from '@/lib/datetime';
 import type {
   Room,
   Transaction,
@@ -166,26 +166,7 @@ export default function DashboardPage() {
         };
 
         if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
-          if (isLarge) {
-            const twoDaysAgo = subDays(new Date(), 2);
-            const dateColumn =
-              name === 'expenses'
-                ? 'date'
-                : name === 'transactions'
-                ? 'timestamp'
-                : 'check_in_time';
-            const itemDate = new Date(payload.new[dateColumn]);
-
-            if (itemDate >= twoDaysAgo) {
-              upsertItem(payload.new);
-            } else {
-              if (payload.eventType === 'UPDATE') {
-                  deleteItem(payload.old);
-              }
-            }
-          } else {
             upsertItem(payload.new);
-          }
         } else if (payload.eventType === 'DELETE') {
           deleteItem(payload.old);
         }
@@ -211,7 +192,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     const checkRooms = () => {
-      const now = new Date();
+      const now = getMexicoCityTime();
       const expiringIds = rooms
         .filter((room) => room.status === 'Ocupada' && room.check_out_time)
         .filter((room) => {
@@ -219,7 +200,7 @@ export default function DashboardPage() {
             new Date(room.check_out_time!),
             now
           );
-          return timeLeft <= 10 && timeLeft >= 0;
+          return timeLeft <= 10;
         })
         .map((room) => room.id);
 
