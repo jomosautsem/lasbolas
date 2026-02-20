@@ -151,6 +151,7 @@ export default function ReportsPage({
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(
     getMexicoCityTime()
   );
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [selectedShift, setSelectedShift] = useState<Shift>(
     getCurrentShiftInfo().shift
   );
@@ -374,15 +375,14 @@ export default function ReportsPage({
           0
         );
 
-        const checkInTimeForStayMs = new Date(
-          initialTransactionForThisStay.timestamp
-        ).getTime();
-
+        const checkInTimeForStayMs = Math.floor(
+          new Date(initialTransactionForThisStay.timestamp).getTime() / 1000
+        );
+        
         const isCurrentlyOccupied =
           room.status === 'Ocupada' &&
           room.check_in_time &&
-          Math.floor(new Date(room.check_in_time).getTime() / 1000) ===
-            Math.floor(checkInTimeForStayMs / 1000);
+          Math.floor(new Date(room.check_in_time).getTime() / 1000) === checkInTimeForStayMs;
 
         let realCheckOutTime: string | null = null;
         if (isCurrentlyOccupied) {
@@ -392,8 +392,7 @@ export default function ReportsPage({
           const vehicleEntry = vehicleHistory.find(
             (vh) =>
               vh.room_id === roomId &&
-              Math.floor(new Date(vh.check_in_time).getTime() / 1000) ===
-                Math.floor(checkInTimeForStayMs / 1000)
+              Math.floor(new Date(vh.check_in_time).getTime() / 1000) === checkInTimeForStayMs
           );
 
           if (vehicleEntry && vehicleEntry.check_out_time) {
@@ -661,7 +660,7 @@ export default function ReportsPage({
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-wrap items-center gap-4">
-          <Popover>
+          <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
             <PopoverTrigger asChild>
               <Button
                 variant={'outline'}
@@ -682,7 +681,10 @@ export default function ReportsPage({
               <Calendar
                 mode="single"
                 selected={selectedDate}
-                onSelect={setSelectedDate}
+                onSelect={(date) => {
+                  setSelectedDate(date);
+                  setIsCalendarOpen(false);
+                }}
                 initialFocus
                 disabled={(date) =>
                   date > new Date() || date < new Date('1900-01-01')
