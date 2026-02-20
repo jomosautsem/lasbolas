@@ -601,16 +601,16 @@ export function RoomCard({
               </Button>
             )
           ) : room.status === 'Limpieza' ? (
-            <div className="flex w-full gap-2">
+            <div className="grid grid-cols-2 w-full gap-2">
               <Button
-                className="flex-1 whitespace-normal h-auto"
+                className="whitespace-normal h-auto"
                 variant="outline"
                 onClick={() => onFinishCleaning(room.id)}
               >
                 <Sparkles className="mr-2 h-4 w-4 text-cyan-500" /> Disponible
               </Button>
               <Button
-                className="flex-1 whitespace-normal h-auto"
+                className="whitespace-normal h-auto"
                 variant="outline"
                 onClick={() => onSetDeepCleaning(room.id)}
               >
