@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { DollarSign, PackagePlus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { Product, ProductCategory } from '@/lib/types';
+import { ScrollArea } from '../ui/scroll-area';
 
 interface ProductFormModalProps {
   isOpen: boolean;
@@ -63,7 +64,7 @@ export default function ProductFormModal({ isOpen, onOpenChange, onConfirm, prod
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md rounded-2xl">
+      <DialogContent className="sm:max-w-md rounded-2xl flex flex-col max-h-[90dvh]">
         <DialogHeader>
           <DialogTitle className="font-headline text-2xl flex items-center gap-2">
             <PackagePlus className="h-6 w-6 text-primary" />
@@ -74,45 +75,47 @@ export default function ProductFormModal({ isOpen, onOpenChange, onConfirm, prod
           </DialogDescription>
         </DialogHeader>
 
-        <div className="py-4 space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="name">Nombre del Producto</Label>
-            <Input id="name" value={name} onChange={(e) => setName(e.target.value)} />
-          </div>
+        <ScrollArea className='flex-1 -mx-6'>
+          <div className="px-6 py-4 space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Nombre del Producto</Label>
+              <Input id="name" value={name} onChange={(e) => setName(e.target.value)} />
+            </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="price">Precio</Label>
-            <div className="relative">
-              <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                id="price"
-                type="number"
-                placeholder="0.00"
-                className="pl-9"
-                value={price}
-                onChange={(e) => setPrice(e.target.value === '' ? '' : parseFloat(e.target.value))}
-              />
+            <div className="space-y-2">
+              <Label htmlFor="price">Precio</Label>
+              <div className="relative">
+                <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="price"
+                  type="number"
+                  placeholder="0.00"
+                  className="pl-9"
+                  value={price}
+                  onChange={(e) => setPrice(e.target.value === '' ? '' : parseFloat(e.target.value))}
+                />
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="category">Categoría</Label>
+              <Select value={category} onValueChange={(value: ProductCategory) => setCategory(value)}>
+                <SelectTrigger id="category">
+                  <SelectValue placeholder="Seleccione una categoría" />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories.map((cat) => (
+                    <SelectItem key={cat} value={cat}>
+                      {cat}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="category">Categoría</Label>
-            <Select value={category} onValueChange={(value: ProductCategory) => setCategory(value)}>
-              <SelectTrigger id="category">
-                <SelectValue placeholder="Seleccione una categoría" />
-              </SelectTrigger>
-              <SelectContent>
-                {categories.map((cat) => (
-                  <SelectItem key={cat} value={cat}>
-                    {cat}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
+        </ScrollArea>
 
-        <DialogFooter>
+        <DialogFooter className="border-t pt-4">
           <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>Cancelar</Button>
           <Button type="button" onClick={handleConfirmClick}>Guardar Producto</Button>
         </DialogFooter>

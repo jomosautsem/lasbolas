@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Users } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { Employee, EmployeeRole } from '@/lib/types';
+import { ScrollArea } from '../ui/scroll-area';
 
 interface EmployeeFormModalProps {
   isOpen: boolean;
@@ -59,7 +60,7 @@ export default function EmployeeFormModal({ isOpen, onOpenChange, onConfirm, emp
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md rounded-2xl">
+      <DialogContent className="sm:max-w-md rounded-2xl flex flex-col max-h-[90dvh]">
         <DialogHeader>
           <DialogTitle className="font-headline text-2xl flex items-center gap-2">
             <Users className="h-6 w-6 text-primary" />
@@ -70,30 +71,32 @@ export default function EmployeeFormModal({ isOpen, onOpenChange, onConfirm, emp
           </DialogDescription>
         </DialogHeader>
 
-        <div className="py-4 space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="name">Nombre del Empleado</Label>
-            <Input id="name" value={name} onChange={(e) => setName(e.target.value)} />
+        <ScrollArea className='flex-1 -mx-6'>
+          <div className="px-6 py-4 space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Nombre del Empleado</Label>
+              <Input id="name" value={name} onChange={(e) => setName(e.target.value)} />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="role">Rol</Label>
+              <Select value={role} onValueChange={(value: EmployeeRole) => setRole(value)}>
+                <SelectTrigger id="role">
+                  <SelectValue placeholder="Seleccione un rol" />
+                </SelectTrigger>
+                <SelectContent>
+                  {roles.map((r) => (
+                    <SelectItem key={r} value={r}>
+                      {r}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="role">Rol</Label>
-            <Select value={role} onValueChange={(value: EmployeeRole) => setRole(value)}>
-              <SelectTrigger id="role">
-                <SelectValue placeholder="Seleccione un rol" />
-              </SelectTrigger>
-              <SelectContent>
-                {roles.map((r) => (
-                  <SelectItem key={r} value={r}>
-                    {r}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
+        </ScrollArea>
 
-        <DialogFooter>
+        <DialogFooter className='border-t pt-4'>
           <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>Cancelar</Button>
           <Button type="button" onClick={handleConfirmClick}>Guardar Empleado</Button>
         </DialogFooter>

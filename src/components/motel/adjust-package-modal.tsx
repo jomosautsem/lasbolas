@@ -61,7 +61,7 @@ export default function AdjustPackageModal({ isOpen, onOpenChange, currentRoom, 
 
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-lg rounded-2xl">
+      <DialogContent className="sm:max-w-lg rounded-2xl flex flex-col max-h-[90dvh]">
         <DialogHeader>
           <DialogTitle className="font-headline text-2xl">Ajustar Paquete de Estancia</DialogTitle>
           <DialogDescription>
@@ -69,33 +69,34 @@ export default function AdjustPackageModal({ isOpen, onOpenChange, currentRoom, 
           </DialogDescription>
         </DialogHeader>
         
-        <div className="grid md:grid-cols-2 gap-4 py-2">
-          <div className="rounded-lg border p-3 flex flex-col items-center justify-center bg-muted/50">
-            <h3 className="text-sm font-semibold text-muted-foreground mb-1">PAQUETE ACTUAL</h3>
-            <Package className="h-8 w-8 text-primary mb-1"/>
-            <p className="font-bold">{currentRate.name}</p>
-            <p className="text-xl font-headline font-extrabold">${currentRate.price.toFixed(2)}</p>
-          </div>
+        <ScrollArea className='flex-1 -mx-6'>
+          <div className='px-6 py-4 space-y-4'>
+            <div className="grid md:grid-cols-2 gap-4">
+              <div className="rounded-lg border p-3 flex flex-col items-center justify-center bg-muted/50">
+                <h3 className="text-sm font-semibold text-muted-foreground mb-1">PAQUETE ACTUAL</h3>
+                <Package className="h-8 w-8 text-primary mb-1"/>
+                <p className="font-bold">{currentRate.name}</p>
+                <p className="text-xl font-headline font-extrabold">${currentRate.price.toFixed(2)}</p>
+              </div>
 
-          <div className="rounded-lg border p-3 flex flex-col items-center justify-center">
-            <h3 className="text-sm font-semibold text-muted-foreground mb-1">NUEVO PAQUETE</h3>
-            <Package className="h-8 w-8 text-green-500 mb-1"/>
-            {selectedNewRate ? (
-                <>
-                    <p className="font-bold">{selectedNewRate.name}</p>
-                    <p className="text-xl font-headline font-extrabold">${selectedNewRate.price.toFixed(2)}</p>
-                </>
-            ) : (
-                <p className="text-muted-foreground">Seleccione un paquete</p>
-            )}
-          </div>
-        </div>
+              <div className="rounded-lg border p-3 flex flex-col items-center justify-center">
+                <h3 className="text-sm font-semibold text-muted-foreground mb-1">NUEVO PAQUETE</h3>
+                <Package className="h-8 w-8 text-green-500 mb-1"/>
+                {selectedNewRate ? (
+                    <>
+                        <p className="font-bold">{selectedNewRate.name}</p>
+                        <p className="text-xl font-headline font-extrabold">${selectedNewRate.price.toFixed(2)}</p>
+                    </>
+                ) : (
+                    <p className="text-muted-foreground">Seleccione un paquete</p>
+                )}
+              </div>
+            </div>
 
-        <div>
-            <h4 className="mb-2 text-sm font-medium text-muted-foreground">Paquetes Superiores Disponibles</h4>
-            {availableRates.length > 0 ? (
-                <ScrollArea className="max-h-48">
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 pr-4">
+            <div>
+                <h4 className="mb-2 text-sm font-medium text-muted-foreground">Paquetes Superiores Disponibles</h4>
+                {availableRates.length > 0 ? (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                         {availableRates.map((rate, index) => (
                         <Button
                             key={rate.id}
@@ -108,27 +109,28 @@ export default function AdjustPackageModal({ isOpen, onOpenChange, currentRoom, 
                         </Button>
                         ))}
                     </div>
-                </ScrollArea>
-            ) : (
-                <div className="text-center text-muted-foreground border rounded-lg p-6">
-                    No hay paquetes superiores disponibles.
+                ) : (
+                    <div className="text-center text-muted-foreground border rounded-lg p-6">
+                        No hay paquetes superiores disponibles.
+                    </div>
+                )}
+            </div>
+            
+            {selectedNewRate && (
+                <div className="mt-2 p-3 border-t bg-green-50 border-green-200 rounded-lg">
+                    <h3 className="font-semibold mb-2 text-green-800">Resumen del Cambio</h3>
+                    <div className="text-sm text-green-700 space-y-1">
+                        <div className="flex justify-between"><span>Paquete Nuevo:</span> <span>{selectedNewRate.name}</span></div>
+                        <div className="flex justify-between"><span>Precio Nuevo:</span> <span>${selectedNewRate.price.toFixed(2)}</span></div>
+                        <div className="flex justify-between"><span>Pagado Actual:</span> <span>-${currentRate.price.toFixed(2)}</span></div>
+                        <div className="flex justify-between font-bold text-green-800 text-lg border-t border-green-300 mt-2 pt-2"><span>Diferencia a Pagar:</span> <span>${difference.toFixed(2)}</span></div>
+                    </div>
                 </div>
             )}
-        </div>
-        
-        {selectedNewRate && (
-            <div className="mt-2 p-3 border-t bg-green-50 border-green-200 rounded-lg">
-                <h3 className="font-semibold mb-2 text-green-800">Resumen del Cambio</h3>
-                <div className="text-sm text-green-700 space-y-1">
-                    <div className="flex justify-between"><span>Paquete Nuevo:</span> <span>{selectedNewRate.name}</span></div>
-                    <div className="flex justify-between"><span>Precio Nuevo:</span> <span>${selectedNewRate.price.toFixed(2)}</span></div>
-                    <div className="flex justify-between"><span>Pagado Actual:</span> <span>-${currentRate.price.toFixed(2)}</span></div>
-                    <div className="flex justify-between font-bold text-green-800 text-lg border-t border-green-300 mt-2 pt-2"><span>Diferencia a Pagar:</span> <span>${difference.toFixed(2)}</span></div>
-                </div>
-            </div>
-        )}
+          </div>
+        </ScrollArea>
 
-        <DialogFooter>
+        <DialogFooter className='border-t pt-4'>
           <Button type="button" variant="ghost" onClick={() => handleOpenChange(false)}>Cancelar</Button>
           <Button type="submit" onClick={handleConfirm} disabled={!selectedNewRate || difference <= 0}>
             Confirmar y Cobrar Diferencia

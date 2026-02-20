@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { DollarSign, Receipt, Info } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { ScrollArea } from '../ui/scroll-area';
 
 interface AddExpenseModalProps {
   isOpen: boolean;
@@ -54,7 +55,7 @@ export default function AddExpenseModal({ isOpen, onOpenChange, onConfirm }: Add
 
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-md rounded-2xl">
+      <DialogContent className="sm:max-w-md rounded-2xl flex flex-col max-h-[90dvh]">
         <DialogHeader>
           <DialogTitle className="font-headline text-2xl flex items-center gap-2">
             <Receipt className="h-6 w-6 text-primary" />
@@ -65,49 +66,53 @@ export default function AddExpenseModal({ isOpen, onOpenChange, onConfirm }: Add
           </DialogDescription>
         </DialogHeader>
 
-        {!isConfirming ? (
-          <div className="py-4 space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="description">Descripción del Gasto</Label>
-              <Textarea
-                id="description"
-                placeholder="Ej. Compra de productos de limpieza"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                rows={3}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="amount">Monto del Gasto</Label>
-              <div className="relative">
-                <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="amount"
-                  type="number"
-                  placeholder="0.00"
-                  className="pl-9"
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value === '' ? '' : parseFloat(e.target.value))}
-                />
+        <ScrollArea className="flex-1 -mx-6">
+          <div className="px-6 py-4">
+            {!isConfirming ? (
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="description">Descripción del Gasto</Label>
+                  <Textarea
+                    id="description"
+                    placeholder="Ej. Compra de productos de limpieza"
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    rows={3}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="amount">Monto del Gasto</Label>
+                  <div className="relative">
+                    <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="amount"
+                      type="number"
+                      placeholder="0.00"
+                      className="pl-9"
+                      value={amount}
+                      onChange={(e) => setAmount(e.target.value === '' ? '' : parseFloat(e.target.value))}
+                    />
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
-        ) : (
-          <div className="py-4">
-            <div className="p-4 border bg-blue-50 border-blue-200 rounded-lg">
-                <h3 className="font-semibold mb-2 text-blue-800 flex items-center gap-2"><Info className="h-5 w-5"/>Confirmar Gasto</h3>
-                <div className="text-sm text-blue-700 space-y-2">
-                    <p><span className="font-semibold">Descripción:</span> {description}</p>
-                    <div className="flex justify-between items-center font-bold text-blue-800 text-lg border-t border-blue-300 mt-2 pt-2">
-                        <span>Monto:</span> 
-                        <span>${typeof amount === 'number' ? amount.toFixed(2) : '0.00'}</span>
+            ) : (
+              <div className="py-4">
+                <div className="p-4 border bg-blue-50 border-blue-200 rounded-lg">
+                    <h3 className="font-semibold mb-2 text-blue-800 flex items-center gap-2"><Info className="h-5 w-5"/>Confirmar Gasto</h3>
+                    <div className="text-sm text-blue-700 space-y-2">
+                        <p><span className="font-semibold">Descripción:</span> {description}</p>
+                        <div className="flex justify-between items-center font-bold text-blue-800 text-lg border-t border-blue-300 mt-2 pt-2">
+                            <span>Monto:</span> 
+                            <span>${typeof amount === 'number' ? amount.toFixed(2) : '0.00'}</span>
+                        </div>
                     </div>
                 </div>
-            </div>
+              </div>
+            )}
           </div>
-        )}
+        </ScrollArea>
 
-        <DialogFooter>
+        <DialogFooter className="border-t pt-4">
           {isConfirming ? (
             <>
               <Button type="button" variant="ghost" onClick={() => setIsConfirming(false)}>Atrás</Button>

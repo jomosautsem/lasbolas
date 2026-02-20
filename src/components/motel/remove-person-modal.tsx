@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Button } from '@/components/ui/button';
 import { UserMinus, AlertTriangle } from 'lucide-react';
 import type { Room } from '@/lib/types';
+import { ScrollArea } from '../ui/scroll-area';
 
 interface RemovePersonModalProps {
   isOpen: boolean;
@@ -23,7 +24,7 @@ export default function RemovePersonModal({ isOpen, onOpenChange, currentRoom, o
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md rounded-2xl">
+      <DialogContent className="sm:max-w-md rounded-2xl flex flex-col max-h-[90dvh]">
         <DialogHeader>
           <DialogTitle className="font-headline text-2xl flex items-center gap-2">
             <UserMinus className="h-6 w-6 text-primary" />
@@ -33,27 +34,30 @@ export default function RemovePersonModal({ isOpen, onOpenChange, currentRoom, o
             Habitación: <span className="font-semibold">{currentRoom.name}</span>. Personas actuales: {currentPersons}.
           </DialogDescription>
         </DialogHeader>
-        
-        {canRemove ? (
-            <div className="py-4 space-y-4">
-                <p>
-                    ¿Está seguro que desea reducir una persona del conteo actual? El nuevo total será de{' '}
-                    <span className="font-bold">{currentPersons - 1}</span> personas.
-                </p>
-                <div className="mt-2 p-4 border bg-yellow-50 border-yellow-200 rounded-lg text-yellow-800 flex items-start gap-3">
-                    <AlertTriangle className="h-5 w-5 mt-1 shrink-0"/>
-                    <div className="text-sm">
-                        Esta acción solo modifica el número de personas registradas y no afecta el total de la cuenta.
+        <ScrollArea className='flex-1 -mx-6'>
+          <div className="px-6 py-4">
+            {canRemove ? (
+                <div className="space-y-4">
+                    <p>
+                        ¿Está seguro que desea reducir una persona del conteo actual? El nuevo total será de{' '}
+                        <span className="font-bold">{currentPersons - 1}</span> personas.
+                    </p>
+                    <div className="mt-2 p-4 border bg-yellow-50 border-yellow-200 rounded-lg text-yellow-800 flex items-start gap-3">
+                        <AlertTriangle className="h-5 w-5 mt-1 shrink-0"/>
+                        <div className="text-sm">
+                            Esta acción solo modifica el número de personas registradas y no afecta el total de la cuenta.
+                        </div>
                     </div>
                 </div>
-            </div>
-        ) : (
-             <div className="py-4 space-y-4 text-center">
-                <p>No se pueden reducir más personas.</p>
-             </div>
-        )}
+            ) : (
+                 <div className="space-y-4 text-center">
+                    <p>No se pueden reducir más personas.</p>
+                 </div>
+            )}
+          </div>
+        </ScrollArea>
 
-        <DialogFooter>
+        <DialogFooter className="border-t pt-4">
           <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>Cancelar</Button>
           <Button type="submit" onClick={handleConfirm} disabled={!canRemove}>
             Confirmar y Reducir

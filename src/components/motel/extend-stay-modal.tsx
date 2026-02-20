@@ -6,6 +6,7 @@ import { Clock, DollarSign, ArrowRight, CalendarClock } from 'lucide-react';
 import type { Room, Rate } from '@/lib/types';
 import { formatToMexicanTime } from '@/lib/datetime';
 import { addHours } from 'date-fns';
+import { ScrollArea } from '../ui/scroll-area';
 
 interface ExtendStayModalProps {
   isOpen: boolean;
@@ -39,7 +40,7 @@ export default function ExtendStayModal({ isOpen, onOpenChange, currentRoom, ext
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md rounded-2xl">
+      <DialogContent className="sm:max-w-md rounded-2xl flex flex-col max-h-[90dvh]">
         <DialogHeader>
           <DialogTitle className="font-headline text-2xl flex items-center gap-2">
             <Clock className="h-6 w-6 text-primary" />
@@ -49,39 +50,40 @@ export default function ExtendStayModal({ isOpen, onOpenChange, currentRoom, ext
             Habitación: <span className="font-semibold">{currentRoom.name}</span>
           </DialogDescription>
         </DialogHeader>
-        
-        <div className="py-4 space-y-6">
-            <div className="flex justify-around items-center text-center">
-                <div>
-                    <p className="text-sm text-muted-foreground">Salida Actual</p>
-                    <p className="font-bold text-lg">{formatToMexicanTime(currentCheckOutTime)}</p>
-                </div>
-                <ArrowRight className="h-6 w-6 text-muted-foreground"/>
-                 <div>
-                    <p className="text-sm text-primary font-semibold">Nueva Salida</p>
-                    <p className="font-bold text-lg text-primary">{formatToMexicanTime(newCheckOutTime)}</p>
-                </div>
-            </div>
-          <div className="mt-4 p-4 border bg-blue-50 border-blue-200 rounded-lg">
-                <h3 className="font-semibold mb-2 text-blue-800 flex items-center gap-2"><CalendarClock className="h-5 w-5"/>Resumen de la Extensión</h3>
-                <div className="text-sm text-blue-700 space-y-2">
-                    <div className="flex justify-between">
-                        <span>Extensión de tiempo:</span> 
-                        <span className="font-semibold">{extensionRate.hours} horas</span>
-                    </div>
-                    <div className="flex justify-between">
-                        <span>Costo de extensión:</span> 
-                        <span className="font-semibold">${extensionRate.price.toFixed(2)}</span>
-                    </div>
-                     <div className="flex justify-between items-center font-bold text-blue-800 text-lg border-t border-blue-300 mt-2 pt-2">
-                        <span>Nueva Cuenta Total:</span> 
-                        <span>${newTotalDebt.toFixed(2)}</span>
-                    </div>
-                </div>
-            </div>
-        </div>
+        <ScrollArea className='flex-1 -mx-6'>
+          <div className="px-6 py-4 space-y-6">
+              <div className="flex justify-around items-center text-center">
+                  <div>
+                      <p className="text-sm text-muted-foreground">Salida Actual</p>
+                      <p className="font-bold text-lg">{formatToMexicanTime(currentCheckOutTime)}</p>
+                  </div>
+                  <ArrowRight className="h-6 w-6 text-muted-foreground"/>
+                   <div>
+                      <p className="text-sm text-primary font-semibold">Nueva Salida</p>
+                      <p className="font-bold text-lg text-primary">{formatToMexicanTime(newCheckOutTime)}</p>
+                  </div>
+              </div>
+            <div className="mt-4 p-4 border bg-blue-50 border-blue-200 rounded-lg">
+                  <h3 className="font-semibold mb-2 text-blue-800 flex items-center gap-2"><CalendarClock className="h-5 w-5"/>Resumen de la Extensión</h3>
+                  <div className="text-sm text-blue-700 space-y-2">
+                      <div className="flex justify-between">
+                          <span>Extensión de tiempo:</span> 
+                          <span className="font-semibold">{extensionRate.hours} horas</span>
+                      </div>
+                      <div className="flex justify-between">
+                          <span>Costo de extensión:</span> 
+                          <span className="font-semibold">${extensionRate.price.toFixed(2)}</span>
+                      </div>
+                       <div className="flex justify-between items-center font-bold text-blue-800 text-lg border-t border-blue-300 mt-2 pt-2">
+                          <span>Nueva Cuenta Total:</span> 
+                          <span>${newTotalDebt.toFixed(2)}</span>
+                      </div>
+                  </div>
+              </div>
+          </div>
+        </ScrollArea>
 
-        <DialogFooter>
+        <DialogFooter className='border-t pt-4'>
           <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>Cancelar</Button>
           <Button type="submit" onClick={handleConfirm}>
             Confirmar y Cobrar

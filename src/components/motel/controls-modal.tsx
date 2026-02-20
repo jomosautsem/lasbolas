@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Tv, Wind, Plus, Minus, RotateCcw } from 'lucide-react';
 import type { Room } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
+import { ScrollArea } from '../ui/scroll-area';
 
 interface ControlsModalProps {
   isOpen: boolean;
@@ -67,34 +68,38 @@ export default function ControlsModal({ isOpen, onOpenChange, room, onSave }: Co
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md rounded-2xl">
+      <DialogContent className="sm:max-w-md rounded-2xl flex flex-col max-h-[90dvh]">
         <DialogHeader>
           <DialogTitle className="font-headline text-2xl">
             Gestionar Controles - Hab. {room.name}
           </DialogTitle>
         </DialogHeader>
-        <div className="grid gap-6 py-4">
-          <ControlInput
-            label="Controles de TV"
-            icon={Tv}
-            value={tvControls}
-            onValueChange={setTvControls}
-          />
-          <ControlInput
-            label="Controles de A/A"
-            icon={Wind}
-            value={acControls}
-            onValueChange={setAcControls}
-          />
-           <div className="text-sm text-muted-foreground text-center">
-            Puede seleccionar un máximo de 2 controles de cada tipo.
+        <ScrollArea className="flex-1 -mx-6">
+          <div className="px-6 py-4">
+            <div className="grid gap-6">
+              <ControlInput
+                label="Controles de TV"
+                icon={Tv}
+                value={tvControls}
+                onValueChange={setTvControls}
+              />
+              <ControlInput
+                label="Controles de A/A"
+                icon={Wind}
+                value={acControls}
+                onValueChange={setAcControls}
+              />
+              <div className="text-sm text-muted-foreground text-center">
+                Puede seleccionar un máximo de 2 controles de cada tipo.
+              </div>
+              <Button type="button" variant="outline" onClick={handleResetControls}>
+                <RotateCcw className="mr-2 h-4 w-4" />
+                Poner Controles en Cero
+              </Button>
+            </div>
           </div>
-          <Button type="button" variant="outline" onClick={handleResetControls}>
-            <RotateCcw className="mr-2 h-4 w-4" />
-            Poner Controles en Cero
-          </Button>
-        </div>
-        <DialogFooter>
+        </ScrollArea>
+        <DialogFooter className="border-t pt-4">
           <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>Cancelar</Button>
           <Button type="submit" onClick={handleSave}>Guardar Cambios</Button>
         </DialogFooter>

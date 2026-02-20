@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { KeyRound } from 'lucide-react';
+import { ScrollArea } from '../ui/scroll-area';
 
 interface PasswordPromptModalProps {
   isOpen: boolean;
@@ -31,7 +32,7 @@ export default function PasswordPromptModal({ isOpen, onOpenChange, onConfirm, t
 
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-md rounded-2xl">
+      <DialogContent className="sm:max-w-md rounded-2xl flex flex-col max-h-[90dvh]">
         <DialogHeader>
           <DialogTitle className="font-headline text-2xl flex items-center gap-2">
             <KeyRound className="h-6 w-6 text-primary" />
@@ -42,18 +43,20 @@ export default function PasswordPromptModal({ isOpen, onOpenChange, onConfirm, t
           </DialogDescription>
         </DialogHeader>
 
-        <div className="py-4 space-y-2">
-          <Label htmlFor="password-prompt">Contraseña de Administrador</Label>
-          <Input
-            id="password-prompt"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleConfirmClick()}
-          />
-        </div>
+        <ScrollArea className='flex-1 -mx-6'>
+          <div className="px-6 py-4 space-y-2">
+            <Label htmlFor="password-prompt">Contraseña de Administrador</Label>
+            <Input
+              id="password-prompt"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleConfirmClick()}
+            />
+          </div>
+        </ScrollArea>
 
-        <DialogFooter>
+        <DialogFooter className="border-t pt-4">
           <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>Cancelar</Button>
           <Button type="button" onClick={handleConfirmClick}>Confirmar</Button>
         </DialogFooter>

@@ -6,6 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Wrench } from 'lucide-react';
 import type { Room } from '@/lib/types';
 import { Label } from '../ui/label';
+import { ScrollArea } from '../ui/scroll-area';
 
 interface SetMaintenanceModalProps {
   isOpen: boolean;
@@ -32,7 +33,7 @@ export default function SetMaintenanceModal({ isOpen, onOpenChange, onConfirm, r
 
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-md rounded-2xl">
+      <DialogContent className="sm:max-w-md rounded-2xl flex flex-col max-h-[90dvh]">
         <DialogHeader>
           <DialogTitle className="font-headline text-2xl flex items-center gap-2">
             <Wrench className="h-6 w-6 text-primary" />
@@ -42,19 +43,19 @@ export default function SetMaintenanceModal({ isOpen, onOpenChange, onConfirm, r
             Habitación: <span className="font-semibold">{room.name}</span>.
           </DialogDescription>
         </DialogHeader>
-
-        <div className="py-4 space-y-2">
-          <Label htmlFor="maintenance-note">Nota de Mantenimiento (Opcional)</Label>
-          <Textarea
-            id="maintenance-note"
-            placeholder="Ej. Fuga en el lavabo, TV no enciende..."
-            value={note}
-            onChange={(e) => setNote(e.target.value)}
-            rows={3}
-          />
-        </div>
-
-        <DialogFooter>
+        <ScrollArea className="flex-1 -mx-6">
+          <div className="px-6 py-4 space-y-2">
+            <Label htmlFor="maintenance-note">Nota de Mantenimiento (Opcional)</Label>
+            <Textarea
+              id="maintenance-note"
+              placeholder="Ej. Fuga en el lavabo, TV no enciende..."
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              rows={3}
+            />
+          </div>
+        </ScrollArea>
+        <DialogFooter className='border-t pt-4'>
           <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>Cancelar</Button>
           <Button type="button" onClick={handleConfirmClick}>Confirmar Mantenimiento</Button>
         </DialogFooter>

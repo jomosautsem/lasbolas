@@ -38,38 +38,38 @@ export default function ChangeRoomModal({ isOpen, onOpenChange, currentRoom, all
 
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-lg rounded-2xl">
+      <DialogContent className="sm:max-w-lg rounded-2xl flex flex-col max-h-[90dvh]">
         <DialogHeader>
           <DialogTitle className="font-headline text-2xl">Cambiar de Habitación</DialogTitle>
           <DialogDescription>
             Moviendo desde <span className="font-semibold">{currentRoom.name}</span>. Seleccione una habitación disponible del mismo tipo.
           </DialogDescription>
         </DialogHeader>
-        <div className="py-4">
-            <h4 className="mb-4 text-sm font-medium text-muted-foreground">Habitaciones Disponibles</h4>
-            {availableRooms.length > 0 ? (
-                <ScrollArea className="max-h-64">
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 pr-4">
-                        {availableRooms.map(room => (
-                        <Button
-                            key={room.id}
-                            variant={selectedRoomId === room.id ? 'default' : 'outline'}
-                            className="h-20 flex-col gap-1"
-                            onClick={() => setSelectedRoomId(room.id)}
-                        >
-                            <Bed className="h-5 w-5"/>
-                            <span className="font-bold">{room.name}</span>
-                        </Button>
-                        ))}
-                    </div>
-                </ScrollArea>
-            ) : (
-                <div className="text-center text-muted-foreground border rounded-lg p-8">
-                    No hay habitaciones disponibles del mismo tipo.
-                </div>
-            )}
-        </div>
-        <DialogFooter>
+        <ScrollArea className="flex-1 -mx-6">
+          <div className="px-6 py-4">
+              <h4 className="mb-4 text-sm font-medium text-muted-foreground">Habitaciones Disponibles</h4>
+              {availableRooms.length > 0 ? (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                      {availableRooms.map(room => (
+                      <Button
+                          key={room.id}
+                          variant={selectedRoomId === room.id ? 'default' : 'outline'}
+                          className="h-20 flex-col gap-1"
+                          onClick={() => setSelectedRoomId(room.id)}
+                      >
+                          <Bed className="h-5 w-5"/>
+                          <span className="font-bold">{room.name}</span>
+                      </Button>
+                      ))}
+                  </div>
+              ) : (
+                  <div className="text-center text-muted-foreground border rounded-lg p-8">
+                      No hay habitaciones disponibles del mismo tipo.
+                  </div>
+              )}
+          </div>
+        </ScrollArea>
+        <DialogFooter className='border-t pt-4'>
           <Button type="button" variant="ghost" onClick={() => handleOpenChange(false)}>Cancelar</Button>
           <Button type="submit" onClick={handleConfirm} disabled={!selectedRoomId}>
             Confirmar Cambio
