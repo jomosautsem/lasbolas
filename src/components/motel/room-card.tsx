@@ -39,7 +39,7 @@ import {
 import { cn } from '@/lib/utils';
 import type { Room, Rate, RoomType, Transaction } from '@/lib/types';
 import { formatToMexicanTime, formatToMexicanDate, getMexicoCityTime } from '@/lib/datetime';
-import { MotorcycleIcon, AnimatedBucketIcon } from '@/components/icons';
+import { MotorcycleIcon, AnimatedBucketIcon, AnimatedBroomIcon, AnimatedWrenchIcon } from '@/components/icons';
 import ControlsModal from './controls-modal';
 import ReleaseWarningModal from './release-warning-modal';
 import ChangeRoomModal from './change-room-modal';
@@ -47,7 +47,7 @@ import AdjustPackageModal from './adjust-package-modal';
 import ExtendStayModal from './extend-stay-modal';
 import AddPersonModal from './add-person-modal';
 import RemovePersonModal from './remove-person-modal';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { ScrollArea } from '../ui/scroll-area';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 import SetMaintenanceModal from './set-maintenance-modal';
@@ -329,13 +329,13 @@ export function RoomCard({
             </div>
           ) : room.status === 'Profunda' ? (
             <div className="flex flex-col items-center justify-center h-full w-full">
-              <Trash2 className="h-24 w-24" />
+              <AnimatedBroomIcon className="h-24 w-24" />
             </div>
           ) : room.status === 'Mantenimiento' ? (
             <div className="flex flex-col items-center justify-center h-full w-full p-2 text-center">
-              <Wrench className="h-16 w-16 mb-2" />
+              <AnimatedWrenchIcon className="h-24 w-24" />
               {room.maintenance_note && (
-                <p className="text-xs italic px-2 py-1 bg-black/20 rounded-md">
+                <p className="text-xs italic px-2 py-1 bg-black/20 rounded-md mt-2">
                   {room.maintenance_note}
                 </p>
               )}
@@ -603,14 +603,14 @@ export function RoomCard({
           ) : room.status === 'Limpieza' ? (
             <div className="grid grid-cols-2 w-full gap-2">
               <Button
-                className="whitespace-normal h-auto"
+                className="h-auto whitespace-normal"
                 variant="outline"
                 onClick={() => onFinishCleaning(room.id)}
               >
                 <Sparkles className="mr-2 h-4 w-4 text-cyan-500" /> Disponible
               </Button>
               <Button
-                className="whitespace-normal h-auto"
+                className="h-auto whitespace-normal"
                 variant="outline"
                 onClick={() => onSetDeepCleaning(room.id)}
               >

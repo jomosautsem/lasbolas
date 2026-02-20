@@ -137,3 +137,29 @@ export const AnimatedBucketIcon = (props: SVGProps<SVGSVGElement>) => (
       <circle className="bubble bubble-4" cx="18" cy="50" r="2" />
     </svg>
   );
+
+export const AnimatedWrenchIcon = (props: SVGProps<SVGSVGElement>) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 64 64"
+    {...props}
+  >
+    <style>
+      {`
+        .wrench-icon {
+          animation: wiggle 2.5s infinite ease-in-out;
+          transform-origin: center;
+          fill: currentColor;
+        }
+        @keyframes wiggle {
+          0%, 100% { transform: rotate(-5deg); }
+          50% { transform: rotate(10deg) scale(1.05); }
+        }
+      `}
+    </style>
+    <g className="wrench-icon">
+      <path d="M60,14.2l-3.3-3.3c-2.4-2.4-6.2-2.4-8.5,0L34.3,24.8c-0.6,0.6-0.6,1.6,0,2.2l12.7,12.7c0.6,0.6,1.6,0.6,2.2,0l13.8-13.8 C62.4,20.4,62.4,16.6,60,14.2z M50.4,36.4L39.6,25.6l2.1-2.1c1.2-1.2,3.1-1.2,4.2,0l5.3,5.3c1.2,1.2,1.2,3.1,0,4.2L50.4,36.4z" />
+      <path d="M30.6,28.4L2.8,56.2c-1.6,1.6-1.6,4.1,0,5.7l0,0c1.6,1.6,4.1,1.6,5.7,0l27.8-27.8L23.6,21.4L30.6,28.4z" />
+    </g>
+  </svg>
+);
