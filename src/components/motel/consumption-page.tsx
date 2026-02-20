@@ -14,6 +14,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import ProductFormModal from './product-form-modal';
 import DeleteProductDialog from './delete-product-dialog';
 import { Input } from '@/components/ui/input';
+import { cn } from '@/lib/utils';
 
 
 interface ConsumptionPageProps {
@@ -32,6 +33,25 @@ const categoryIcons: { [key: string]: React.ElementType } = {
   Snack: UtensilsCrossed,
   Cocina: UtensilsCrossed,
   Otro: GlassWater,
+};
+
+const categoryStyles: { [key: string]: { card: string; icon: string; } } = {
+  Bebida: {
+    card: 'border-blue-400 bg-blue-50 hover:shadow-blue-200/50',
+    icon: 'text-blue-500',
+  },
+  Snack: {
+    card: 'border-orange-400 bg-orange-50 hover:shadow-orange-200/50',
+    icon: 'text-orange-500',
+  },
+  Cocina: {
+    card: 'border-yellow-400 bg-yellow-50 hover:shadow-yellow-200/50',
+    icon: 'text-yellow-500',
+  },
+  Otro: {
+    card: 'border-gray-300 bg-gray-50 hover:shadow-gray-200/50',
+    icon: 'text-gray-500',
+  },
 };
 
 export default function ConsumptionPage({ products, occupiedRooms, onConfirm, onAddProduct, onUpdateProduct, onDeleteProduct }: ConsumptionPageProps) {
@@ -162,26 +182,27 @@ export default function ConsumptionPage({ products, occupiedRooms, onConfirm, on
                     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 pr-4">
                     {filteredProducts.map(product => {
                         const Icon = categoryIcons[product.category] || UtensilsCrossed;
+                        const styles = categoryStyles[product.category] || categoryStyles['Otro'];
                         const quantity = getProductQuantity(product.id);
                         return (
-                        <Card key={product.id} className="flex flex-col">
-                            <CardHeader className="p-3">
-                            <Icon className="h-8 w-8 text-muted-foreground mx-auto" />
+                          <Card key={product.id} className={cn("flex flex-col transition-shadow duration-200 shadow-sm hover:shadow-md", styles.card)}>
+                            <CardHeader className="p-4 flex-grow-0">
+                              <Icon className={cn("h-10 w-10 mx-auto", styles.icon)} />
                             </CardHeader>
                             <CardContent className="p-3 flex-grow text-center">
-                            <p className="font-semibold">{product.name}</p>
-                            <p className="text-muted-foreground">${product.price.toFixed(2)}</p>
+                              <p className="font-bold text-base text-gray-800">{product.name}</p>
+                              <p className="font-semibold text-lg text-muted-foreground">${product.price.toFixed(2)}</p>
                             </CardContent>
-                            <CardFooter className="p-2 bg-muted/50 flex justify-center items-center gap-2">
-                            <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => handleQuantityChange(product, -1)} disabled={quantity === 0}>
+                            <CardFooter className="p-2 bg-black/5 flex justify-center items-center gap-2">
+                              <Button size="icon" variant="ghost" className="h-8 w-8 text-gray-700" onClick={() => handleQuantityChange(product, -1)} disabled={quantity === 0}>
                                 <Minus className="h-4 w-4"/>
-                            </Button>
-                            <span className="font-bold text-lg w-6 text-center">{quantity}</span>
-                            <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => handleQuantityChange(product, 1)}>
+                              </Button>
+                              <span className="font-bold text-xl w-8 text-center text-gray-800">{quantity}</span>
+                              <Button size="icon" variant="ghost" className="h-8 w-8 text-gray-700" onClick={() => handleQuantityChange(product, 1)}>
                                 <Plus className="h-4 w-4"/>
-                            </Button>
+                              </Button>
                             </CardFooter>
-                        </Card>
+                          </Card>
                         );
                     })}
                     </div>
