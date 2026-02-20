@@ -241,7 +241,7 @@ export default function EmployeesPage({ employees, products, transactions, onAdd
                     </Select>
                     </div>
                     <Separator />
-                    <ScrollArea className="h-64">
+                    <ScrollArea>
                         <div className="space-y-2 pr-4">
                         {cart.length > 0 ? (
                             cart.map(item => (
@@ -272,7 +272,7 @@ export default function EmployeesPage({ employees, products, transactions, onAdd
                         </div>
                     </ScrollArea>
                 </CardContent>
-                <CardFooter className="flex-col items-stretch space-y-4 border-t pt-4">
+                <CardFooter className="flex-col items-stretch space-y-4 border-t pt-4 mt-auto">
                     <div className="flex justify-between font-bold text-lg">
                         <span>Total:</span>
                         <span>${totalPrice.toFixed(2)}</span>
@@ -287,7 +287,7 @@ export default function EmployeesPage({ employees, products, transactions, onAdd
         <TabsContent value="employees">
             <Card>
             <CardHeader>
-                <div className="flex items-center justify-between">
+                <div className="flex flex-wrap items-center justify-between gap-4">
                 <div>
                     <CardTitle>Gestión de Empleados</CardTitle>
                     <CardDescription>Crea, edita, elimina empleados y revisa su historial de consumo.</CardDescription>
@@ -299,6 +299,7 @@ export default function EmployeesPage({ employees, products, transactions, onAdd
                 </div>
             </CardHeader>
             <CardContent>
+                <div className="overflow-x-auto">
                 <Table>
                 <TableHeader>
                     <TableRow>
@@ -333,7 +334,7 @@ export default function EmployeesPage({ employees, products, transactions, onAdd
                             {openEmployeeId === employee.id && (
                                 <TableRow>
                                     <TableCell colSpan={4} className="p-0">
-                                        <div className="p-4 bg-muted/20">
+                                        <div className="p-4 bg-muted/20 overflow-x-auto">
                                             <div className="flex items-center gap-2 mb-2 font-semibold">
                                                 <History className="h-5 w-5 text-primary" />
                                                 Historial de Consumo del Turno
@@ -376,6 +377,7 @@ export default function EmployeesPage({ employees, products, transactions, onAdd
                     )}
                 </TableBody>
                 </Table>
+                </div>
             </CardContent>
             </Card>
         </TabsContent>

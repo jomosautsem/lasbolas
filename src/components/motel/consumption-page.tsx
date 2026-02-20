@@ -235,7 +235,7 @@ export default function ConsumptionPage({ products, occupiedRooms, onConfirm, on
                     </Select>
                     </div>
                     <Separator />
-                    <ScrollArea className="h-64">
+                    <ScrollArea>
                         <div className="space-y-2 pr-4">
                         {cart.length > 0 ? (
                             cart.map(item => (
@@ -258,7 +258,7 @@ export default function ConsumptionPage({ products, occupiedRooms, onConfirm, on
                         </div>
                     </ScrollArea>
                 </CardContent>
-                <CardFooter className="flex-col items-stretch space-y-4 border-t pt-4">
+                <CardFooter className="flex-col items-stretch space-y-4 border-t pt-4 mt-auto">
                     <div className="flex justify-between font-bold text-lg">
                         <span>Total:</span>
                         <span>${totalPrice.toFixed(2)}</span>
@@ -285,6 +285,7 @@ export default function ConsumptionPage({ products, occupiedRooms, onConfirm, on
                 </div>
             </CardHeader>
             <CardContent>
+              <div className="overflow-x-auto">
                 <Table>
                 <TableHeader>
                     <TableRow>
@@ -320,6 +321,7 @@ export default function ConsumptionPage({ products, occupiedRooms, onConfirm, on
                     )}
                 </TableBody>
                 </Table>
+                </div>
             </CardContent>
             </Card>
         </TabsContent>

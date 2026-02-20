@@ -94,7 +94,7 @@ export default function AdjustPackageModal({ isOpen, onOpenChange, currentRoom, 
         <div>
             <h4 className="mb-2 text-sm font-medium text-muted-foreground">Paquetes Superiores Disponibles</h4>
             {availableRates.length > 0 ? (
-                <ScrollArea className="h-32">
+                <ScrollArea className="max-h-48">
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 pr-4">
                         {availableRates.map((rate, index) => (
                         <Button

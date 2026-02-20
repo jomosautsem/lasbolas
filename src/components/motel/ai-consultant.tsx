@@ -86,7 +86,7 @@ export function AIConsultant() {
         <Bot className="h-8 w-8" />
       </Button>
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent className="sm:max-w-[425px] h-[70vh] flex flex-col p-0 gap-0 rounded-2xl">
+        <DialogContent className="sm:max-w-[425px] max-h-[80dvh] flex flex-col p-0 gap-0 rounded-2xl">
           <DialogHeader className="p-4 border-b">
             <DialogTitle className="flex items-center gap-2 font-headline"><Bot /> Consultor IA</DialogTitle>
           </DialogHeader>

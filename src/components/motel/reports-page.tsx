@@ -733,7 +733,7 @@ export default function ReportsPage({
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="bg-blue-50 border-l-4 border-blue-500 text-blue-900 rounded-xl p-4">
               <div className="flex items-center justify-between">
                 <p className="text-sm font-semibold">TOTAL INGRESOS</p>
@@ -757,32 +757,34 @@ export default function ReportsPage({
                 <p className="text-xs">Clic para ver detalle</p>
               </CollapsibleTrigger>
               <CollapsibleContent className="px-2 pt-2">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Descripción</TableHead>
-                      <TableHead className="text-right">Monto</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {summary.expensesList.length > 0 ? (
-                      summary.expensesList.map((expense) => (
-                        <TableRow key={expense.id}>
-                          <TableCell>{expense.description}</TableCell>
-                          <TableCell className="text-right">
-                            -${expense.amount.toFixed(2)}
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Descripción</TableHead>
+                        <TableHead className="text-right">Monto</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {summary.expensesList.length > 0 ? (
+                        summary.expensesList.map((expense) => (
+                          <TableRow key={expense.id}>
+                            <TableCell>{expense.description}</TableCell>
+                            <TableCell className="text-right">
+                              -${expense.amount.toFixed(2)}
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      ) : (
+                        <TableRow>
+                          <TableCell colSpan={2} className="text-center">
+                            No hay gastos en este turno.
                           </TableCell>
                         </TableRow>
-                      ))
-                    ) : (
-                      <TableRow>
-                        <TableCell colSpan={2} className="text-center">
-                          No hay gastos en este turno.
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
               </CollapsibleContent>
             </Collapsible>
 
@@ -821,28 +823,30 @@ export default function ReportsPage({
                   <p className="text-xs">Clic para ver detalle</p>
                 </CollapsibleTrigger>
                 <CollapsibleContent className="px-2 pt-2">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Habitación</TableHead>
-                        <TableHead className="text-right">
-                          Tiempo Vencida
-                        </TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {expiredRoomsReport.map((room) => (
-                        <TableRow key={room.name}>
-                          <TableCell className="font-medium">
-                            {room.name}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            {room.time}
-                          </TableCell>
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Habitación</TableHead>
+                          <TableHead className="text-right">
+                            Tiempo Vencida
+                          </TableHead>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                      </TableHeader>
+                      <TableBody>
+                        {expiredRoomsReport.map((room) => (
+                          <TableRow key={room.name}>
+                            <TableCell className="font-medium">
+                              {room.name}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              {room.time}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
                 </CollapsibleContent>
               </Collapsible>
             )}

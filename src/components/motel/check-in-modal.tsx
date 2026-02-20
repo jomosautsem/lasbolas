@@ -14,6 +14,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { addHours, format } from 'date-fns';
 import { formatToMexicanTime, getMexicoCityTime } from '@/lib/datetime';
 import { cn } from '@/lib/utils';
+import { ScrollArea } from '../ui/scroll-area';
 
 interface CheckInModalProps {
   isOpen: boolean;
@@ -97,10 +98,9 @@ export default function CheckInModal({ isOpen, onOpenChange, room, rates, roomTy
   
   const handleManualSwitch = (manual: boolean) => {
     setIsManual(manual);
-    // When entering manual mode, we keep selectedRate so user can choose one
     if (!manual) {
-      // When exiting manual mode, reset to now
       setStartTime(getMexicoCityTime());
+      setSelectedRate(null); // Reset rate when switching back to auto time
     }
   }
 
@@ -165,7 +165,7 @@ export default function CheckInModal({ isOpen, onOpenChange, room, rates, roomTy
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-xl rounded-2xl">
+      <DialogContent className="sm:max-w-xl rounded-2xl flex flex-col max-h-[90dvh]">
         <DialogHeader>
           <DialogTitle className="font-headline text-xl flex items-center">
             Ocupar Habitación: {room.name}
@@ -176,143 +176,146 @@ export default function CheckInModal({ isOpen, onOpenChange, room, rates, roomTy
 
         {step === 'form' ? (
             <>
-              <div className="grid md:grid-cols-2 gap-3 py-2">
-                {/* Columna Izquierda */}
-                <div className="grid gap-2 content-start">
-                  <div className="space-y-1">
-                    <Label htmlFor="name">Nombre del Cliente <span className="text-destructive">*</span></Label>
-                    <div className="relative">
-                      <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input 
-                        id="name" 
-                        placeholder="Nombre (opcional)" 
-                        className="pl-9"
-                        value={customerName}
-                        onChange={(e) => setCustomerName(e.target.value)}
-                      />
+              <ScrollArea className='-mx-6 flex-1'>
+                <div className="px-6">
+                <div className="grid md:grid-cols-2 gap-4 py-2">
+                  {/* Columna Izquierda */}
+                  <div className="grid gap-3 content-start">
+                    <div className="space-y-1">
+                      <Label htmlFor="name">Nombre del Cliente <span className="text-destructive">*</span></Label>
+                      <div className="relative">
+                        <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input 
+                          id="name" 
+                          placeholder="Nombre (opcional)" 
+                          className="pl-9"
+                          value={customerName}
+                          onChange={(e) => setCustomerName(e.target.value)}
+                        />
+                      </div>
                     </div>
-                  </div>
 
-                  <div className="space-y-1">
-                    <Label htmlFor="persons">Personas</Label>
-                    <div className="relative">
-                      <Users className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input 
-                        id="persons" 
-                        className="pl-9"
-                        value={persons}
-                        onChange={(e) => setPersons(e.target.value)}
-                      />
+                    <div className="space-y-1">
+                      <Label htmlFor="persons">Personas</Label>
+                      <div className="relative">
+                        <Users className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input 
+                          id="persons" 
+                          className="pl-9"
+                          value={persons}
+                          onChange={(e) => setPersons(e.target.value)}
+                        />
+                      </div>
                     </div>
-                  </div>
 
-                  <div className="space-y-1">
-                    <Label>Tipo de Entrada <span className="text-destructive">*</span></Label>
-                    <div className="flex gap-2">
-                      <Button variant={entryType === 'Auto' ? 'default' : 'outline'} onClick={() => setEntryType('Auto')} className="flex-1 gap-2 text-xs h-9 px-2"><Car/> Auto</Button>
-                      <Button variant={entryType === 'Moto' ? 'default' : 'outline'} onClick={() => setEntryType('Moto')} className="flex-1 gap-2 text-xs h-9 px-2"><MotorcycleIcon/> Moto</Button>
-                      <Button variant={entryType === 'Pie' ? 'default' : 'outline'} onClick={() => setEntryType('Pie')} className="flex-1 gap-2 text-xs h-9 px-2"><PersonStanding/> Pie</Button>
+                    <div className="space-y-1">
+                      <Label>Tipo de Entrada <span className="text-destructive">*</span></Label>
+                      <div className="flex gap-2">
+                        <Button variant={entryType === 'Auto' ? 'default' : 'outline'} onClick={() => setEntryType('Auto')} className="flex-1 gap-2 text-xs h-9 px-2"><Car/> Auto</Button>
+                        <Button variant={entryType === 'Moto' ? 'default' : 'outline'} onClick={() => setEntryType('Moto')} className="flex-1 gap-2 text-xs h-9 px-2"><MotorcycleIcon/> Moto</Button>
+                        <Button variant={entryType === 'Pie' ? 'default' : 'outline'} onClick={() => setEntryType('Pie')} className="flex-1 gap-2 text-xs h-9 px-2"><PersonStanding/> Pie</Button>
+                      </div>
                     </div>
-                  </div>
-                  
-                  { (entryType === 'Auto' || entryType === 'Moto') && (
-                    <div className="grid grid-cols-2 gap-2">
-                      <div className="space-y-1">
-                        <Label htmlFor="plate">Placa</Label>
-                        <div className="relative">
-                            <Input 
-                                id="plate" 
-                                placeholder="ABC-123" 
-                                className={`uppercase ${isBlacklisted ? 'border-destructive ring-2 ring-destructive' : ''}`}
-                                value={plate}
-                                onChange={handlePlateChange} 
-                            />
-                            {isBlacklisted && <AlertTriangle className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-destructive" />}
+                    
+                    { (entryType === 'Auto' || entryType === 'Moto') && (
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="space-y-1">
+                          <Label htmlFor="plate">Placa</Label>
+                          <div className="relative">
+                              <Input 
+                                  id="plate" 
+                                  placeholder="ABC-123" 
+                                  className={`uppercase ${isBlacklisted ? 'border-destructive ring-2 ring-destructive' : ''}`}
+                                  value={plate}
+                                  onChange={handlePlateChange} 
+                              />
+                              {isBlacklisted && <AlertTriangle className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-destructive" />}
+                          </div>
+                        </div>
+                        <div className="space-y-1">
+                          <Label htmlFor="color">Color</Label>
+                          <Input id="color" placeholder="Ej. Rojo" value={color} onChange={(e) => setColor(e.target.value)} />
+                        </div>
+                        <div className="space-y-1">
+                          <Label htmlFor="brand">Marca</Label>
+                          <Input id="brand" placeholder="Ej. Toyota" value={marca} onChange={(e) => setMarca(e.target.value)} />
+                        </div>
+                        <div className="space-y-1">
+                          <Label htmlFor="model">Modelo</Label>
+                          <Input id="model" placeholder="Ej. Yaris" value={modelo} onChange={(e) => setModelo(e.target.value)} />
                         </div>
                       </div>
-                      <div className="space-y-1">
-                        <Label htmlFor="color">Color</Label>
-                        <Input id="color" placeholder="Ej. Rojo" value={color} onChange={(e) => setColor(e.target.value)} />
-                      </div>
-                      <div className="space-y-1">
-                        <Label htmlFor="brand">Marca</Label>
-                        <Input id="brand" placeholder="Ej. Toyota" value={marca} onChange={(e) => setMarca(e.target.value)} />
-                      </div>
-                      <div className="space-y-1">
-                        <Label htmlFor="model">Modelo</Label>
-                        <Input id="model" placeholder="Ej. Yaris" value={modelo} onChange={(e) => setModelo(e.target.value)} />
-                      </div>
-                    </div>
-                  )}
-                </div>
+                    )}
+                  </div>
 
-                {/* Columna Derecha */}
-                <div className="grid gap-2 content-start">
-                    <h3 className="font-semibold flex items-center gap-2 text-base"><Calendar className="h-5 w-5"/> Tiempo de Estancia</h3>
-                    
-                    <div className="flex items-center justify-between rounded-lg border bg-background p-2">
-                        <Label htmlFor="manual-time">Activar Tiempo Manual</Label>
-                        <Switch id="manual-time" checked={isManual} onCheckedChange={handleManualSwitch} />
-                    </div>
-                    <div className="grid grid-cols-2 gap-2">
-                      {isManual ? (
-                          <>
-                            <div className="space-y-1">
-                                <Label htmlFor="start-time" className="text-xs text-muted-foreground">INICIO MANUAL</Label>
-                                <Input
-                                    id="start-time"
-                                    type="time"
-                                    value={startTime ? format(startTime, 'HH:mm') : ''}
-                                    onChange={handleStartTimeChange}
-                                />
-                            </div>
-                            <div className="rounded-lg border bg-background p-2 text-center">
-                                <Label className="text-xs text-muted-foreground">FIN</Label>
-                                <div className="font-semibold text-base">{endTime ? formatToMexicanTime(endTime) : '--:--'}</div>
-                            </div>
-                          </>
-                      ) : (
-                          <>
-                              <div className="rounded-lg border bg-background p-2 text-center">
-                                  <Label className="text-xs text-muted-foreground">INICIO</Label>
-                                  <div className="font-semibold text-base">{startTime ? formatToMexicanTime(startTime) : '--:--'}</div>
+                  {/* Columna Derecha */}
+                  <div className="grid gap-3 content-start">
+                      <h3 className="font-semibold flex items-center gap-2 text-base"><Calendar className="h-5 w-5"/> Tiempo de Estancia</h3>
+                      
+                      <div className="flex items-center justify-between rounded-lg border bg-background p-2">
+                          <Label htmlFor="manual-time">Activar Tiempo Manual</Label>
+                          <Switch id="manual-time" checked={isManual} onCheckedChange={handleManualSwitch} />
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        {isManual ? (
+                            <>
+                              <div className="space-y-1">
+                                  <Label htmlFor="start-time" className="text-xs text-muted-foreground">INICIO MANUAL</Label>
+                                  <Input
+                                      id="start-time"
+                                      type="time"
+                                      value={startTime ? format(startTime, 'HH:mm') : ''}
+                                      onChange={handleStartTimeChange}
+                                  />
                               </div>
                               <div className="rounded-lg border bg-background p-2 text-center">
                                   <Label className="text-xs text-muted-foreground">FIN</Label>
                                   <div className="font-semibold text-base">{endTime ? formatToMexicanTime(endTime) : '--:--'}</div>
                               </div>
-                          </>
-                      )}
-                    </div>
-                    <div>
-                      <Label className="mb-2 block text-sm">Seleccionar Tarifa <span className="text-destructive">*</span></Label>
-                      <div className="grid grid-cols-3 gap-1">
-                        {rates
-                          .filter(r => !r.is_extra_hour)
-                          .sort((a, b) => a.hours - b.hours)
-                          .map((rate, index) => (
-                            <Button 
-                              key={rate.id}
-                              variant={selectedRate?.id === rate.id ? 'default' : 'outline'}
-                              className={cn("h-auto flex-col p-1 text-xs", selectedRate?.id !== rate.id && rateColors[index % rateColors.length])}
-                              onClick={() => setSelectedRate(rate)}
-                            >
-                              <span className="text-sm font-bold">{rate.hours}</span>
-                              <span className="text-xs">Hr</span>
-                            </Button>
-                        ))}
+                            </>
+                        ) : (
+                            <>
+                                <div className="rounded-lg border bg-background p-2 text-center">
+                                    <Label className="text-xs text-muted-foreground">INICIO</Label>
+                                    <div className="font-semibold text-base">{startTime ? formatToMexicanTime(startTime) : '--:--'}</div>
+                                </div>
+                                <div className="rounded-lg border bg-background p-2 text-center">
+                                    <Label className="text-xs text-muted-foreground">FIN</Label>
+                                    <div className="font-semibold text-base">{endTime ? formatToMexicanTime(endTime) : '--:--'}</div>
+                                </div>
+                            </>
+                        )}
                       </div>
-                    </div>
+                      <div>
+                      <Label className="mb-2 block text-sm">Seleccionar Tarifa <span className="text-destructive">*</span></Label>
+                        <div className="grid grid-cols-3 gap-1">
+                          {rates
+                            .filter(r => !r.is_extra_hour)
+                            .sort((a, b) => a.hours - b.hours)
+                            .map((rate, index) => (
+                              <Button 
+                                key={rate.id}
+                                variant={selectedRate?.id === rate.id ? 'default' : 'outline'}
+                                className={cn("h-auto flex-col p-1 text-xs", selectedRate?.id !== rate.id && rateColors[index % rateColors.length])}
+                                onClick={() => setSelectedRate(rate)}
+                              >
+                                <span className="text-sm font-bold">{rate.name}</span>
+                                <span className="text-xs font-semibold">${rate.price.toFixed(2)}</span>
+                              </Button>
+                          ))}
+                        </div>
+                      </div>
+                  </div>
                 </div>
-              </div>
-
-              <div className="p-4 border-t">
+                <div className="p-4 border-t mt-4">
                   <h3 className="font-semibold mb-1">Resumen</h3>
                   <div className="text-sm text-muted-foreground space-y-1">
                       <div className="flex justify-between"><span>Tarifa:</span> <span>{selectedRate ? `${selectedRate.name} - $${selectedRate.price}` : 'N/A'}</span></div>
                       <div className="flex justify-between font-bold text-foreground"><span>Total:</span> <span>${selectedRate ? selectedRate.price.toFixed(2) : '0.00'}</span></div>
                   </div>
+                </div>
               </div>
+              </ScrollArea>
             </>
         ) : (
             <div className="py-4 space-y-4">
@@ -330,7 +333,7 @@ export default function CheckInModal({ isOpen, onOpenChange, room, rates, roomTy
                             </div>
                             <div>
                                 <Label className="text-muted-foreground">Horas</Label>
-                                <p className="text-3xl font-bold">{selectedRate?.hours || 'Manual'}</p>
+                                <p className="text-3xl font-bold">{selectedRate?.hours || 'N/A'}</p>
                             </div>
                         </div>
                     </CardContent>
@@ -338,7 +341,7 @@ export default function CheckInModal({ isOpen, onOpenChange, room, rates, roomTy
             </div>
         )}
 
-        <DialogFooter>
+        <DialogFooter className="pt-4 border-t">
           {step === 'form' ? (
              <>
               <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>Cancelar</Button>
