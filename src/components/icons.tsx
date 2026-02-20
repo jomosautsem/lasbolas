@@ -47,39 +47,39 @@ export const AnimatedBroomIcon = (props: SVGProps<SVGSVGElement>) => (
         .broom-stick { fill: #A16207; }
         .broom-bristles { fill: #FBBF24; }
         .broom-sweep {
-          animation: sweep-motion 3s infinite ease-in-out;
-          transform-origin: 32px 58px;
+          animation: sweep-motion 2.5s infinite ease-in-out;
+          transform-origin: 32px 32px;
         }
         @keyframes sweep-motion {
-          0%, 100% { transform: rotate(-20deg) translateX(-10px); }
-          50% { transform: rotate(20deg) translateX(10px); }
+          0%, 100% { transform: rotate(15deg); }
+          50% { transform: rotate(-15deg); }
         }
         .dust-particle {
           fill: #E2E8F0;
           opacity: 0;
-          animation: dust-fly 3s infinite ease-out;
+          animation: dust-fly 2.5s infinite ease-out;
         }
         @keyframes dust-fly {
-          0% { opacity: 0; transform: translate(0, 0) scale(1); }
-          10% { opacity: 0.7; }
-          40% { opacity: 0; transform: translate(-20px, -20px) scale(0.5); }
-          50% { opacity: 0; transform: translate(0, 0) scale(1); }
-          60% { opacity: 0.7; }
-          90% { opacity: 0; transform: translate(20px, -20px) scale(0.5); }
-          100% { opacity: 0; }
+          0%, 100% { opacity: 0; }
+          10% { opacity: 0.8; transform: translate(18px, 50px) scale(1); }
+          50% { opacity: 0; transform: translate(40px, 30px) scale(0.3); }
+          60% { opacity: 0.8; transform: translate(45px, 55px) scale(1); }
+          90% { opacity: 0; transform: translate(20px, 35px) scale(0.3); }
         }
         .particle-1 { animation-delay: 0s; }
-        .particle-2 { animation-delay: 0.2s; }
-        .particle-3 { animation-delay: 0.4s; }
+        .particle-2 { animation-delay: 0.3s; }
+        .particle-3 { animation-delay: 0.6s; }
       `}
     </style>
     <g className="broom-sweep">
-      <rect x="30" y="4" width="4" height="40" rx="2" className="broom-stick" />
-      <path d="M16 44 H 48 L 44 58 H 20 Z" className="broom-bristles" />
+        <g transform="rotate(-45 32 32)">
+            <rect className="broom-stick" x="29" y="0" width="6" height="42" rx="3" />
+            <path className="broom-bristles" d="M16,40 c-2,0 -4,2 -4,4 v16 h32 V44 c0-2-2-4-4-4 H16z" />
+        </g>
     </g>
-    <circle cx="20" cy="55" r="2" className="dust-particle particle-1" />
-    <circle cx="28" cy="58" r="1.5" className="dust-particle particle-2" />
-    <circle cx="15" cy="60" r="1" className="dust-particle particle-3" />
+    <circle cx="0" cy="0" r="2.5" className="dust-particle particle-1" />
+    <circle cx="0" cy="0" r="1.5" className="dust-particle particle-2" />
+    <circle cx="0" cy="0" r="2" className="dust-particle particle-3" />
   </svg>
 );
 
