@@ -119,7 +119,7 @@ export default function DashboardPage() {
     tablesToFetch.forEach(({ name, setter, isLarge }) => {
       // 1. Initial Fetch
       const fetchAndSet = async () => {
-        const twoDaysAgoISO = subDays(new Date(), 2).toISOString();
+        const fortyDaysAgoISO = subDays(new Date(), 40).toISOString();
         let query = supabase.from(name).select('*');
 
         if (isLarge) {
@@ -129,7 +129,7 @@ export default function DashboardPage() {
               : name === 'transactions'
               ? 'timestamp'
               : 'check_in_time';
-          query = query.gte(dateColumn, twoDaysAgoISO);
+          query = query.gte(dateColumn, fortyDaysAgoISO);
         }
 
         const { data, error } = await query.order('id');
@@ -1033,6 +1033,39 @@ export default function DashboardPage() {
     }
   };
 
+  const handlePurgeOldData = async () => {
+    const thirtyDaysAgo = subDays(new Date(), 30).toISOString();
+
+    const tablesToPurge = [
+      { name: 'transactions', dateColumn: 'timestamp' },
+      { name: 'expenses', dateColumn: 'date' },
+      { name: 'vehicle_history', dateColumn: 'check_in_time' },
+    ];
+
+    try {
+      for (const table of tablesToPurge) {
+        const { error } = await supabase
+          .from(table.name)
+          .delete()
+          .lt(table.dateColumn, thirtyDaysAgo);
+
+        if (error) {
+          throw new Error(`Error purgando ${table.name}: ${error.message}`);
+        }
+      }
+      toast({
+        title: 'Datos Antiguos Purgados',
+        description: 'Se han eliminado los registros de más de 30 días.',
+      });
+    } catch (error: any) {
+      toast({
+        variant: 'destructive',
+        title: 'Error al Purgar Datos',
+        description: error.message,
+      });
+    }
+  };
+
   const occupiedRooms = rooms.filter((r) => r.status === 'Ocupada');
 
   if (loading) {
@@ -1128,6 +1161,7 @@ export default function DashboardPage() {
             onUpdateEmail={handleUpdateEmail}
             onUpdatePassword={handleUpdatePassword}
             onTestAlarm={handleTestAlarm}
+            onPurgeData={handlePurgeOldData}
           />
         )}
       </AppLayout>

@@ -1,17 +1,19 @@
 'use client';
 import { useState } from 'react';
 import type { Rate, RoomType, Room, User } from '@/lib/types';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { PlusCircle, Edit, Trash2, Settings, Bell } from 'lucide-react';
+import { PlusCircle, Edit, Trash2, Settings, Bell, AlertTriangle } from 'lucide-react';
 import RateFormModal from './rate-form-modal';
 import DeleteRateDialog from './delete-rate-dialog';
 import RoomTypeFormModal from './room-type-form-modal';
 import DeleteRoomTypeDialog from './delete-room-type-dialog';
 import UserSettings from './user-settings';
 import { useToast } from '@/hooks/use-toast';
+import PasswordPromptModal from './password-prompt-modal';
+import { supabase } from '@/lib/supabaseClient';
 
 interface SettingsPageProps {
   rooms: Room[];
@@ -27,6 +29,7 @@ interface SettingsPageProps {
   onUpdateEmail: (newEmail: string) => Promise<void>;
   onUpdatePassword: (newPassword: string) => Promise<void>;
   onTestAlarm: () => void;
+  onPurgeData: () => Promise<void>;
 }
 
 export default function SettingsPage({
@@ -43,7 +46,9 @@ export default function SettingsPage({
   onUpdateEmail,
   onUpdatePassword,
   onTestAlarm,
+  onPurgeData,
 }: SettingsPageProps) {
+  const { toast } = useToast();
   const [isRateFormOpen, setIsRateFormOpen] = useState(false);
   const [isDeleteRateOpen, setIsDeleteRateOpen] = useState(false);
   const [selectedRate, setSelectedRate] = useState<Rate | null>(null);
@@ -51,6 +56,9 @@ export default function SettingsPage({
   const [isRoomTypeFormOpen, setIsRoomTypeFormOpen] = useState(false);
   const [isDeleteRoomTypeOpen, setIsDeleteRoomTypeOpen] = useState(false);
   const [selectedRoomType, setSelectedRoomType] = useState<RoomType | null>(null);
+  
+  const [isPurgePromptOpen, setIsPurgePromptOpen] = useState(false);
+  const [isPurging, setIsPurging] = useState(false);
 
   const handleOpenRateForm = (rate: Rate | null = null) => {
     setSelectedRate(rate);
@@ -107,6 +115,30 @@ export default function SettingsPage({
     setIsRoomTypeFormOpen(false);
   };
 
+  const handleConfirmPurge = async (password: string) => {
+    if (!user?.email || !password) {
+      toast({ variant: 'destructive', title: 'Error', description: 'Contraseña no ingresada.' });
+      return;
+    }
+
+    setIsPurging(true);
+    const { error: authError } = await supabase.auth.signInWithPassword({
+      email: user.email,
+      password: password,
+    });
+
+    if (authError) {
+      toast({ variant: 'destructive', title: 'Contraseña Incorrecta', description: 'No se pudo verificar su identidad.' });
+      setIsPurging(false);
+      return;
+    }
+
+    await onPurgeData();
+    setIsPurging(false);
+    setIsPurgePromptOpen(false);
+  };
+
+
   return (
     <>
       <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
@@ -122,6 +154,7 @@ export default function SettingsPage({
             <TabsTrigger value="rooms">Administración de Habitaciones</TabsTrigger>
             <TabsTrigger value="account">Mi Cuenta</TabsTrigger>
             <TabsTrigger value="notifications">Sonido</TabsTrigger>
+            <TabsTrigger value="maintenance">Mantenimiento</TabsTrigger>
           </TabsList>
 
           <TabsContent value="rates">
@@ -264,6 +297,29 @@ export default function SettingsPage({
               </CardContent>
             </Card>
           </TabsContent>
+          <TabsContent value="maintenance">
+            <Card>
+              <CardHeader>
+                <CardTitle>Mantenimiento de Datos</CardTitle>
+                <CardDescription>
+                  Gestione los registros históricos para optimizar el rendimiento del sistema.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="p-4 border rounded-lg bg-destructive/10 border-destructive/50 text-destructive">
+                  <h4 className="font-bold flex items-center gap-2"><AlertTriangle /> Zona de Peligro</h4>
+                  <p className="text-sm mt-2">
+                    La siguiente acción es destructiva y no se puede deshacer. Se eliminarán permanentemente todos los registros de transacciones, gastos e historial de vehículos con más de 30 días de antigüedad.
+                  </p>
+                </div>
+              </CardContent>
+              <CardFooter>
+                <Button variant="destructive" onClick={() => setIsPurgePromptOpen(true)} disabled={isPurging}>
+                  {isPurging ? 'Purgando...' : 'Purgar Registros Antiguos'}
+                </Button>
+              </CardFooter>
+            </Card>
+          </TabsContent>
         </Tabs>
       </div>
       <RateFormModal
@@ -290,6 +346,13 @@ export default function SettingsPage({
         onOpenChange={setIsDeleteRoomTypeOpen}
         onConfirm={handleConfirmDeleteRoomType}
         roomTypeName={selectedRoomType?.name || ''}
+      />
+      <PasswordPromptModal
+        isOpen={isPurgePromptOpen}
+        onOpenChange={setIsPurgePromptOpen}
+        onConfirm={handleConfirmPurge}
+        title="Confirmar Purga de Datos"
+        description="Esta acción es irreversible. Para continuar, por favor ingrese su contraseña de administrador."
       />
     </>
   );

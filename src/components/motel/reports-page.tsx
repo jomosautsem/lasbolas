@@ -32,7 +32,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { format, isAfter, formatDistance } from 'date-fns';
+import { format, isAfter, formatDistance, differenceInDays, subDays, startOfDay } from 'date-fns';
 import { es } from 'date-fns/locale';
 import {
   Calendar as CalendarIcon,
@@ -74,6 +74,7 @@ import {
 import { Separator } from '@/components/ui/separator';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 interface ReportsPageProps {
   rooms: Room[];
@@ -159,6 +160,20 @@ export default function ReportsPage({
     title: string;
     transactions: Transaction[];
   } | null>(null);
+  const [isGeneratingMonthly, setIsGeneratingMonthly] = useState(false);
+
+  const dataHealth = useMemo(() => {
+    if (transactions.length === 0) {
+      return { oldestDate: null, daysOld: 0 };
+    }
+    const sorted = [...transactions].sort(
+      (a, b) =>
+        new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+    );
+    const oldestDate = new Date(sorted[0].timestamp);
+    const daysOld = differenceInDays(new Date(), oldestDate);
+    return { oldestDate, daysOld };
+  }, [transactions]);
 
   const filteredData = useMemo(() => {
     if (!selectedDate) {
@@ -650,6 +665,146 @@ export default function ReportsPage({
     doc.save(`Reporte_Turno_${dateStr}_${selectedShift}.pdf`);
   };
 
+  const handleDownloadMonthlyReport = async () => {
+    setIsGeneratingMonthly(true);
+    const doc = new jsPDF();
+    const today = new Date();
+    const thirtyDaysAgo = subDays(today, 30);
+
+    const reportTransactions = transactions.filter((t) =>
+      isAfter(new Date(t.timestamp), thirtyDaysAgo)
+    );
+    const reportExpenses = expenses.filter((e) =>
+      isAfter(new Date(e.date), thirtyDaysAgo)
+    );
+
+    // Header
+    doc.setFontSize(18);
+    doc.text('Reporte Mensual Consolidado - Motel Las Bolas', 14, 22);
+    doc.setFontSize(11);
+    const dateRange = `Periodo: ${format(
+      thirtyDaysAgo,
+      'dd/MM/yyyy'
+    )} - ${format(today, 'dd/MM/yyyy')}`;
+    doc.text(dateRange, 14, 29);
+
+    let finalY = 40;
+
+    // Summary
+    const totalIncome = reportTransactions.reduce((sum, t) => sum + t.amount, 0);
+    const totalExpenses = reportExpenses.reduce((sum, e) => sum + e.amount, 0);
+    const netProfit = totalIncome - totalExpenses;
+
+    doc.setFontSize(14);
+    doc.text('Resumen General del Periodo', 14, finalY);
+    finalY += 7;
+    autoTable(doc, {
+      startY: finalY,
+      head: [['Concepto', 'Monto']],
+      body: [
+        ['Total Ingresos', `$${totalIncome.toFixed(2)}`],
+        ['Total Gastos', `-$${totalExpenses.toFixed(2)}`],
+        ['Utilidad Neta', `$${netProfit.toFixed(2)}`],
+      ],
+      theme: 'grid',
+    });
+    finalY = (doc as any).lastAutoTable.finalY + 10;
+
+    // Group data by day
+    const dailyData = new Map<
+      string,
+      { transactions: Transaction[]; expenses: Expense[] }
+    >();
+
+    for (let i = 0; i < 30; i++) {
+      const date = subDays(today, i);
+      const dateStr = format(date, 'yyyy-MM-dd');
+      dailyData.set(dateStr, { transactions: [], expenses: [] });
+    }
+
+    reportTransactions.forEach((t) => {
+      const dateStr = format(startOfDay(new Date(t.timestamp)), 'yyyy-MM-dd');
+      if (dailyData.has(dateStr)) {
+        dailyData.get(dateStr)!.transactions.push(t);
+      }
+    });
+
+    reportExpenses.forEach((e) => {
+      const dateStr = format(startOfDay(new Date(e.date)), 'yyyy-MM-dd');
+      if (dailyData.has(dateStr)) {
+        dailyData.get(dateStr)!.expenses.push(e);
+      }
+    });
+
+    doc.addPage();
+    finalY = 20;
+    doc.setFontSize(14);
+    doc.text('Detalle Diario', 14, finalY);
+    finalY += 7;
+
+    const sortedDays = Array.from(dailyData.keys()).sort(
+      (a, b) => new Date(b).getTime() - new Date(a).getTime()
+    );
+
+    for (const dateStr of sortedDays) {
+      const dayData = dailyData.get(dateStr)!;
+      if (dayData.transactions.length === 0 && dayData.expenses.length === 0)
+        continue;
+
+      const pageHeight = doc.internal.pageSize.height;
+      if (finalY > pageHeight - 60) {
+        doc.addPage();
+        finalY = 20;
+      }
+
+      doc.setFontSize(12);
+      doc.setFillColor(243, 244, 246);
+      doc.rect(14, finalY, doc.internal.pageSize.width - 28, 10, 'F');
+      doc.setTextColor(0);
+      doc.setFont('helvetica', 'bold');
+      doc.text(
+        format(new Date(dateStr), "EEEE dd 'de' MMMM 'de' yyyy", {
+          locale: es,
+        }),
+        20,
+        finalY + 7
+      );
+      finalY += 12;
+
+      if (dayData.transactions.length > 0) {
+        autoTable(doc, {
+          startY: finalY,
+          head: [['Hora', 'Descripción', 'Monto']],
+          body: dayData.transactions.map((t) => [
+            formatToMexicanTime(t.timestamp),
+            t.description,
+            `$${t.amount.toFixed(2)}`,
+          ]),
+          theme: 'striped',
+          headStyles: { fillColor: [37, 99, 235] }, // blue
+        });
+        finalY = (doc as any).lastAutoTable.finalY + 5;
+      }
+
+      if (dayData.expenses.length > 0) {
+        autoTable(doc, {
+          startY: finalY,
+          head: [['Gasto', 'Monto']],
+          body: dayData.expenses.map((e) => [
+            e.description,
+            `-$${e.amount.toFixed(2)}`,
+          ]),
+          theme: 'striped',
+          headStyles: { fillColor: [220, 38, 38] }, // red
+        });
+        finalY = (doc as any).lastAutoTable.finalY + 10;
+      }
+    }
+
+    doc.save(`Reporte_Mensual_${format(today, 'yyyy-MM-dd')}.pdf`);
+    setIsGeneratingMonthly(false);
+  };
+
   const DetailCard = ({
     title,
     value,
@@ -696,68 +851,88 @@ export default function ReportsPage({
             Consulte movimientos y descargue reportes detallados.
           </CardDescription>
         </CardHeader>
-        <CardContent className="flex flex-wrap items-center gap-4">
-          <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
-            <PopoverTrigger asChild>
-              <Button
-                variant={'outline'}
-                className={cn(
-                  'w-full sm:w-[240px] justify-start text-left font-normal',
-                  !selectedDate && 'text-muted-foreground'
-                )}
-              >
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                {selectedDate ? (
-                  format(selectedDate, 'PPP', { locale: es })
-                ) : (
-                  <span>Seleccionar Fecha</span>
-                )}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0">
-              <Calendar
-                mode="single"
-                selected={selectedDate}
-                onSelect={(date) => {
-                  setSelectedDate(date);
-                  setIsCalendarOpen(false);
-                }}
-                initialFocus
-                disabled={(date) =>
-                  date > new Date() || date < new Date('1900-01-01')
-                }
-              />
-            </PopoverContent>
-          </Popover>
+        <CardContent className="flex flex-col gap-4">
+          {dataHealth.daysOld > 25 && (
+            <Alert variant="destructive">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertTitle>Atención: Registros Antiguos</AlertTitle>
+              <AlertDescription>
+                Hay registros con más de {dataHealth.daysOld} días de
+                antigüedad. Se recomienda descargar el reporte mensual y luego
+                purgar los datos antiguos desde la sección de Mantenimiento en
+                Configuración para optimizar el rendimiento.
+              </AlertDescription>
+            </Alert>
+          )}
+          <div className="flex flex-wrap items-center gap-2">
+            <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant={'outline'}
+                  className={cn(
+                    'w-full sm:w-[240px] justify-start text-left font-normal',
+                    !selectedDate && 'text-muted-foreground'
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {selectedDate ? (
+                    format(selectedDate, 'PPP', { locale: es })
+                  ) : (
+                    <span>Seleccionar Fecha</span>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0">
+                <Calendar
+                  mode="single"
+                  selected={selectedDate}
+                  onSelect={(date) => {
+                    setSelectedDate(date);
+                    setIsCalendarOpen(false);
+                  }}
+                  initialFocus
+                  disabled={(date) =>
+                    date > new Date() || date < new Date('1900-01-01')
+                  }
+                />
+              </PopoverContent>
+            </Popover>
 
-          <Select
-            value={selectedShift}
-            onValueChange={(v: Shift) => setSelectedShift(v)}
-          >
-            <SelectTrigger className="w-full sm:w-[240px]">
-              <SelectValue placeholder="Seleccionar Turno" />
-            </SelectTrigger>
-            <SelectContent>
-              {shifts.map((s) => (
-                <SelectItem key={s.value} value={s.value}>
-                  {s.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          <div className="w-full flex-1 flex flex-col sm:flex-row sm:justify-end gap-2">
-            <Button variant="outline" className="w-full sm:w-auto">
-              <RefreshCw className="mr-2 h-4 w-4" />
-              Ver Balance General
-            </Button>
-            <Button
-              onClick={handleDownloadPDF}
-              className="bg-red-600 hover:bg-red-700 w-full sm:w-auto"
+            <Select
+              value={selectedShift}
+              onValueChange={(v: Shift) => setSelectedShift(v)}
             >
-              <Download className="mr-2 h-4 w-4" />
-              Descargar PDF
-            </Button>
+              <SelectTrigger className="w-full sm:w-[240px]">
+                <SelectValue placeholder="Seleccionar Turno" />
+              </SelectTrigger>
+              <SelectContent>
+                {shifts.map((s) => (
+                  <SelectItem key={s.value} value={s.value}>
+                    {s.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <div className="w-full flex-1 flex flex-col sm:flex-row sm:justify-end gap-2">
+              <Button
+                onClick={handleDownloadMonthlyReport}
+                disabled={isGeneratingMonthly}
+                className="w-full sm:w-auto"
+              >
+                <Download className="mr-2 h-4 w-4" />
+                {isGeneratingMonthly
+                  ? 'Generando...'
+                  : 'Descargar Reporte Mensual'}
+              </Button>
+              <Button
+                onClick={handleDownloadPDF}
+                className="bg-red-600 hover:bg-red-700 w-full sm:w-auto"
+              >
+                <Download className="mr-2 h-4 w-4" />
+                Descargar PDF del Turno
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>
