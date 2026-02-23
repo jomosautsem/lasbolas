@@ -452,17 +452,34 @@ export default function ReportsPage({
     return roomLogData
       .filter((log) => {
         if (!log.check_out_time) return false;
-        return isAfter(shiftEndDate, new Date(log.check_out_time));
+        
+        const checkoutIsAfterShiftEnd = isAfter(new Date(log.check_out_time), shiftEndDate);
+        
+        // A room is considered expired if it was still occupied at the end of the shift,
+        // and its scheduled checkout time was before the end of the shift.
+        // This is a simplification due to complex data state over time.
+        const wasOccupiedAtShiftEnd = log.status === 'Ocupada' || checkoutIsAfterShiftEnd;
+        if (!wasOccupiedAtShiftEnd) return false;
+
+        const liveRoomData = rooms.find(r => r.id === log.id);
+        if (!liveRoomData || !liveRoomData.check_out_time) return false;
+        
+        const scheduledCheckout = new Date(liveRoomData.check_out_time);
+
+        return isAfter(shiftEndDate, scheduledCheckout);
       })
-      .map((log) => ({
+      .map((log) => {
+        const liveRoomData = rooms.find(r => r.id === log.id)!;
+        const scheduledCheckout = new Date(liveRoomData.check_out_time!);
+        return {
         name: log.name,
         time: `Vencida por ${formatDistance(
-          new Date(log.check_out_time!),
           shiftEndDate,
+          scheduledCheckout,
           { locale: es }
         )}`,
-      }));
-  }, [roomLogData, selectedDate, selectedShift]);
+      }});
+  }, [roomLogData, selectedDate, selectedShift, rooms]);
   
   const handleDownloadPDF = () => {
     if (!selectedDate) return;
@@ -539,6 +556,26 @@ export default function ReportsPage({
           headStyles: { fillColor: [220, 38, 38] },
       });
       finalY = (doc as any).lastAutoTable.finalY + 10;
+    }
+
+    if (doc.internal.pageSize.height - finalY < 40) {
+        doc.addPage();
+        finalY = 20;
+    }
+
+    // Reporte de Habitaciones Vencidas
+    if (expiredRoomsReport.length > 0) {
+        doc.setFontSize(14);
+        doc.text("Reporte de Habitaciones Vencidas en el Turno", 14, finalY);
+        finalY += 7;
+        autoTable(doc, {
+            startY: finalY,
+            head: [['Habitación', 'Tiempo Vencida al Final del Turno']],
+            body: expiredRoomsReport.map(r => [r.name, r.time]),
+            theme: 'striped',
+            headStyles: { fillColor: [220, 38, 38] },
+        });
+        finalY = (doc as any).lastAutoTable.finalY + 10;
     }
 
     // Bitácora de Habitaciones
