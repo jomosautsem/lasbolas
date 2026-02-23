@@ -50,6 +50,8 @@ import {
   ArrowRight,
   AlertTriangle,
   X,
+  Car,
+  PersonStanding,
 } from 'lucide-react';
 import {
   getCurrentShiftInfo,
@@ -75,6 +77,7 @@ import { Separator } from '@/components/ui/separator';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { MotorcycleIcon } from '../icons';
 
 interface ReportsPageProps {
   rooms: Room[];
@@ -394,6 +397,12 @@ export default function ReportsPage({
           new Date(initialTransactionForThisStay.timestamp).getTime() / 1000
         );
         
+        const vehicleEntry = vehicleHistory.find(
+            (vh) =>
+              vh.room_id === roomId &&
+              Math.floor(new Date(vh.check_in_time).getTime() / 1000) === checkInTimeForStayMs
+        );
+        
         const isCurrentlyOccupied =
           room.status === 'Ocupada' &&
           room.check_in_time &&
@@ -403,13 +412,6 @@ export default function ReportsPage({
         if (isCurrentlyOccupied) {
           realCheckOutTime = room.check_out_time;
         } else {
-          // For past stays, find the checkout time from vehicle history
-          const vehicleEntry = vehicleHistory.find(
-            (vh) =>
-              vh.room_id === roomId &&
-              Math.floor(new Date(vh.check_in_time).getTime() / 1000) === checkInTimeForStayMs
-          );
-
           if (vehicleEntry && vehicleEntry.check_out_time) {
             realCheckOutTime = vehicleEntry.check_out_time;
           }
@@ -439,6 +441,11 @@ export default function ReportsPage({
           otherChargeTransactions,
           totalStayAmount,
           duration,
+           vehicle: vehicleEntry ? {
+                plate: vehicleEntry.plate,
+                entry_type: vehicleEntry.entry_type,
+                details: `${vehicleEntry.vehicle_brand || ''} ${vehicleEntry.vehicle_details || ''}`.trim()
+            } : null,
         };
       })
       .filter((r): r is NonNullable<typeof r> => r !== null);
@@ -470,9 +477,6 @@ export default function ReportsPage({
         
         const checkoutIsAfterShiftEnd = isAfter(new Date(log.check_out_time), shiftEndDate);
         
-        // A room is considered expired if it was still occupied at the end of the shift,
-        // and its scheduled checkout time was before the end of the shift.
-        // This is a simplification due to complex data state over time.
         const wasOccupiedAtShiftEnd = log.status === 'Ocupada' || checkoutIsAfterShiftEnd;
         if (!wasOccupiedAtShiftEnd) return false;
 
@@ -504,7 +508,6 @@ export default function ReportsPage({
     const dateStr = format(selectedDate, 'dd/MM/yyyy', { locale: es });
     const subtitle = `Fecha: ${dateStr} - Turno: ${selectedShift}`;
 
-    // Header
     doc.setFontSize(18);
     doc.text(title, 14, 22);
     doc.setFontSize(11);
@@ -515,7 +518,6 @@ export default function ReportsPage({
 
     let finalY = 40;
 
-    // Resumen Financiero
     doc.setFontSize(14);
     doc.text("Resumen Financiero", 14, finalY);
     finalY += 5;
@@ -538,7 +540,6 @@ export default function ReportsPage({
     });
     finalY = (doc as any).lastAutoTable.finalY + 10;
     
-    // Desglose de Ingresos
     doc.setFontSize(14);
     doc.text("Desglose de Ingresos", 14, finalY);
     finalY += 5;
@@ -558,7 +559,6 @@ export default function ReportsPage({
     });
     finalY = (doc as any).lastAutoTable.finalY + 10;
 
-    // Desglose de Gastos
     if(summary.expensesList.length > 0) {
       doc.setFontSize(14);
       doc.text("Desglose de Gastos", 14, finalY);
@@ -572,13 +572,38 @@ export default function ReportsPage({
       });
       finalY = (doc as any).lastAutoTable.finalY + 10;
     }
+    
+    const shiftEmployeeSales = filteredData.filteredTransactions.filter(
+      t => t.type === 'Venta a Empleado'
+    );
+     if(shiftEmployeeSales.length > 0) {
+      doc.setFontSize(14);
+      doc.text("Venta a Empleados", 14, finalY);
+      finalY += 5;
+      autoTable(doc, {
+          startY: finalY,
+          head: [['Hora', 'Empleado', 'Descripción', 'Monto']],
+           body: shiftEmployeeSales.map(t => {
+              const employee = employees.find(e => e.id === t.employee_id);
+              return [
+                  formatToMexicanTime(t.timestamp),
+                  employee?.name || 'N/A',
+                  t.description,
+                  `$${t.amount.toFixed(2)}`,
+              ]
+          }),
+          theme: 'striped',
+          headStyles: { fillColor: [147, 51, 234] },
+      });
+      finalY = (doc as any).lastAutoTable.finalY + 10;
+    }
+
 
     if (doc.internal.pageSize.height - finalY < 40) {
         doc.addPage();
         finalY = 20;
     }
 
-    // Reporte de Habitaciones Vencidas
     if (expiredRoomsReport.length > 0) {
         doc.setFontSize(14);
         doc.text("Reporte de Habitaciones Vencidas en el Turno", 14, finalY);
@@ -593,7 +618,6 @@ export default function ReportsPage({
         finalY = (doc as any).lastAutoTable.finalY + 10;
     }
 
-    // Bitácora de Habitaciones
     if (roomLogData.length > 0) {
         doc.addPage();
         finalY = 20;
@@ -617,6 +641,21 @@ export default function ReportsPage({
             doc.setFont('helvetica', 'normal');
             doc.text(`Total Cobrado: $${logItem.totalStayAmount.toFixed(2)}`, doc.internal.pageSize.width - 20, finalY + 7, { align: 'right' });
             finalY += 12;
+
+            if (logItem.vehicle) {
+                 autoTable(doc, {
+                    startY: finalY,
+                    body: [
+                        ['Vehículo', `${logItem.vehicle.entry_type} - ${logItem.vehicle.details || 'N/A'}`],
+                        ['Placa', logItem.vehicle.plate || 'N/A'],
+                    ],
+                    theme: 'plain',
+                    styles: { fontSize: 9, cellPadding: 1 },
+                    columnStyles: { 0: { fontStyle: 'bold' } },
+                });
+                finalY = (doc as any).lastAutoTable.finalY;
+            }
+
 
             const roomDetails = [
                 ['Check-in', logItem.check_in_time ? `${formatToMexicanDate(logItem.check_in_time)} ${formatToMexicanTime(logItem.check_in_time)}` : 'N/A'],
@@ -1179,6 +1218,19 @@ export default function ReportsPage({
                       </span>
                       <ChevronDown className="h-4 w-4 transition-transform data-[state=open]:rotate-180" />
                     </div>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-x-6 gap-y-2 mt-2 text-sm">
+                     {logItem.vehicle ? (
+                        <>
+                           <div className="flex items-center gap-2">
+                            {logItem.vehicle.entry_type === 'Auto' && <Car className="h-4 w-4 text-muted-foreground" />}
+                            {logItem.vehicle.entry_type === 'Moto' && <MotorcycleIcon className="h-4 w-4 text-muted-foreground" />}
+                            {logItem.vehicle.entry_type === 'Pie' && <PersonStanding className="h-4 w-4 text-muted-foreground" />}
+                            <span>{logItem.vehicle.plate || logItem.vehicle.entry_type}</span>
+                          </div>
+                           <div className="text-muted-foreground">{logItem.vehicle.details}</div>
+                        </>
+                      ) : <div className="flex items-center gap-2"><PersonStanding className="h-4 w-4 text-muted-foreground" /> A Pie</div>}
                   </div>
                   <div className="flex flex-wrap items-center gap-x-6 gap-y-2 mt-2 text-sm">
                     <div className="flex items-center gap-2">
