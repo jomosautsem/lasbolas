@@ -460,6 +460,11 @@ export default function ReportsPage({
   const expiredRoomsReport = useMemo(() => {
     if (!selectedDate) return [];
 
+    const now = getMexicoCityTime();
+    const currentShiftInfo = getCurrentShiftInfo();
+    const isToday = format(selectedDate, 'yyyy-MM-dd') === format(currentShiftInfo.operationalDate, 'yyyy-MM-dd');
+    const isCurrentShift = isToday && selectedShift === currentShiftInfo.shift;
+
     const shiftEndDate = getMexicoCityTime(new Date(selectedDate));
     if (selectedShift === 'Matutino') {
       shiftEndDate.setHours(14, 0, 0, 0);
@@ -471,21 +476,22 @@ export default function ReportsPage({
       shiftEndDate.setHours(7, 0, 0, 0);
     }
 
+    // Si el turno es el actual, comparamos con "ahora". Si ya pasó, con el fin del turno.
+    const referenceTime = isCurrentShift ? now : shiftEndDate;
+
     return roomLogData
       .filter((log) => {
-        if (!log.check_out_time) return false;
-        
-        const checkoutIsAfterShiftEnd = isAfter(new Date(log.check_out_time), shiftEndDate);
-        
-        const wasOccupiedAtShiftEnd = log.status === 'Ocupada' || checkoutIsAfterShiftEnd;
-        if (!wasOccupiedAtShiftEnd) return false;
+        // Solo nos interesan habitaciones que están actualmente ocupadas para este reporte de vencimiento en vivo/cierre
+        if (log.status !== 'Ocupada') return false; 
 
         const liveRoomData = rooms.find(r => r.id === log.id);
+        // Si no tiene hora de salida programada, no puede estar vencida
         if (!liveRoomData || !liveRoomData.check_out_time) return false;
         
         const scheduledCheckout = new Date(liveRoomData.check_out_time);
 
-        return isAfter(shiftEndDate, scheduledCheckout);
+        // Solo es vencida si el tiempo de referencia (ahora o fin de turno) ya superó la hora de salida programada
+        return isAfter(referenceTime, scheduledCheckout);
       })
       .map((log) => {
         const liveRoomData = rooms.find(r => r.id === log.id)!;
@@ -493,7 +499,7 @@ export default function ReportsPage({
         return {
         name: log.name,
         time: `Vencida por ${formatDistance(
-          shiftEndDate,
+          referenceTime,
           scheduledCheckout,
           { locale: es }
         )}`,
