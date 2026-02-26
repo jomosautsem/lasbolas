@@ -486,15 +486,22 @@ export function RoomCard({
 
                 <Separator className={cn('my-1', separatorClass)} />
 
-                <div className="flex justify-between items-center text-xs opacity-80">
-                  <span className="flex items-center gap-1.5 font-semibold">
-                    {room.entry_type && room.entry_type !== 'Pie' ? (
-                      <VehicleIcon className="h-4 w-4" />
-                    ) : (
-                      <PersonStanding className="h-4 w-4" />
+                <div className="flex justify-between items-start text-xs opacity-80">
+                  <div className="flex flex-col gap-0.5 min-w-0">
+                    <span className="flex items-center gap-1.5 font-semibold">
+                      {room.entry_type && room.entry_type !== 'Pie' ? (
+                        <VehicleIcon className="h-4 w-4" />
+                      ) : (
+                        <PersonStanding className="h-4 w-4" />
+                      )}
+                      {room.vehicle_plate || room.customer_name}
+                    </span>
+                    {(room.vehicle_brand || room.vehicle_details) && (
+                      <span className="pl-6 text-[10px] leading-tight opacity-90 truncate max-w-[120px]">
+                        {`${room.vehicle_brand} ${room.vehicle_details}`.trim()}
+                      </span>
                     )}
-                    {room.vehicle_plate || room.customer_name}
-                  </span>
+                  </div>
                   <div className="flex items-center gap-3">
                     {hasConsumption && (
                       <span className="flex items-center gap-1 font-semibold text-black">
