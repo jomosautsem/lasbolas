@@ -250,6 +250,7 @@ export default function DashboardPage() {
   const handleConfirmCheckIn = async (roomToUpdate: Room, checkInData: any) => {
     const shiftInfo = getCurrentShiftInfo();
     const startTime = checkInData.startTime.toISOString();
+    const scheduledEndTime = checkInData.endTime?.toISOString();
 
     // Step 1: Create Transaction
     if (checkInData.selectedRate?.price > 0) {
@@ -281,6 +282,7 @@ export default function DashboardPage() {
       plate: checkInData.plate || '',
       check_in_time: startTime,
       check_out_time: null,
+      scheduled_check_out: scheduledEndTime,
       room_id: roomToUpdate.id,
       room_name: roomToUpdate.name,
       entry_type: checkInData.entryType,
@@ -300,17 +302,16 @@ export default function DashboardPage() {
         title: 'Error al guardar historial de vehículo',
         description: vehicleError.message,
       });
-      // We continue even if vehicle fails to try to at least occupy the room
     }
 
 
-    // Step 3: Update Room Status (Crucial Step)
+    // Step 3: Update Room Status
     const { error: roomError } = await supabase
       .from('rooms')
       .update({
         status: 'Ocupada',
         check_in_time: startTime,
-        check_out_time: checkInData.endTime?.toISOString(),
+        check_out_time: scheduledEndTime,
         customer_name: checkInData.customerName,
         persons: checkInData.persons,
         entry_type: checkInData.entryType,
@@ -597,6 +598,13 @@ export default function DashboardPage() {
         description: roomError.message,
       });
     } else {
+      // Update vehicle history scheduled time
+      await supabase
+        .from('vehicle_history')
+        .update({ scheduled_check_out: newCheckOutTime.toISOString() })
+        .eq('room_id', roomId)
+        .is('check_out_time', null);
+
       toast({
         title: 'Paquete Ajustado Exitosamente',
         description: `Habitación ${roomToUpdate.name} ahora tiene ${newRate.name}.`,
@@ -661,6 +669,13 @@ export default function DashboardPage() {
         description: roomError.message,
       });
     } else {
+      // Update vehicle history scheduled time
+      await supabase
+        .from('vehicle_history')
+        .update({ scheduled_check_out: newCheckOutTime.toISOString() })
+        .eq('room_id', roomId)
+        .is('check_out_time', null);
+
       toast({
         title: 'Estancia Extendida',
         description: `Se agregaron ${extensionRate.hours} horas a la habitación ${roomToUpdate.name}.`,
@@ -1139,6 +1154,7 @@ export default function DashboardPage() {
         {activeView === 'reports' && (
           <ReportsPage
             rooms={rooms}
+            rates={rates}
             transactions={transactions}
             expenses={expenses}
             products={products}

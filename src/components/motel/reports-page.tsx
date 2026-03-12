@@ -9,6 +9,7 @@ import type {
   Product,
   Employee,
   VehicleHistory,
+  Rate,
 } from '@/lib/types';
 import {
   Card,
@@ -32,7 +33,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { format, isAfter, formatDistance, differenceInDays, subDays, startOfDay } from 'date-fns';
+import { format, isAfter, formatDistance, differenceInDays, subDays, startOfDay, isBefore, differenceInMinutes } from 'date-fns';
 import { es } from 'date-fns/locale';
 import {
   Calendar as CalendarIcon,
@@ -81,6 +82,7 @@ import { MotorcycleIcon } from '../icons';
 
 interface ReportsPageProps {
   rooms: Room[];
+  rates: Rate[];
   transactions: Transaction[];
   expenses: Expense[];
   products: Product[];
@@ -146,6 +148,7 @@ const TransactionTable = ({
 
 export default function ReportsPage({
   rooms,
+  rates,
   transactions,
   expenses,
   products,
@@ -293,72 +296,60 @@ export default function ReportsPage({
     if (!selectedDate) return [];
     const operationalDateStr = format(selectedDate, 'yyyy-MM-dd');
 
+    const shiftStart = getMexicoCityTime(new Date(selectedDate));
+    const shiftEnd = getMexicoCityTime(new Date(selectedDate));
+    if (selectedShift === 'Matutino') {
+      shiftStart.setHours(7, 0, 0, 0);
+      shiftEnd.setHours(14, 0, 0, 0);
+    } else if (selectedShift === 'Vespertino') {
+      shiftStart.setHours(14, 0, 0, 0);
+      shiftEnd.setHours(21, 0, 0, 0);
+    } else {
+      shiftStart.setHours(21, 0, 0, 0);
+      shiftEnd.setDate(shiftEnd.getDate() + 1);
+      shiftEnd.setHours(7, 0, 0, 0);
+    }
+
     const shiftTransactions = transactions.filter(
       (t) =>
         t.fecha_operativa === operationalDateStr &&
         t.turno_calculado === selectedShift
     );
 
-    const uniqueRoomIdsInShift = Array.from(
-      new Set(
-        shiftTransactions.map((t) => t.room_id).filter((id): id is number => id !== null)
-      )
-    );
+    const activeVehicleHistory = vehicleHistory.filter(vh => {
+        const checkIn = new Date(vh.check_in_time);
+        const checkOut = vh.check_out_time ? new Date(vh.check_out_time) : null;
+        return isBefore(checkIn, shiftEnd) && (!checkOut || isAfter(checkOut, shiftStart));
+    });
+
+    const roomIdsFromTransactions = shiftTransactions.map((t) => t.room_id).filter((id): id is number => id !== null);
+    const roomIdsFromVehicles = activeVehicleHistory.map(vh => vh.room_id);
+    const uniqueRoomIdsInShift = Array.from(new Set([...roomIdsFromTransactions, ...roomIdsFromVehicles]));
 
     const log = uniqueRoomIdsInShift
       .map((roomId) => {
         const room = rooms.find((r) => r.id === roomId);
         if (!room) return null;
 
-        const allTransactionsForRoom = transactions
-          .filter((t) => t.room_id === roomId)
-          .sort(
-            (a, b) =>
-              new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
-          );
+        const vehicleEntry = activeVehicleHistory
+            .filter(vh => vh.room_id === roomId)
+            .sort((a, b) => new Date(b.check_in_time).getTime() - new Date(a.check_in_time).getTime())[0];
 
-        const initialTransactionForThisStay = allTransactionsForRoom
-          .filter((t) => t.type === 'Hospedaje Inicial')
-          .sort(
-            (a, b) =>
-              new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-          )[0];
+        if (!vehicleEntry) return null;
 
-        if (!initialTransactionForThisStay) return null;
-
-        const checkInTime = new Date(initialTransactionForThisStay.timestamp);
-
-        const allTransactionsThisStay = allTransactionsForRoom.filter(
-          (t) => new Date(t.timestamp) >= checkInTime
-        );
-        const transactionIdsThisStay = new Set(
-          allTransactionsThisStay.map((t) => t.id)
+        const checkInTime = new Date(vehicleEntry.check_in_time);
+        const allTransactionsThisStay = transactions.filter(
+          (t) => t.room_id === roomId && new Date(t.timestamp) >= checkInTime && (!vehicleEntry.check_out_time || new Date(t.timestamp) <= new Date(vehicleEntry.check_out_time))
         );
 
-        const wasActiveInShift = shiftTransactions.some((t) =>
-          transactionIdsThisStay.has(t.id)
-        );
-        if (!wasActiveInShift) return null;
-
+        const initialTransaction = allTransactionsThisStay.find(t => t.type === 'Hospedaje Inicial');
         const checkinShiftInfo = getCurrentShiftInfo(checkInTime);
-        const checkinOpDateStr = format(
-          checkinShiftInfo.operationalDate,
-          'yyyy-MM-dd'
-        );
-        const isFromPreviousShift =
-          checkinShiftInfo.shift !== selectedShift ||
-          checkinOpDateStr !== operationalDateStr;
+        const checkinOpDateStr = format(checkinShiftInfo.operationalDate, 'yyyy-MM-dd');
+        const isFromPreviousShift = checkinShiftInfo.shift !== selectedShift || checkinOpDateStr !== operationalDateStr;
 
-        const initialOccupancyAmount =
-          initialTransactionForThisStay?.amount || 0;
-
-        const productTransactions = allTransactionsThisStay.filter(
-          (t) => t.type === 'Consumo'
-        );
-        const productsAmount = productTransactions.reduce(
-          (sum, t) => sum + t.amount,
-          0
-        );
+        const initialOccupancyAmount = initialTransaction?.amount || 0;
+        const productTransactions = allTransactionsThisStay.filter((t) => t.type === 'Consumo');
+        const productsAmount = productTransactions.reduce((sum, t) => sum + t.amount, 0);
 
         const parsedProducts = productTransactions.flatMap((t) => {
           return t.description
@@ -366,75 +357,50 @@ export default function ReportsPage({
             .map((desc) => {
               const match = desc.match(/(\d+)x\s(.+)/);
               if (!match) return null;
-
               const quantity = parseInt(match[1], 10);
               const name = match[2].trim();
               const product = products.find((p) => p.name === name);
-              const price = product ? product.price : 0; // price per item
-
               return {
                 id: `${t.id}-${name}`,
                 quantity,
                 name,
-                price,
-                total: quantity * price,
+                price: product ? product.price : 0,
+                total: quantity * (product ? product.price : 0),
               };
             })
             .filter((p): p is NonNullable<typeof p> => p !== null);
         });
 
         const otherChargeTransactions = allTransactionsThisStay.filter(
-          (t) =>
-            t.type !== 'Hospedaje Inicial' && t.type !== 'Consumo'
+          (t) => t.type !== 'Hospedaje Inicial' && t.type !== 'Consumo'
         );
 
-        let totalStayAmount = allTransactionsThisStay.reduce(
-          (sum, t) => sum + t.amount,
-          0
-        );
+        const totalStayAmount = allTransactionsThisStay.reduce((sum, t) => sum + t.amount, 0);
 
-        const checkInTimeForStayMs = Math.floor(
-          new Date(initialTransactionForThisStay.timestamp).getTime() / 1000
-        );
-        
-        // Robust vehicle matching with 5-second window to handle precision differences
-        const vehicleEntry = vehicleHistory.find(
-            (vh) =>
-              vh.room_id === roomId &&
-              Math.abs(new Date(vh.check_in_time).getTime() - new Date(initialTransactionForThisStay.timestamp).getTime()) < 5000
-        );
-        
-        const isCurrentlyOccupied =
-          room.status === 'Ocupada' &&
-          room.check_in_time &&
-          Math.floor(new Date(room.check_in_time).getTime() / 1000) === checkInTimeForStayMs;
+        const isCurrentlyOccupied = room.status === 'Ocupada' && room.check_in_time && 
+            Math.abs(new Date(room.check_in_time).getTime() - checkInTime.getTime()) < 5000;
 
         let realCheckOutTime: string | null = null;
         if (isCurrentlyOccupied) {
           realCheckOutTime = room.check_out_time;
-        } else {
-          if (vehicleEntry && vehicleEntry.check_out_time) {
-            realCheckOutTime = vehicleEntry.check_out_time;
-          }
+        } else if (vehicleEntry.check_out_time) {
+          realCheckOutTime = vehicleEntry.check_out_time;
         }
 
         let duration: string | null = null;
-        if (realCheckOutTime) {
-          duration = formatDistance(
-            new Date(realCheckOutTime),
-            new Date(initialTransactionForThisStay.timestamp),
-            { locale: es }
-          );
+        if (realCheckOutTime && vehicleEntry.check_out_time) {
+          duration = formatDistance(new Date(vehicleEntry.check_out_time), checkInTime, { locale: es });
         }
 
         return {
           id: room.id,
           name: room.name,
           status: isCurrentlyOccupied ? 'Ocupada' : 'Salida',
-          check_in_time: initialTransactionForThisStay.timestamp,
+          check_in_time: vehicleEntry.check_in_time,
           check_out_time: realCheckOutTime,
+          scheduled_check_out: vehicleEntry.scheduled_check_out || room.check_out_time,
           is_manual_time: room?.is_manual_time || false,
-          isFromPreviousShift: isCurrentlyOccupied && isFromPreviousShift,
+          isFromPreviousShift,
           initialOccupancyAmount,
           productsAmount,
           productTransactions,
@@ -442,20 +408,16 @@ export default function ReportsPage({
           otherChargeTransactions,
           totalStayAmount,
           duration,
-           vehicle: vehicleEntry ? {
-                plate: vehicleEntry.plate,
-                entry_type: vehicleEntry.entry_type,
-                details: `${vehicleEntry.vehicle_brand || ''} ${vehicleEntry.vehicle_details || ''}`.trim()
-            } : null,
+          vehicle: {
+            plate: vehicleEntry.plate,
+            entry_type: vehicleEntry.entry_type,
+            details: `${vehicleEntry.vehicle_brand || ''} ${vehicleEntry.vehicle_details || ''}`.trim()
+          },
         };
       })
       .filter((r): r is NonNullable<typeof r> => r !== null);
 
-    return log.sort(
-      (a, b) =>
-        new Date(b.check_in_time!).getTime() -
-        new Date(a.check_in_time!).getTime()
-    );
+    return log.sort((a, b) => new Date(b.check_in_time!).getTime() - new Date(a.check_in_time!).getTime());
   }, [selectedDate, selectedShift, rooms, transactions, products, vehicleHistory]);
 
   const expiredRoomsReport = useMemo(() => {
@@ -480,26 +442,35 @@ export default function ReportsPage({
 
     return roomLogData
       .filter((log) => {
-        if (log.status !== 'Ocupada') return false; 
-
-        const liveRoomData = rooms.find(r => r.id === log.id);
-        if (!liveRoomData || !liveRoomData.check_out_time) return false;
+        if (!log.scheduled_check_out) return false;
+        const scheduled = new Date(log.scheduled_check_out);
         
-        const scheduledCheckout = new Date(liveRoomData.check_out_time);
-        return isAfter(referenceTime, scheduledCheckout);
+        // Si está ocupada, comparamos contra el ahora/fin de turno
+        if (log.status === 'Ocupada') {
+            return isAfter(referenceTime, scheduled);
+        }
+        
+        // Si ya salió, usamos su hora de salida real del historial
+        const actualExit = log.check_out_time ? new Date(log.check_out_time) : null;
+        if (actualExit) {
+            return isAfter(actualExit, scheduled);
+        }
+        
+        return false;
       })
       .map((log) => {
-        const liveRoomData = rooms.find(r => r.id === log.id)!;
-        const scheduledCheckout = new Date(liveRoomData.check_out_time!);
+        const scheduled = new Date(log.scheduled_check_out!);
+        const reference = (log.status === 'Ocupada') 
+            ? referenceTime 
+            : (log.check_out_time ? new Date(log.check_out_time) : referenceTime);
+            
+        const diff = differenceInMinutes(reference, scheduled);
         return {
-        name: log.name,
-        time: `Vencida por ${formatDistance(
-          referenceTime,
-          scheduledCheckout,
-          { locale: es }
-        )}`,
-      }});
-  }, [roomLogData, selectedDate, selectedShift, rooms]);
+            name: log.name,
+            time: diff > 0 ? `Vencida por ${diff} min` : 'A tiempo',
+        };
+      });
+  }, [roomLogData, selectedDate, selectedShift]);
   
   const handleDownloadPDF = () => {
     if (!selectedDate) return;
@@ -611,7 +582,7 @@ export default function ReportsPage({
         finalY += 7;
         autoTable(doc, {
             startY: finalY,
-            head: [['Habitación', 'Tiempo Vencida al Final del Turno']],
+            head: [['Habitación', 'Tiempo Vencida']],
             body: expiredRoomsReport.map(r => [r.name, r.time]),
             theme: 'striped',
             headStyles: { fillColor: [220, 38, 38] },
@@ -660,7 +631,8 @@ export default function ReportsPage({
 
             const roomDetails = [
                 ['Check-in', logItem.check_in_time ? `${formatToMexicanDate(logItem.check_in_time)} ${formatToMexicanTime(logItem.check_in_time)}` : 'N/A'],
-                ['Check-out', logItem.check_out_time ? `${formatToMexicanDate(logItem.check_out_time)} ${formatToMexicanTime(logItem.check_out_time)}` : (logItem.status === 'Ocupada' ? 'En estancia' : 'N/A')],
+                ['Check-out Programado', logItem.scheduled_check_out ? `${formatToMexicanDate(logItem.scheduled_check_out)} ${formatToMexicanTime(logItem.scheduled_check_out)}` : 'N/A'],
+                ['Salida Real', logItem.check_out_time ? `${formatToMexicanDate(logItem.check_out_time)} ${formatToMexicanTime(logItem.check_out_time)}` : (logItem.status === 'Ocupada' ? 'En estancia' : 'N/A')],
                 ['Estado', logItem.status + (logItem.isFromPreviousShift ? ' (Turno Anterior)' : '') + (logItem.is_manual_time ? ' - MANUAL' : '')],
             ];
 
@@ -1078,7 +1050,7 @@ export default function ReportsPage({
                         <TableRow>
                           <TableHead>Habitación</TableHead>
                           <TableHead className="text-right">
-                            Tiempo Vencida
+                            Estatus/Tiempo
                           </TableHead>
                         </TableRow>
                       </TableHeader>
@@ -1179,7 +1151,7 @@ export default function ReportsPage({
         <CardContent className="space-y-2">
           {roomLogData.length > 0 ? (
             roomLogData.map((logItem) => (
-              <Collapsible key={logItem.id} className="border rounded-lg">
+              <Collapsible key={`${logItem.id}-${logItem.check_in_time}`} className="border rounded-lg">
                 <CollapsibleTrigger className="w-full text-left p-4 hover:bg-muted/50 rounded-lg transition-colors">
                   <div className="flex justify-between items-center">
                     <div className="flex items-center gap-4">

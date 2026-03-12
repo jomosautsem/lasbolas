@@ -77,6 +77,7 @@ export type VehicleHistory = {
     plate: string;
     check_in_time: string;
     check_out_time: string | null;
+    scheduled_check_out: string | null;
     room_id: number;
     room_name: string;
     entry_type: EntryType;
