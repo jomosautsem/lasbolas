@@ -17,7 +17,7 @@ interface Message {
   sender: 'user' | 'ai';
 }
 
-export function AIColultant() {
+export function AIConsultant() {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
@@ -36,7 +36,7 @@ export function AIColultant() {
     try {
       const thirtyDaysAgo = subDays(new Date(), 30).toISOString();
       
-      // Filter data to only send relevant information to AI to avoid payload errors and timeouts
+      // Fetch fresh data for the AI context to ensure accuracy
       const [
         { data: rooms },
         { data: transactions },
@@ -44,17 +44,16 @@ export function AIColultant() {
         { data: expenses }
       ] = await Promise.all([
         supabase.from('rooms').select('*'),
-        supabase.from('transactions').select('*').gte('timestamp', thirtyDaysAgo),
+        supabase.from('transactions').select('*').gte('timestamp', thirtyDaysAgo).order('timestamp', { ascending: false }).limit(50),
         supabase.from('products').select('*'),
-        supabase.from('expenses').select('*').gte('date', thirtyDaysAgo)
+        supabase.from('expenses').select('*').gte('date', thirtyDaysAgo).order('date', { ascending: false }).limit(50)
       ]);
 
       const motelDataContext = {
         rooms,
-        transactionsCount: transactions?.length || 0,
-        recentTransactions: transactions?.slice(-50), // Only most recent to stay within context limits
+        recentTransactions: transactions,
         products,
-        recentExpenses: expenses?.slice(-50),
+        recentExpenses: expenses,
         timestamp: new Date().toISOString(),
       };
       
@@ -73,7 +72,7 @@ export function AIColultant() {
         title: "Error del Consultor IA",
         description: "No se pudo obtener una respuesta. Por favor, intente de nuevo.",
       });
-       const aiErrorMessage: Message = { id: (Date.now() + 1).toString(), text: "Lo siento, no pude procesar tu solicitud debido a una respuesta inesperada del servidor. Por favor, intenta ser más específico.", sender: 'ai' };
+       const aiErrorMessage: Message = { id: (Date.now() + 1).toString(), text: "Lo siento, no pude procesar tu solicitud debido a una respuesta inesperada del servidor. Por favor, intenta ser más específico o intenta de nuevo más tarde.", sender: 'ai' };
       setMessages(prev => [...prev, aiErrorMessage]);
     } finally {
       setIsLoading(false);

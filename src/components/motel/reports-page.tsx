@@ -51,6 +51,7 @@ import {
   X,
   Car,
   PersonStanding,
+  HelpCircle,
 } from 'lucide-react';
 import {
   getCurrentShiftInfo,
@@ -1227,7 +1228,12 @@ export default function ReportsPage({
                           </div>
                            <div className="text-muted-foreground">{logItem.vehicle.details}</div>
                         </>
-                      ) : <div className="flex items-center gap-2"><PersonStanding className="h-4 w-4 text-muted-foreground" /> Sin registro de vehículo</div>}
+                      ) : (
+                        <div className="flex items-center gap-2 text-muted-foreground italic">
+                          <HelpCircle className="h-4 w-4" />
+                          <span>Sin registro de vehículo detallado</span>
+                        </div>
+                      )}
                   </div>
                   <div className="flex flex-wrap items-center gap-x-6 gap-y-2 mt-2 text-sm">
                     <div className="flex items-center gap-2">
