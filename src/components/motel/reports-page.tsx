@@ -43,7 +43,6 @@ import {
   UserPlus,
   Clock,
   Download,
-  RefreshCw,
   FileText,
   ChevronDown,
   History,
@@ -397,10 +396,11 @@ export default function ReportsPage({
           new Date(initialTransactionForThisStay.timestamp).getTime() / 1000
         );
         
+        // Robust vehicle matching with 5-second window to handle precision differences
         const vehicleEntry = vehicleHistory.find(
             (vh) =>
               vh.room_id === roomId &&
-              Math.floor(new Date(vh.check_in_time).getTime() / 1000) === checkInTimeForStayMs
+              Math.abs(new Date(vh.check_in_time).getTime() - new Date(initialTransactionForThisStay.timestamp).getTime()) < 5000
         );
         
         const isCurrentlyOccupied =
@@ -471,26 +471,20 @@ export default function ReportsPage({
     } else if (selectedShift === 'Vespertino') {
       shiftEndDate.setHours(21, 0, 0, 0);
     } else {
-      // Nocturno
       shiftEndDate.setDate(shiftEndDate.getDate() + 1);
       shiftEndDate.setHours(7, 0, 0, 0);
     }
 
-    // Si el turno es el actual, comparamos con "ahora". Si ya pasó, con el fin del turno.
     const referenceTime = isCurrentShift ? now : shiftEndDate;
 
     return roomLogData
       .filter((log) => {
-        // Solo nos interesan habitaciones que están actualmente ocupadas para este reporte de vencimiento en vivo/cierre
         if (log.status !== 'Ocupada') return false; 
 
         const liveRoomData = rooms.find(r => r.id === log.id);
-        // Si no tiene hora de salida programada, no puede estar vencida
         if (!liveRoomData || !liveRoomData.check_out_time) return false;
         
         const scheduledCheckout = new Date(liveRoomData.check_out_time);
-
-        // Solo es vencida si el tiempo de referencia (ahora o fin de turno) ya superó la hora de salida programada
         return isAfter(referenceTime, scheduledCheckout);
       })
       .map((log) => {
@@ -723,7 +717,6 @@ export default function ReportsPage({
       isAfter(new Date(e.date), thirtyDaysAgo)
     );
 
-    // Header
     doc.setFontSize(18);
     doc.text('Reporte Mensual Consolidado - Motel Las Bolas', 14, 22);
     doc.setFontSize(11);
@@ -735,7 +728,6 @@ export default function ReportsPage({
 
     let finalY = 40;
 
-    // Summary
     const totalIncome = reportTransactions.reduce((sum, t) => sum + t.amount, 0);
     const totalExpenses = reportExpenses.reduce((sum, e) => sum + e.amount, 0);
     const netProfit = totalIncome - totalExpenses;
@@ -755,7 +747,6 @@ export default function ReportsPage({
     });
     finalY = (doc as any).lastAutoTable.finalY + 10;
 
-    // Group data by day
     const dailyData = new Map<
       string,
       { transactions: Transaction[]; expenses: Expense[] }
@@ -826,7 +817,7 @@ export default function ReportsPage({
             `$${t.amount.toFixed(2)}`,
           ]),
           theme: 'striped',
-          headStyles: { fillColor: [37, 99, 235] }, // blue
+          headStyles: { fillColor: [37, 99, 235] },
         });
         finalY = (doc as any).lastAutoTable.finalY + 5;
       }
@@ -840,7 +831,7 @@ export default function ReportsPage({
             `-$${e.amount.toFixed(2)}`,
           ]),
           theme: 'striped',
-          headStyles: { fillColor: [220, 38, 38] }, // red
+          headStyles: { fillColor: [220, 38, 38] },
         });
         finalY = (doc as any).lastAutoTable.finalY + 10;
       }
@@ -1236,7 +1227,7 @@ export default function ReportsPage({
                           </div>
                            <div className="text-muted-foreground">{logItem.vehicle.details}</div>
                         </>
-                      ) : <div className="flex items-center gap-2"><PersonStanding className="h-4 w-4 text-muted-foreground" /> A Pie</div>}
+                      ) : <div className="flex items-center gap-2"><PersonStanding className="h-4 w-4 text-muted-foreground" /> Sin registro de vehículo</div>}
                   </div>
                   <div className="flex flex-wrap items-center gap-x-6 gap-y-2 mt-2 text-sm">
                     <div className="flex items-center gap-2">

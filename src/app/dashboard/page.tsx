@@ -117,7 +117,6 @@ export default function DashboardPage() {
     const channels: RealtimeChannel[] = [];
 
     tablesToFetch.forEach(({ name, setter, isLarge }) => {
-      // 1. Initial Fetch
       const fetchAndSet = async () => {
         const fortyDaysAgoISO = subDays(new Date(), 40).toISOString();
         let query = supabase.from(name).select('*');
@@ -147,7 +146,6 @@ export default function DashboardPage() {
 
       fetchAndSet();
 
-      // 2. Realtime Subscription
       const handlePayload = (payload: any) => {
         const upsertItem = (newItem: any) => {
              setter((current: any[]) => {
@@ -160,7 +158,6 @@ export default function DashboardPage() {
         };
 
         const deleteItem = (oldItem: any) => {
-            // Supabase does not return the full old item on DELETE, just the primary keys
             if (!oldItem.id) return;
             setter((current: any[]) => current.filter(item => item.id !== oldItem.id));
         };
@@ -254,6 +251,7 @@ export default function DashboardPage() {
     const shiftInfo = getCurrentShiftInfo();
     const startTime = checkInData.startTime.toISOString();
 
+    // Step 1: Create Transaction
     if (checkInData.selectedRate?.price > 0) {
       const newTransaction: Omit<Transaction, 'id'> = {
         room_id: roomToUpdate.id,
@@ -278,6 +276,7 @@ export default function DashboardPage() {
       }
     }
 
+    // Step 2: Create Vehicle History
     const newVehicleHistoryEntry: Omit<VehicleHistory, 'id'> = {
       plate: checkInData.plate || '',
       check_in_time: startTime,
@@ -301,11 +300,12 @@ export default function DashboardPage() {
         title: 'Error al guardar historial de vehículo',
         description: vehicleError.message,
       });
-      return;
+      // We continue even if vehicle fails to try to at least occupy the room
     }
 
 
-    const { error } = await supabase
+    // Step 3: Update Room Status (Crucial Step)
+    const { error: roomError } = await supabase
       .from('rooms')
       .update({
         status: 'Ocupada',
@@ -325,16 +325,16 @@ export default function DashboardPage() {
       })
       .eq('id', roomToUpdate.id);
 
-    if (error) {
+    if (roomError) {
       toast({
         variant: 'destructive',
-        title: 'Error en Check-in',
-        description: error.message,
+        title: 'Error al ocupar habitación',
+        description: "La transacción se registró pero la habitación no cambió de estado. Por favor, intente ocuparla de nuevo si sigue apareciendo disponible.",
       });
     } else {
       toast({
         title: 'Check-in Exitoso',
-        description: `Habitación ${roomToUpdate.name} ocupada.`,
+        description: `Habitación ${roomToUpdate.name} ocupada correctamente.`,
       });
     }
   };
